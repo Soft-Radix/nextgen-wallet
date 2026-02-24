@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --mainBackground: #f0f7f0;
+  --text: #030200;
+  --grey: #6f7b8f;
+  --primary: #2563eb;
+  --muted: #71717a;
+  --border: #e4e4e7;
+  --error: #ef4444;
+  /* Button */
+  --button-primary-from: #169d25;
+  --button-primary-to: #00de1c;
+  --button-primary-from-hover: #13861f;
+  --button-primary-to-hover: #00c818;
+  --button-outline-border: #d8ebd7;
+  --button-outline-text: #030200;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-mainBackground: var(--mainBackground);
+  --color-text: var(--text);
+  --color-grey: var(--grey);
+  --color-primary: var(--primary);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-error: var(--error);
+  --color-buttonPrimaryFrom: var(--button-primary-from);
+  --color-buttonPrimaryTo: var(--button-primary-to);
+  --color-buttonPrimaryFromHover: var(--button-primary-from-hover);
+  --color-buttonPrimaryToHover: var(--button-primary-to-hover);
+  --color-buttonOutlineBorder: var(--button-outline-border);
+  --color-buttonOutlineText: var(--button-outline-text);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), ui-sans-serif, sans-serif;
+}
+.react-tel-input .form-control {
+  width: 100% !important;
+  height: 52px !important;
+  border-radius: 14px !important;
+  border-color: #d8ebd7 !important;
+  box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
+  outline: none !important;
+}
+.react-tel-input .flag-dropdown {
+  border-radius: 14px 0 0 14px !important;
+  border: none !important;
+  border-right: 1px solid #d8ebd7 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  margin: 8px 0px 8px 0px !important;
+}
+
+.react-tel-input .flag-dropdown.open .selected-flag {
+  border-radius: 14px 0 0 14px !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+.react-tel-input .flag-dropdown.open {
+  border-radius: 14px 0 0 14px !important;
+  border-color: #d8ebd7 !important;
+  box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
+}
+.react-tel-input .form-control:focus {
+  border-color: #d8ebd7 !important;
+  box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
+  outline: none !important;
+}
+.react-tel-input .form-control:hover {
+  border-color: #d8ebd7 !important;
+}
+.react-tel-input .country-list {
+  width: 100% !important;
+  min-width: 220px !important;
+  max-height: 150px !important;
+}
+.react-tel-input .form-control.invalid-number {
+  border-color: #ef4444 !important;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08) !important;
+  outline: none !important;
+}
+.react-tel-input .flag-dropdown.invalid-number {
+  border-color: #ef4444 !important;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08) !important;
+  outline: none !important;
+}
