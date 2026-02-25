@@ -3,6 +3,7 @@ import { useRef, useState, type KeyboardEvent, type ChangeEvent, useEffect } fro
 import { Button } from "@/components/ui";
 import { useRouter } from "next/navigation";
 export default function OtpVerificationPage() {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     const [otp, setOtp] = useState(["", "", "", ""]);
     const [timer, setTimer] = useState(80);
     const [error, setError] = useState<string | null>(null);
@@ -52,8 +53,13 @@ export default function OtpVerificationPage() {
             setError("Invalid OTP");
             return;
         }
+        else if (user?.status == "active") {
+            router.push("/user/dashboard");
+            return;
+        }
         else {
             router.push("/user/create-pin");
+            return;
         }
     }
 

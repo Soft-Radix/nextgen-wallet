@@ -2,7 +2,7 @@ import type { SVGProps } from "react";
 
 /**
  * When pasting exported SVG: use JSX attribute names (e.g. xmlnsXlink, xlinkHref, stopColor, stopOpacity).
- * Find-replace: xmlns:xlink → xmlnsXlink, xlink:href → xlinkHref, stop-color → stopColor, stop-opacity → stopOpacity.
+ * Find-replace: xmlns:xlink → xmlnsXlink, xlink:href → xlinkHref, stopColor → stopColor, stop-opacity → stopOpacity.
  */
 
 /** Shared props for all SVG icons (size, className, aria). */
@@ -101,8 +101,8 @@ export function CreatePin(props: SvgIconProps) {
       <path d="M18.3333 1.83331C18.5764 1.83331 18.8096 1.92989 18.9815 2.1018C19.1534 2.27371 19.25 2.50686 19.25 2.74998V19.25C19.25 19.4931 19.1534 19.7263 18.9815 19.8982C18.8096 20.0701 18.5764 20.1666 18.3333 20.1666H3.66667C3.42355 20.1666 3.19039 20.0701 3.01849 19.8982C2.84658 19.7263 2.75 19.4931 2.75 19.25V2.74998C2.75 2.50686 2.84658 2.27371 3.01849 2.1018C3.19039 1.92989 3.42355 1.83331 3.66667 1.83331H18.3333ZM17.4167 3.66665H4.58333V18.3333H17.4167V3.66665ZM14.6667 14.6666V16.5H7.33333V14.6666H14.6667ZM11 5.49998C11.9725 5.49998 12.9051 5.88629 13.5927 6.57392C14.2804 7.26155 14.6667 8.19419 14.6667 9.16665C14.6667 10.1391 14.2804 11.0717 13.5927 11.7594C12.9051 12.447 11.9725 12.8333 11 12.8333C10.0275 12.8333 9.09491 12.447 8.40728 11.7594C7.71964 11.0717 7.33333 10.1391 7.33333 9.16665C7.33333 8.19419 7.71964 7.26155 8.40728 6.57392C9.09491 5.88629 10.0275 5.49998 11 5.49998V5.49998ZM11 7.33331C10.5138 7.33331 10.0475 7.52647 9.70364 7.87028C9.35982 8.2141 9.16667 8.68042 9.16667 9.16665C9.16667 9.65288 9.35982 10.1192 9.70364 10.463C10.0475 10.8068 10.5138 11 11 11C11.4862 11 11.9525 10.8068 12.2964 10.463C12.6402 10.1192 12.8333 9.65288 12.8333 9.16665C12.8333 8.68042 12.6402 8.2141 12.2964 7.87028C11.9525 7.52647 11.4862 7.33331 11 7.33331V7.33331Z" fill="url(#paint0_linear_332_339)" />
       <defs>
         <linearGradient id="paint0_linear_332_339" x1="19.9054" y1="14.2862" x2="6.86479" y2="14.3558" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop stopColor="#00DE1C" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>
@@ -137,8 +137,8 @@ export function SuccessIcon(props: SvgIconProps) {
       <path d="M114.612 79.2591L91.5903 102.281L81.126 91.8163" stroke="url(#paint0_linear_87_1499)" strokeWidth="5.11348" strokeLinecap="round" strokeLinejoin="round" />
       <defs>
         <linearGradient id="paint0_linear_87_1499" x1="79.4088" y1="90.8771" x2="95.0784" y2="96.6728" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00A91B" />
-          <stop offset="1" stop-color="#00A91B" />
+          <stop stopColor="#00A91B" />
+          <stop offset="1" stopColor="#00A91B" />
         </linearGradient>
       </defs>
     </svg>
@@ -167,8 +167,8 @@ export function ArrowRightIcon(props: SvgIconProps) {
       <path d="M12.129 9.75L3 9.75L3 8.25L12.129 8.25L8.106 4.227L9.1665 3.1665L15 9L9.1665 14.8335L8.106 13.773L12.129 9.75Z" fill="url(#paint0_linear_345_609)" />
       <defs>
         <linearGradient id="paint0_linear_345_609" x1="6.84905" y1="15.2969" x2="6.79584" y2="6.07608" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop stopColor="#00DE1C" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>
@@ -192,8 +192,8 @@ export function HomeIconActive({ color = "#94A3B8", ...props }: SvgIconProps) {
       <path d="M0 19.5V6.5L8.66667 0L17.3333 6.5V19.5H10.8333V11.9167H6.5V19.5H0Z" fill="url(#paint0_linear_237_15274)" />
       <defs>
         <linearGradient id="paint0_linear_237_15274" x1="18.5763" y1="13.6528" x2="4.4556" y2="13.7273" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop stopColor="#00DE1C" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>
@@ -216,8 +216,8 @@ export function TransactionIconActive({ color = "#94A3B8", ...props }: SvgIconPr
       <path d="M19.5 18.417C19.4999 19.3196 19.1836 20.0869 18.5518 20.7188C17.9198 21.3506 17.1527 21.667 16.25 21.667H3.25C2.3473 21.667 1.58016 21.3506 0.948242 20.7188C0.316374 20.0869 7.60954e-05 19.3196 0 18.417V15.167H3.25V0L4.875 1.625L6.5 0L8.125 1.625L9.75 0L11.375 1.625L13 0L14.625 1.625L16.25 0L17.875 1.625L19.5 0V18.417ZM5.41699 15.167H15.167V18.417C15.1671 18.7238 15.271 18.9809 15.4785 19.1885C15.6861 19.396 15.9431 19.5 16.25 19.5C16.5569 19.5 16.8139 19.396 17.0215 19.1885C17.229 18.9809 17.3329 18.7238 17.333 18.417V3.25H5.41699V15.167ZM13 10.833H6.5V8.66699H13V10.833ZM15.167 8.66699C15.4738 8.66707 15.7309 8.77095 15.9385 8.97852C16.146 9.18613 16.25 9.44314 16.25 9.75C16.25 10.0569 16.146 10.3139 15.9385 10.5215C15.7309 10.729 15.4738 10.8329 15.167 10.833C14.86 10.833 14.6022 10.7291 14.3945 10.5215C14.1871 10.3139 14.083 10.0568 14.083 9.75C14.083 9.44322 14.1871 9.1861 14.3945 8.97852C14.6022 8.77088 14.86 8.66699 15.167 8.66699ZM13 7.58301H6.5V5.41699H13V7.58301ZM15.167 5.41699C15.4738 5.41707 15.7309 5.52095 15.9385 5.72852C16.146 5.93613 16.25 6.19314 16.25 6.5C16.25 6.80686 16.146 7.06387 15.9385 7.27148C15.7309 7.47905 15.4738 7.58293 15.167 7.58301C14.86 7.58301 14.6022 7.47912 14.3945 7.27148C14.1871 7.0639 14.083 6.80678 14.083 6.5C14.083 6.19322 14.1871 5.9361 14.3945 5.72852C14.6022 5.52088 14.86 5.41699 15.167 5.41699Z" fill="url(#paint0_linear_134_3026)" />
       <defs>
         <linearGradient id="paint0_linear_134_3026" x1="20.2745" y1="14.7172" x2="4.86293" y2="14.7995" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop stopColor="#00DE1C" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>
@@ -241,8 +241,8 @@ export function ProfileIconAction({ color = "#94A3B8", ...props }: SvgIconProps)
       <path d="M14 11V14.5H0V12L5 10L14 11ZM10 2L9.5 4.5L8 6H6.5L4.5 5L4 3L5.5 0H8L10 2Z" fill="url(#paint0_linear_153_3310)" />
       <defs>
         <linearGradient id="paint0_linear_153_3310" x1="14.5561" y1="9.84907" x2="3.49138" y2="9.91247" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop stopColor="#00DE1C" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>

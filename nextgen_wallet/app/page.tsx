@@ -1,14 +1,15 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
-  if (user) {
-    redirect("/user/dashboard");
-  } else {
+export default function Home() {
+  const router = useRouter();
 
-    redirect("/user/welcome");
-  }
+  useEffect(() => {
+    bootstrapRedirect(router);
+  }, [router]);
+
+  return null;
 }

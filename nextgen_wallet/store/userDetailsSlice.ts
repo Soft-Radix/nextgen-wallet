@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   apiCreateUserDetails,
+  apiGetUserDetails,
   apiUpdateUserPin,
   type UserDetails,
 } from "@/lib/api/userDetails";
@@ -33,6 +34,20 @@ export const createUserDetails = createAsyncThunk<
   }
 });
 
+export const loginUser = createAsyncThunk<
+  UserDetails,
+  { mobile_number: string; country: string },
+  { rejectValue: string }
+>("userDetails/login", async ({ mobile_number, country }, { rejectWithValue }) => {
+  try {
+    return await apiGetUserDetails(mobile_number, country);
+  } catch (err: any) {
+    const message =
+      err?.response?.data?.error ?? err?.message ?? "Failed to login";
+    return rejectWithValue(message);
+  }
+});
+
 export const updateUserPin = createAsyncThunk<
   UserDetails,
   { mobile_number: string; pin: string; country: string },
@@ -50,9 +65,14 @@ export const updateUserPin = createAsyncThunk<
 const userDetailsSlice = createSlice({
   name: "userDetails",
   initialState,
-  reducers: {},
+  reducers: {
+    EmptyError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+
       .addCase(createUserDetails.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -62,10 +82,35 @@ const userDetailsSlice = createSlice({
         (state, action: PayloadAction<UserDetails>) => {
           state.loading = false;
           state.user = action.payload;
-          localStorage.setItem("mobile_number", action.payload.full_number || "");
+          localStorage.setItem("country_code", action.payload.country_code || "");
+          localStorage.setItem("mobile_number", action.payload.mobile_number || "");
         }
       )
       .addCase(createUserDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Something went wrong";
+      })
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(
+        loginUser.fulfilled,
+        (state, action: PayloadAction<UserDetails>) => {
+          state.loading = false;
+          state.user = action.payload;
+          localStorage.setItem(
+            "country_code",
+            action.payload.country_code || ""
+          );
+          localStorage.setItem(
+            "mobile_number",
+            action.payload.mobile_number || ""
+          );
+          localStorage.setItem("user", JSON.stringify(action.payload));
+        }
+      )
+      .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Something went wrong";
       })
@@ -89,4 +134,4 @@ const userDetailsSlice = createSlice({
 });
 
 export default userDetailsSlice.reducer;
-
+export const { EmptyError } = userDetailsSlice.actions;

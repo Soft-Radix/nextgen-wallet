@@ -1,10 +1,17 @@
 "use client";
-import { Button } from "@/components/ui"
-import { Checkcircle, FeedNow, PoweredBy } from "@/lib/svg"
+import { Button } from "@/components/ui";
+import { Checkcircle, FeedNow, PoweredBy } from "@/lib/svg";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
 export default function WelcomePage() {
     const router = useRouter();
+
+    useEffect(() => {
+        bootstrapRedirect(router);
+    }, [router]);
+
     return (
 
         <>

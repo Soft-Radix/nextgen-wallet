@@ -8,10 +8,23 @@ import { createUserDetails } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
 
 export default function SignUpPage() {
-    const savedNumber = localStorage.getItem("mobile_number");
-    const [phoneNumber, setPhoneNumber] = useState(!savedNumber ? "" : savedNumber);
+    const savedNumber =
+        typeof window !== "undefined"
+            ? localStorage.getItem("mobile_number")
+            : null;
+    const savedCountryCode =
+        typeof window !== "undefined"
+            ? localStorage.getItem("country_code")
+            : null;
+
+    const initialDialCode = savedCountryCode || "+91";
+    const initialNationalNumber = savedNumber || "";
+    const initialPhoneValue =
+        initialNationalNumber ? `${initialDialCode}${initialNationalNumber}` : "";
+
+    const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
     const [country, setCountry] = useState("us"); // ISO code for UI
-    const [countryCode, setCountryCode] = useState("+91"); // dial code for API
+    const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { loading, error } = useAppSelector((state: any) => state.userDetails);
@@ -22,7 +35,7 @@ export default function SignUpPage() {
             return;
         }
         if (savedNumber && savedNumber.length > 0) {
-            router.push("/user/create-pin");
+            router.push("/user/otp-verification");
             return;
         }
 

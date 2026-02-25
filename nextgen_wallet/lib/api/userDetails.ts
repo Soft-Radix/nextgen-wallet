@@ -28,6 +28,24 @@ export async function apiCreateUserDetails(
   return response.data.user;
 }
 
+export async function apiGetUserDetails(
+  mobile_number: string,
+  country: string
+): Promise<UserDetails> {
+  const response = await ApiHelperFunction<UserDetailsResponse>({
+    url: "user-details",
+    method: "get",
+    config: {
+      params: {
+        mobile_number,
+        country_code: country,
+      },
+    },
+  });
+
+  return response.data.user;
+}
+
 export async function apiUpdateUserPin(
   mobile_number: string,
   pin: string,

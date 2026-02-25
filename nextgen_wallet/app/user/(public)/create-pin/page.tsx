@@ -21,6 +21,8 @@ const CreatePinSchema = Yup.object({
 export default function PinPage() {
     const router = useRouter();
     const users = localStorage.getItem("user");
+    const country_code = localStorage.getItem("country_code");
+    const mobile_number = localStorage.getItem("mobile_number");
     const dispatch = useAppDispatch();
     const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
     return (
@@ -54,9 +56,9 @@ export default function PinPage() {
 
                                 const res: any = await dispatch(
                                     updateUserPin({
-                                        mobile_number: user?.mobile_number || "",
+                                        mobile_number: mobile_number || "",
                                         pin: values.pin,
-                                        country: user?.country_code || "",
+                                        country: country_code || "",
                                     })
                                 );
 
@@ -121,11 +123,11 @@ export default function PinPage() {
                                     }
                                 />
 
-                                {status && (
+                                {/* {status && (
                                     <p className="text-red-500 text-xs w-full text-left">
                                         {status}
                                     </p>
-                                )}
+                                )} */}
 
                                 {error && (
                                     <p className="text-red-500 text-xs w-full text-left">
