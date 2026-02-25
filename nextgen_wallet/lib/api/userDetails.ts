@@ -1,0 +1,43 @@
+export type UserDetails = {
+  id: string;
+  mobile_number: string;
+  country_code: string;
+  full_number?: string;
+  pin?: string | null;
+  status?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+import { ApiHelperFunction } from "@/lib/api/client";
+
+type UserDetailsResponse = {
+  user: UserDetails;
+};
+
+export async function apiCreateUserDetails(
+  mobile_number: string,
+  country: string
+): Promise<UserDetails> {
+  const response = await ApiHelperFunction<UserDetailsResponse>({
+    url: "user-details",
+    method: "post",
+    data: { mobile_number, country_code: country },
+  });
+
+  return response.data.user;
+}
+
+export async function apiUpdateUserPin(
+  mobile_number: string,
+  pin: string,
+  country: string
+): Promise<UserDetails> {
+  const response = await ApiHelperFunction<UserDetailsResponse>({
+    url: "user-details",
+    method: "patch",
+    data: { mobile_number, pin, country_code: country },
+  });
+
+  return response.data.user;
+}

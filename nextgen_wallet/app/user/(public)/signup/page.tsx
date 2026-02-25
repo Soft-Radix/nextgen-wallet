@@ -1,24 +1,70 @@
-"use client"
-import { Button, PhoneInput } from "@/components/ui"
-import { useState } from "react"
+"use client";
+import { Button } from "@/components/ui";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PhoneNumberInput from "@/components/ui/Phone";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createUserDetails } from "@/store/userDetailsSlice";
+import { RootState } from "@/store/store";
 
 export default function SignUpPage() {
-    const [phoneNumber, setPhoneNumber] = useState("")
+    const savedNumber = localStorage.getItem("mobile_number");
+    const [phoneNumber, setPhoneNumber] = useState(!savedNumber ? "" : savedNumber);
+    const [country, setCountry] = useState("us"); // ISO code for UI
+    const [countryCode, setCountryCode] = useState("+91"); // dial code for API
     const router = useRouter();
+    const dispatch = useAppDispatch();
+    const { loading, error } = useAppSelector((state: any) => state.userDetails);
+
+    const handleSignUp = async () => {
+        if (!phoneNumber) {
+            // local validation error
+            return;
+        }
+        if (savedNumber && savedNumber.length > 0) {
+            router.push("/user/create-pin");
+            return;
+        }
+
+        // Strip country dial code from the full phone value for API
+        const allDigits = phoneNumber.replace(/\D/g, "");
+        const dialDigits = countryCode.replace(/\D/g, "");
+        const nationalNumber = allDigits.startsWith(dialDigits)
+            ? allDigits.slice(dialDigits.length)
+            : allDigits;
+
+        const resultAction: any = await dispatch(
+            createUserDetails({
+                mobile_number: nationalNumber,
+                country: countryCode,
+
+            })
+        );
+        if (resultAction.meta?.requestStatus == "fulfilled") {
+            router.push("/user/otp-verification");
+        }
+    };
     return (
         <>
             <div className="max-w-[524px] w-full">
                 <div className="bg-white pt-[48px] p-6 rounded-[14px] flex flex-col gap-[20px] items-center border-[0.5px] border-[var(--button-outline-border)] shadow-[0_23px_50px_rgba(25,33,61,0.02)] ">
                     <p className="text-text font-semibold text-[24px] leading-[35px]"> Sign Up</p>
                     <p className="text-grey  text-[14px] text-center mb-[20px]">Enter your phone number to get started.</p>
-                    <PhoneInput
+                    <PhoneNumberInput
                         label="Phone number"
                         placeholder="Enter phone number"
                         value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        onChange={(value) => setPhoneNumber(value)}
+                        setCountry={setCountry}
+                        country={country}
+                        onDialCodeChange={setCountryCode}
                     />
-                    <Button fullWidth={true} onClick={() => router.push("/user/otp-verification")}>Sign Up</Button>
+                    {error && (
+                        <p className="text-red-500 text-xs w-full text-left">{error}</p>
+                    )}
+                    <Button fullWidth={true} onClick={handleSignUp} disabled={loading}>
+                        {loading ? "Signing Up..." : "Sign Up"}
+                    </Button>
 
 
 

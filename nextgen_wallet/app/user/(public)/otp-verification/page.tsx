@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 export default function OtpVerificationPage() {
     const [otp, setOtp] = useState(["", "", "", ""]);
     const [timer, setTimer] = useState(80);
+    const [error, setError] = useState<string | null>(null);
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+        setError(null);
         const value = e.target.value;
         if (!/^\d?$/.test(value)) return; // allow only single digit
 
@@ -21,6 +23,7 @@ export default function OtpVerificationPage() {
     };
 
     const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+        setError(null);
         if (e.key === "Backspace" && !otp[index] && index > 0) {
             inputsRef.current[index - 1]?.focus();
         }
@@ -40,6 +43,20 @@ export default function OtpVerificationPage() {
         .toString()
         .padStart(2, "0")}`;
 
+    const handleVerify = () => {
+        if (otp.every(value => value == "")) {
+            setError("Please enter the OTP");
+            return;
+
+        } else if (otp.join("") != "1234") {
+            setError("Invalid OTP");
+            return;
+        }
+        else {
+            router.push("/user/create-pin");
+        }
+    }
+
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -50,27 +67,29 @@ export default function OtpVerificationPage() {
                     <p className="text-grey text-[14px] text-center mb-[12px]">
                         We sent a code to +1 XXX-XXX-XXXX
                     </p>
-
-                    <div className="flex items-center justify-center gap-3 mb-[16px]">
-                        {otp.map((value, index) => (
-                            <input
-                                key={index}
-                                ref={(el) => {
-                                    inputsRef.current[index] = el;
-                                }}
-                                type="text"
-                                inputMode="numeric"
-                                autoComplete="one-time-code"
-                                maxLength={1}
-                                value={value}
-                                onChange={(e) => handleChange(index, e)}
-                                onKeyDown={(e) => handleKeyDown(index, e)}
-                                className="w-[56px] h-[56px] rounded-[14px] border border-[#D8EBD7] bg-white text-center text-[24px] font-semibold text-text shadow-[0_2px_6px_rgba(0, 166, 62, 0.1)] focus:outline-none focus:ring-2 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]"
-                            />
-                        ))}
+                    <div className="flex flex-col gap-1 mb-[16px]">
+                        <div className="flex items-center justify-center gap-3 ">
+                            {otp.map((value, index) => (
+                                <input
+                                    key={index}
+                                    ref={(el) => {
+                                        inputsRef.current[index] = el;
+                                    }}
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="one-time-code"
+                                    maxLength={1}
+                                    value={value}
+                                    onChange={(e) => handleChange(index, e)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    className="w-[56px] h-[56px] rounded-[14px] border border-[#D8EBD7] bg-white text-center text-[24px] font-semibold text-text shadow-[0_2px_6px_rgba(0, 166, 62, 0.1)] focus:outline-none focus:ring-2 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]"
+                                />
+                            ))}
+                        </div>
+                        {error && <p className="text-red-500 text-[14px] text-left">{error}</p>}
                     </div>
 
-                    <Button fullWidth={true} onClick={() => router.push("/user/create-pin")}>Verify</Button>
+                    <Button fullWidth={true} onClick={() => handleVerify()}>Verify</Button>
 
                     {timer > 0 ? (
                         <p className="text-[#4CCF44] font-medium text-[16px]">

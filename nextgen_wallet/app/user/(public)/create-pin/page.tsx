@@ -5,6 +5,9 @@ import { CreatePin } from "@/lib/svg";
 import { Formik, Form } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateUserPin } from "@/store/userDetailsSlice";
+import { RootState } from "@/store/store";
 
 const CreatePinSchema = Yup.object({
     pin: Yup.string()
@@ -17,6 +20,9 @@ const CreatePinSchema = Yup.object({
 
 export default function PinPage() {
     const router = useRouter();
+    const users = localStorage.getItem("user");
+    const dispatch = useAppDispatch();
+    const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -29,14 +35,57 @@ export default function PinPage() {
                     </p>
 
                     <Formik
-                        initialValues={{ pin: "", confirmPin: "" }}
+                        initialValues={{ pin: users ? JSON.parse(users)?.pin || "" : "", confirmPin: users ? JSON.parse(users)?.pin || "" : "" }}
                         validationSchema={CreatePinSchema}
-                        onSubmit={(values) => {
-                            // TODO: hook this up to your API or navigation
-                            console.log("Create PIN form submitted", values);
+                        onSubmit={async (values, { setSubmitting, setStatus }) => {
+                            try {
+                                const mobile_number =
+                                    typeof window !== "undefined"
+                                        ? window.localStorage.getItem("mobile_number")
+                                        : "";
+                                const country =
+                                    typeof window !== "undefined"
+                                        ? window.localStorage.getItem("country")
+                                        : "";
+                                if (!mobile_number) {
+                                    setStatus("Missing phone number. Please sign up again.");
+                                    return;
+                                }
+
+                                const res: any = await dispatch(
+                                    updateUserPin({
+                                        mobile_number: user?.mobile_number || "",
+                                        pin: values.pin,
+                                        country: user?.country_code || "",
+                                    })
+                                );
+
+                                if (res.meta?.requestStatus == "fulfilled") {
+                                    router.push("/user/success");
+                                } else {
+                                    setStatus(res.payload.message || "Failed to save PIN");
+                                }
+
+
+
+
+                            } catch (error: any) {
+                                setStatus(error.message || "Something went wrong");
+                            } finally {
+                                setSubmitting(false);
+                            }
                         }}
                     >
-                        {({ values, errors, touched, handleChange, handleBlur, isSubmitting }) => (
+                        {({
+                            values,
+                            errors,
+                            touched,
+                            handleChange,
+                            handleBlur,
+                            isSubmitting,
+                            status,
+                            setStatus,
+                        }) => (
                             <Form className="w-full flex flex-col gap-4">
                                 <Input
                                     name="pin"
@@ -46,9 +95,13 @@ export default function PinPage() {
                                     startIcon={<CreatePin />}
                                     maxLength={4}
                                     value={values.pin}
-                                    onChange={handleChange}
+                                    onChange={(e) => { handleChange(e); setStatus("") }}
                                     onBlur={handleBlur}
-                                    error={touched.pin ? errors.pin : undefined}
+                                    error={
+                                        touched.pin && typeof errors.pin === "string"
+                                            ? errors.pin
+                                            : undefined
+                                    }
                                 />
 
                                 <Input
@@ -61,11 +114,30 @@ export default function PinPage() {
                                     value={values.confirmPin}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    error={touched.confirmPin ? errors.confirmPin : undefined}
+                                    error={
+                                        touched.confirmPin && typeof errors.confirmPin === "string"
+                                            ? errors.confirmPin
+                                            : undefined
+                                    }
                                 />
 
-                                <Button type="submit" fullWidth={true} disabled={isSubmitting} onClick={() => router.push("/user/success")}>
-                                    Create Wallet
+                                {status && (
+                                    <p className="text-red-500 text-xs w-full text-left">
+                                        {status}
+                                    </p>
+                                )}
+
+                                {error && (
+                                    <p className="text-red-500 text-xs w-full text-left">
+                                        {error}
+                                    </p>
+                                )}
+                                <Button
+                                    type="submit"
+                                    fullWidth={true}
+                                    disabled={isSubmitting || loading}
+                                >
+                                    {isSubmitting || loading ? "Saving..." : "Create Wallet"}
                                 </Button>
                             </Form>
                         )}
@@ -74,11 +146,12 @@ export default function PinPage() {
                     <button
                         type="button"
                         className="text-[#00A63E]  text-[16px]"
+                        onClick={() => router.push("/user/success")}
                     >
                         Skip for Now
                     </button>
                 </div>
-            </div>
+            </div >
         </>
     );
 }

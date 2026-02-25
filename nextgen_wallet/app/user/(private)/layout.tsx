@@ -11,10 +11,10 @@ export default async function PrivateLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/user/welcome");
-  }
+  console.log("========user==", user);
+  // if (!user) {
+  //   redirect("/user/welcome");
+  // }
 
   return (
     <div className="min-h-screen relative">

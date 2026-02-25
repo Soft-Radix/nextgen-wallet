@@ -10,11 +10,17 @@ const PhoneNumberInput = ({
   onChange,
   label,
   placeholder,
+  country,
+  setCountry,
+  onDialCodeChange,
 }: {
   value: string;
   onChange: (value: string) => void;
   label: string;
   placeholder: string;
+  country: string;
+  setCountry: (country: string) => void;
+  onDialCodeChange?: (code: string) => void;
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -29,10 +35,16 @@ const PhoneNumberInput = ({
       </label>
 
       <PhoneInput
-        country="us"
+        country={country}
         value={value}
         placeholder={placeholder}
-        onChange={(val) => handleChange(val)}
+        onChange={(val, data: any) => {
+          setCountry(data?.countryCode || country);
+          if (onDialCodeChange && data?.dialCode) {
+            onDialCodeChange(`+${data.dialCode}`);
+          }
+          handleChange(val);
+        }}
         enableClickOutside={true}
         inputClass={[
           "w-full h-[52px] rounded-[10px] border bg-background px-3 py-2 text-sm placeholder:text-muted focus:outline-none focus:ring-2",
@@ -42,10 +54,22 @@ const PhoneNumberInput = ({
         ]
           .filter(Boolean)
           .join(" ")}
-        isValid={(inputNumber) => {
-          const input = String(inputNumber ?? "").replace(/\D/g, "");
-          const valid = input.length >= 10;
-          setError(valid || !input ? null : "Invalid phone number");
+        isValid={(inputNumber, country: any) => {
+          const digits = String(inputNumber ?? "").replace(/\D/g, "");
+
+          const dialCode = country?.dialCode ? String(country.dialCode) : "";
+          const nationalDigits = dialCode
+            ? digits.slice(dialCode.length)
+            : digits;
+
+          // If user hasn't typed any national digits yet, don't show an error
+          if (!nationalDigits.length) {
+            setError(null);
+            return true;
+          }
+
+          const valid = nationalDigits.length >= 10;
+          setError(valid ? null : "Invalid phone number");
           return valid;
         }}
       />
