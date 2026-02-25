@@ -20,7 +20,7 @@ export async function apiCreateUserDetails(
   country: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
-    url: "signup",
+    url: "user-details",
     method: "post",
     data: { mobile_number, country_code: country },
   });
@@ -33,7 +33,7 @@ export async function apiGetUserDetails(
   country: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
-    url: "login",
+    url: "user-details",
     method: "get",
     config: {
       params: {

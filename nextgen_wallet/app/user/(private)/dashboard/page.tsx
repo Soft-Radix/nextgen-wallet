@@ -25,7 +25,7 @@ export default function DashboardPage() {
 
             </div>
             {/* banner */}
-            <div className="w-full  bg-[#0c3332] rounded-[14px] p-6 mt-6 text-center">
+            <div className="w-full  bg-[#0c3332] rounded-[14px] p-6 mt-6 text-center bg-[url('/Background.png')] bg-cover bg-center">
                 <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
                 <p className="text-[#FFFFFF] text-[30px] font-bold">$2,450.00</p>
                 <p className="text-[#FFFFFFB2] text-[10px] bg-[#FFFFFF1A] w-fit mx-auto mt-[14px] rounded-[30px] px-4 py-2 flex items-center justify-center gap-1"><AccountSecurelyConnectedIcon />Account Securely Connected</p>
