@@ -64,10 +64,15 @@ export default function OtpVerificationPage() {
             return;
         }
     }
-    
-    useEffect(() => {   
-        bootstrapRedirect(router);
-    }, [router]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!user?.id) {
+            router.push("/user/welcome");
+        }
+
+    }, [])
     return (
         <>
             <div className="max-w-[524px] w-full">

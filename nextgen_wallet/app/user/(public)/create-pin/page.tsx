@@ -25,9 +25,16 @@ export default function PinPage() {
     const users = localStorage.getItem("user");
     const dispatch = useAppDispatch();
     const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
-    useEffect(() => {   
-        bootstrapRedirect(router);
-    }, [router]);
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!user?.id) {
+            router.push("/user/welcome");
+        }
+        if (user?.status == "active") {
+            router.push("/user/dashboard");
+        }
+    }, [])
     return (
         <>
             <div className="max-w-[524px] w-full">

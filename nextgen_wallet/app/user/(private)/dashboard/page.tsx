@@ -1,18 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 import { AccountSecurelyConnectedIcon, ArrowRightBlockIcon, NotificationIcon, PayScanIcon, SendIcon, WithdrawIcon } from "@/lib/svg";
 
-
 export default function DashboardPage() {
-    const router = useRouter();
-
-
-    useEffect(() => {
-        bootstrapRedirect(router);
-    }, [router]);
-
     return (
         <>
             <div className="flex items-center justify-between  gap-2">

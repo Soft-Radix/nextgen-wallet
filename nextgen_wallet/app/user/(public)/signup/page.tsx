@@ -1,12 +1,11 @@
 "use client";
 import { Button } from "@/components/ui";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createUserDetails, EmptyError } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
-import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
 export default function SignUpPage() {
     const savedNumber =
@@ -59,9 +58,6 @@ export default function SignUpPage() {
             router.push("/user/otp-verification");
         }
     };
-    useEffect(() => {
-        bootstrapRedirect(router);
-    }, [router]);
     return (
         <>
             <div className="max-w-[524px] w-full">
