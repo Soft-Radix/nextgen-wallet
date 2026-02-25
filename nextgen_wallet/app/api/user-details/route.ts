@@ -14,6 +14,26 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
+    // Check if a user with this mobile_number + country_code already exists
+    const { data: existingUser, error: existingError } = await supabase
+      .from("user_details")
+      .select("*")
+      .eq("mobile_number", mobile_number)
+      .eq("country_code", country_code)
+      .maybeSingle();
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: "User already exists" },
+        { status: 500 }
+      );
+    }
+
+    if (existingUser) {
+      // Don't create a duplicate; return the existing user instead
+      return NextResponse.json({ user: existingUser }, { status: 200 });
+    }
+
     const { data, error } = await supabase
       .from("user_details")
       .insert({
@@ -40,11 +60,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { mobile_number, pin, country_code } = await request.json();
+    const { id, pin } = await request.json();
 
-    if (!mobile_number || !pin || !country_code) {
+    if (!id || !pin) {
       return NextResponse.json(
-        { error: "mobile_number, pin and country_code are required" },
+        { error: "id and pin are required" },
         { status: 400 }
       );
     }
@@ -58,10 +78,9 @@ export async function PATCH(request: Request) {
         status: "active",
         updated_at: new Date().toISOString(),
       })
-      .eq("mobile_number", mobile_number)
-      .eq("country_code", country_code)
+      .eq("id", id)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -69,7 +88,7 @@ export async function PATCH(request: Request) {
 
     if (!data) {
       return NextResponse.json(
-        { error: "User not found for given mobile_number and country_code" },
+        { error: "User not found for given id" },
         { status: 404 }
       );
     }

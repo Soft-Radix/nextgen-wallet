@@ -6,6 +6,7 @@
   --mainBackground: #f0f7f0;
   --text: #030200;
   --grey: #6f7b8f;
+  --grey-dark: #334155;
   --grey-light: #94A3B8;
   --primary: #2563eb;
   --muted: #71717a;
@@ -26,6 +27,7 @@
   --color-mainBackground: var(--mainBackground);
   --color-text: var(--text);
   --color-grey: var(--grey);
+  --color-greyDark: var(--grey-dark);
   --color-greyLight: var(--grey-light);
   --color-primary: var(--primary);
   --color-muted: var(--muted);

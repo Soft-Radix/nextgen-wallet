@@ -11,7 +11,7 @@ export default async function PrivateLayout({
 
   return (
     <div className="min-h-screen relative">
-      <main className="flex-1 p-6 bg-mainBackground h-[calc(100vh-100px)]">
+      <main className="flex-1 p-6 bg-mainBackground h-[calc(100vh-100px)] overflow-y-auto">
         {children}
       </main>
       <BottomNav />

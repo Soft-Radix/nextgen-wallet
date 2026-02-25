@@ -7,8 +7,10 @@ export default async function Home() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   console.log("========user==", user);
 
-  if (user) {
+  if (user.status == "active") {
     redirect("/user/dashboard");
+  } else if (user.mobile_number && user.country_code) {
+    redirect("/user/create-pin");
   } else {
     redirect("/user/welcome");
   }

@@ -50,11 +50,11 @@ export const loginUser = createAsyncThunk<
 
 export const updateUserPin = createAsyncThunk<
   UserDetails,
-  { mobile_number: string; pin: string; country: string },
+  { id: string; pin: string },
   { rejectValue: string }
->("userDetails/updatePin", async ({ mobile_number, pin, country }, { rejectWithValue }) => {
+>("userDetails/updatePin", async ({ id, pin }, { rejectWithValue }) => {
   try {
-    return await apiUpdateUserPin(mobile_number, pin, country);
+    return await apiUpdateUserPin(id, pin);
   } catch (err: any) {
     const message =
       err?.response?.data?.error ?? err?.message ?? "Failed to update PIN";
@@ -84,6 +84,7 @@ const userDetailsSlice = createSlice({
           state.user = action.payload;
           localStorage.setItem("country_code", action.payload.country_code || "");
           localStorage.setItem("mobile_number", action.payload.mobile_number || "");
+          localStorage.setItem("user", JSON.stringify(action.payload));
         }
       )
       .addCase(createUserDetails.rejected, (state, action) => {

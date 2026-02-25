@@ -7,12 +7,11 @@ export function bootstrapRedirect(router: AppRouterInstance) {
 
   try {
     const userRaw = window.localStorage.getItem("user");
-    const mobile = window.localStorage.getItem("mobile_number");
     const user = userRaw ? JSON.parse(userRaw) : null;
 
-    if (user && Object.keys(user).length > 0) {
+    if (user && user.status == "active") {
       router.replace("/user/dashboard");
-    } else if (mobile && mobile.length > 0) {
+    } else if (user && user.mobile_number && user.country_code) {
       router.replace("/user/otp-verification");
     } else {
       router.replace("/user/welcome");
@@ -21,4 +20,3 @@ export function bootstrapRedirect(router: AppRouterInstance) {
     router.replace("/user/welcome");
   }
 }
-

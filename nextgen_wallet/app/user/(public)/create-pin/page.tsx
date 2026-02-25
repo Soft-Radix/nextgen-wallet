@@ -8,6 +8,8 @@ import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUserPin } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
+import { useEffect } from "react";
+import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
 const CreatePinSchema = Yup.object({
     pin: Yup.string()
@@ -21,10 +23,11 @@ const CreatePinSchema = Yup.object({
 export default function PinPage() {
     const router = useRouter();
     const users = localStorage.getItem("user");
-    const country_code = localStorage.getItem("country_code");
-    const mobile_number = localStorage.getItem("mobile_number");
     const dispatch = useAppDispatch();
     const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
+    useEffect(() => {   
+        bootstrapRedirect(router);
+    }, [router]);
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -41,24 +44,10 @@ export default function PinPage() {
                         validationSchema={CreatePinSchema}
                         onSubmit={async (values, { setSubmitting, setStatus }) => {
                             try {
-                                const mobile_number =
-                                    typeof window !== "undefined"
-                                        ? window.localStorage.getItem("mobile_number")
-                                        : "";
-                                const country =
-                                    typeof window !== "undefined"
-                                        ? window.localStorage.getItem("country")
-                                        : "";
-                                if (!mobile_number) {
-                                    setStatus("Missing phone number. Please sign up again.");
-                                    return;
-                                }
-
                                 const res: any = await dispatch(
                                     updateUserPin({
-                                        mobile_number: mobile_number || "",
+                                        id: user?.id || (users ? JSON.parse(users).id : ""),
                                         pin: values.pin,
-                                        country: country_code || "",
                                     })
                                 );
 

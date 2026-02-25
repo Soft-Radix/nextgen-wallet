@@ -1,11 +1,12 @@
 "use client";
 import { Button } from "@/components/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createUserDetails } from "@/store/userDetailsSlice";
+import { createUserDetails, EmptyError } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
+import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
 export default function SignUpPage() {
     const savedNumber =
@@ -23,6 +24,7 @@ export default function SignUpPage() {
         initialNationalNumber ? `${initialDialCode}${initialNationalNumber}` : "";
 
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
+    const [isChecked, setIsChecked] = useState(false);
     const [country, setCountry] = useState("us"); // ISO code for UI
     const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
@@ -57,6 +59,9 @@ export default function SignUpPage() {
             router.push("/user/otp-verification");
         }
     };
+    useEffect(() => {
+        bootstrapRedirect(router);
+    }, [router]);
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -75,19 +80,17 @@ export default function SignUpPage() {
                     {error && (
                         <p className="text-red-500 text-xs w-full text-left">{error}</p>
                     )}
-                    <Button fullWidth={true} onClick={handleSignUp} disabled={loading}>
+                    <Button fullWidth={true} onClick={handleSignUp} disabled={loading || !isChecked}>
                         {loading ? "Signing Up..." : "Sign Up"}
                     </Button>
-
-
-
-                    <p className="text-grey text-[14px] ">Already have an account? <span className="text-text font-semibold" onClick={() => router.push("/user/login")}>Log In</span> </p>
-
-
-
+                    <p className="text-grey text-[14px] ">Already have an account? <span className="text-text font-semibold" onClick={() => { dispatch(EmptyError()); router.push("/user/login") }}>Log In</span> </p>
                 </div >
                 <div className="flex  gap-4  justify-center items-start mt-[28px]">
-                    <input type="checkbox" style={{ accentColor: 'var(--button-primary-from)', borderColor: '#6F7B8F', borderWidth: "2px", width: "18px", height: "18px" }} />
+                    <input type="checkbox"
+                        style={{ accentColor: 'var(--button-primary-from)', borderColor: '#6F7B8F', borderWidth: "2px", width: "18px", height: "18px" }}
+                        checked={isChecked}
+                        onChange={() => setIsChecked(!isChecked)}
+                    />
                     <span className="text-grey text-[14px] font-medium">
                         By continuing, you agree to our <span className="text-text underline"> Terms & Privacy Policy</span>.
                     </span>

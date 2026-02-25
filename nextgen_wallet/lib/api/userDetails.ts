@@ -47,14 +47,13 @@ export async function apiGetUserDetails(
 }
 
 export async function apiUpdateUserPin(
-  mobile_number: string,
-  pin: string,
-  country: string
+  id: string,
+  pin: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
     url: "user-details",
     method: "patch",
-    data: { mobile_number, pin, country_code: country },
+    data: { id, pin },
   });
 
   return response.data.user;

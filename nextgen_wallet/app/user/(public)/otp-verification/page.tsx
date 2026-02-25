@@ -2,8 +2,10 @@
 import { useRef, useState, type KeyboardEvent, type ChangeEvent, useEffect } from "react";
 import { Button } from "@/components/ui";
 import { useRouter } from "next/navigation";
+import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 export default function OtpVerificationPage() {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+
     const [otp, setOtp] = useState(["", "", "", ""]);
     const [timer, setTimer] = useState(80);
     const [error, setError] = useState<string | null>(null);
@@ -62,7 +64,10 @@ export default function OtpVerificationPage() {
             return;
         }
     }
-
+    
+    useEffect(() => {   
+        bootstrapRedirect(router);
+    }, [router]);
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -71,7 +76,7 @@ export default function OtpVerificationPage() {
                         OTP Verification
                     </p>
                     <p className="text-grey text-[14px] text-center mb-[12px]">
-                        We sent a code to +1 XXX-XXX-XXXX
+                        We sent a code to {user?.country_code} {user?.mobile_number}
                     </p>
                     <div className="flex flex-col gap-1 mb-[16px]">
                         <div className="flex items-center justify-center gap-3 ">
