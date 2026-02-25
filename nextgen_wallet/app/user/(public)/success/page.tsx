@@ -1,10 +1,11 @@
 "use client"
 import { Button, PhoneInput } from "@/components/ui"
 import { ArrowRightIcon, SuccessIcon, WalletIdIcon } from "@/lib/svg"
+import { useRouter } from "next/navigation";
 import { useState } from "react"
 
 export default function SuccessPage() {
-
+    const router = useRouter();
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -28,7 +29,7 @@ export default function SuccessPage() {
                     </div>
                 </div >
 
-                <p className="text-text  text-[16px] text-center mt-[28px] flex items-center justify-center gap-[5px]">
+                <p className="text-text  text-[16px] text-center mt-[28px] flex items-center justify-center gap-[5px]" onClick={() => router.push("/user/dashboard")}>
                     Go to Wallet <ArrowRightIcon />
                 </p>
             </div>

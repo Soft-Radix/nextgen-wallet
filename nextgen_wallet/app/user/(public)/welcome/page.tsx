@@ -1,7 +1,10 @@
+"use client";
 import { Button } from "@/components/ui"
 import { Checkcircle, FeedNow, PoweredBy } from "@/lib/svg"
+import { useRouter } from "next/navigation";
 
 export default function WelcomePage() {
+    const router = useRouter();
     return (
 
         <>
@@ -11,8 +14,8 @@ export default function WelcomePage() {
                         Real Control.</p>
                     <p className="text-grey  text-[14px] text-center mb-[20px]">Send, receive, and manage money instantly with secure digital banking.</p>
 
-                    <Button fullWidth={true} >Login</Button>
-                    <Button variant="outline" fullWidth={true}>Register</Button>
+                    <Button fullWidth={true} onClick={() => router.push("/user/login")}>Login</Button>
+                    <Button variant="outline" fullWidth={true} onClick={() => router.push("/user/signup")}>Register</Button>
                     <div className="flex px-4 w-full gap-2 items-center">
 
                         <hr className="border-[1.5px] border-[#F0F3F7] border-dashed w-full" />

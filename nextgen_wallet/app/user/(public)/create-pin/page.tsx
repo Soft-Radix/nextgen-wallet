@@ -3,6 +3,7 @@
 import { Button, Input } from "@/components/ui";
 import { CreatePin } from "@/lib/svg";
 import { Formik, Form } from "formik";
+import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 
 const CreatePinSchema = Yup.object({
@@ -15,6 +16,7 @@ const CreatePinSchema = Yup.object({
 });
 
 export default function PinPage() {
+    const router = useRouter();
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -62,7 +64,7 @@ export default function PinPage() {
                                     error={touched.confirmPin ? errors.confirmPin : undefined}
                                 />
 
-                                <Button type="submit" fullWidth={true} disabled={isSubmitting}>
+                                <Button type="submit" fullWidth={true} disabled={isSubmitting} onClick={() => router.push("/user/success")}>
                                     Create Wallet
                                 </Button>
                             </Form>

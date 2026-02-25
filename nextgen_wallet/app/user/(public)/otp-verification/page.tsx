@@ -1,12 +1,12 @@
 "use client";
 import { useRef, useState, type KeyboardEvent, type ChangeEvent, useEffect } from "react";
 import { Button } from "@/components/ui";
-
+import { useRouter } from "next/navigation";
 export default function OtpVerificationPage() {
     const [otp, setOtp] = useState(["", "", "", ""]);
     const [timer, setTimer] = useState(80);
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
-
+    const router = useRouter();
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         if (!/^\d?$/.test(value)) return; // allow only single digit
@@ -70,7 +70,7 @@ export default function OtpVerificationPage() {
                         ))}
                     </div>
 
-                    <Button fullWidth={true}>Verify</Button>
+                    <Button fullWidth={true} onClick={() => router.push("/user/create-pin")}>Verify</Button>
 
                     {timer > 0 ? (
                         <p className="text-[#4CCF44] font-medium text-[16px]">

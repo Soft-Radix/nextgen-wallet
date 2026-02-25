@@ -1,10 +1,12 @@
 "use client"
 import { Button } from "@/components/ui"
 import Phone from "@/components/ui/Phone"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function LoginPage() {
     const [phoneNumber, setPhoneNumber] = useState("")
+    const router = useRouter();
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -18,16 +20,16 @@ export default function LoginPage() {
                         onChange={(e) => setPhoneNumber(e.target.value)}
                     /> */}
                     <Phone
-                    label="Phone number"
-                    placeholder="Enter phone number"
-                    value={phoneNumber}
-                    onChange={(value) => setPhoneNumber(value)}
+                        label="Phone number"
+                        placeholder="Enter phone number"
+                        value={phoneNumber}
+                        onChange={(value) => setPhoneNumber(value)}
                     />
-                    <Button fullWidth={true} >Continue</Button>
+                    <Button fullWidth={true} onClick={() => router.push("/user/otp-verification")}>Continue</Button>
 
 
 
-                    <p className="text-grey text-[14px] ">Don’t have an account? <span className="text-[#4CCF44] font-semibold">Sign Up </span> </p>
+                    <p className="text-grey text-[14px] ">Don’t have an account? <span className="text-[#4CCF44] font-semibold" onClick={() => router.push("/user/signup")}>Sign Up </span> </p>
 
 
 

@@ -1,3 +1,9 @@
 export default function DashboardPage() {
-    return <h1 className="text-2xl font-semibold">Dashboard</h1>;
+    return (
+        <div>
+            <div className="w-[50px] h-[50px] rounded-full bg-gray-200">
+                {/* <img src="/../../images/user.png" alt="user" /> */}
+            </div>
+        </div>
+    );
 }
