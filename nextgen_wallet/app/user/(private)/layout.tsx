@@ -11,8 +11,8 @@ export default async function PrivateLayout({
 
 
   return (
-    <div className="min-h-screen relative">
-      <main className="flex-1  bg-mainBackground h-screen">
+    <div className="h-full relative">
+      <main className="flex-1  bg-mainBackground min-h-screen h-full  ">
         <div className="max-w-[968px] w-full mx-auto">
           <GlobalGuard>{children}</GlobalGuard>
         </div>
