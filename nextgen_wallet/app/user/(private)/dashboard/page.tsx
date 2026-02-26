@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 export default function DashboardPage() {
     const router = useRouter();
     return (
-        <div className="p-5">
-            <div className="flex items-center justify-between  gap-2">
+        <div className=" ">
+            <div className="flex items-center justify-between  gap-2 p-5">
 
                 {/* You can render user info here */}
                 <div className="flex items-center justify-between  gap-2">
@@ -28,36 +28,38 @@ export default function DashboardPage() {
                 </div>
 
             </div>
-            {/* banner */}
-            <div className="w-full  bg-[#0c3332] rounded-[14px] p-6 mt-6 text-center bg-[url('/Background.png')] bg-cover bg-center">
-                <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
-                <p className="text-[#FFFFFF] text-[30px] font-bold">$2,450.00</p>
-                <p className="text-[#FFFFFFB2] text-[10px] bg-[#FFFFFF1A] w-fit mx-auto mt-[14px] rounded-[30px] px-4 py-2 flex items-center justify-center gap-1"><AccountSecurelyConnectedIcon />Account Securely Connected</p>
-            </div>
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-5">
+                {/* banner */}
+                <div className="w-full  bg-[#0c3332] rounded-[14px] p-5  text-center bg-[url('/Background.png')] bg-cover bg-center">
+                    <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
+                    <p className="text-[#FFFFFF] text-[30px] font-bold">$2,450.00</p>
+                    <p className="text-[#FFFFFFB2] text-[10px] bg-[#FFFFFF1A] w-fit mx-auto mt-[14px] rounded-[30px] px-4 py-2 flex items-center justify-center gap-1"><AccountSecurelyConnectedIcon />Account Securely Connected</p>
+                </div>
 
-            {/* Account Action */}
-            <p className="text-text text-[14px] font-bold mt-6 uppercase">Quick Actions</p>
-            <div className="flex items-center justify-between gap-2 mt-3">
-                <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]" onClick={() => router.push("/user/send-money")}>
-                    <SendIcon />
-                    <p className="text-greyDark text-[12px] font-semibold ">Send</p>
+                {/* Account Action */}
+                <p className="text-text text-[14px] font-bold mt-6 uppercase">Quick Actions</p>
+                <div className="flex items-center justify-between gap-2 mt-3">
+                    <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]" onClick={() => router.push("/user/send-money")}>
+                        <SendIcon />
+                        <p className="text-greyDark text-[12px] font-semibold ">Send</p>
+                    </div>
+                    <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]">
+                        <WithdrawIcon />
+                        <p className="text-greyDark text-[12px] font-semibold">Withdraw</p>
+                    </div>
+                    <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]">
+                        <PayScanIcon />
+                        <p className="text-greyDark text-[12px] font-semibold">Pay/Scan</p>
+                    </div>
                 </div>
-                <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]">
-                    <WithdrawIcon />
-                    <p className="text-greyDark text-[12px] font-semibold">Withdraw</p>
-                </div>
-                <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]">
-                    <PayScanIcon />
-                    <p className="text-greyDark text-[12px] font-semibold">Pay/Scan</p>
-                </div>
-            </div>
 
-            {/* recent-transactions */}
-            <div className="flex items-center justify-between  mt-6">
-                <p className="text-text text-[14px] font-bold  uppercase">Recent Transactions</p>
-                <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center ">View All <ArrowRightBlockIcon /></p>
+                {/* recent-transactions */}
+                <div className="flex items-center justify-between  mt-6">
+                    <p className="text-text text-[14px] font-bold  uppercase">Recent Transactions</p>
+                    <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center ">View All <ArrowRightBlockIcon /></p>
+                </div>
+                <TransactionsList list={transactions.transactions} />
             </div>
-            <TransactionsList list={transactions.transactions} />
         </div>
     );
 }

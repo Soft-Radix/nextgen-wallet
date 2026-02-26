@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   HomeIcon,
   HomeIconActive,
@@ -14,6 +15,7 @@ import { useRouter } from "next/navigation";
 export default function BottomNav() {
   const [activeItem, setActiveItem] = useState(0);
   const router = useRouter();
+  const pathname = usePathname();
   const menuItems = [
     {
       label: "Dashboard",
@@ -35,7 +37,7 @@ export default function BottomNav() {
     },
   ];
 
-  return (
+  return pathname == "/user/dashboard" && (
     <div className="w-full h-[100px] bg-[#ffffff] p-6 fixed bottom-0 left-0 right-0 border-t border-[#E2E8F0] ">
       <div className="flex items-center justify-between">
         {menuItems.map((item, index) => (
