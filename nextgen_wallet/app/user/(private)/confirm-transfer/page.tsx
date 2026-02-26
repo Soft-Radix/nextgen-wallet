@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store/store";
 import { AddTransaction } from "@/store/transactionSlice";
+import toast from "react-hot-toast";
 
 const page = () => {
     const router = useRouter();
@@ -17,7 +18,6 @@ const page = () => {
 
     const [senderId, setSenderId] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     // Redirect back if user lands here without going through Enter Amount
     useEffect(() => {
@@ -47,12 +47,12 @@ const page = () => {
 
     const handleSendMoney = async () => {
         if (!senderId) {
-            setError("Unable to find logged-in user.");
+            toast.error("Unable to find logged-in user.")
             return;
         }
 
         setSubmitting(true);
-        setError(null);
+
 
         const result = await dispatch(
             AddTransaction({
@@ -67,9 +67,8 @@ const page = () => {
         if (AddTransaction.fulfilled.match(result)) {
             router.push("/user/transfer-success");
         } else {
-            setError(
-                (result.payload as string) || "Transfer failed. Please try again."
-            );
+
+            toast.error((result.payload as string) || "Transfer failed. Please try again.")
         }
 
         setSubmitting(false);
@@ -117,7 +116,7 @@ const page = () => {
                 </div>
 
                 {/* balance*/}
-                <div className='w-full flex flex-col  justify-between gap-2 bg-[#1BD4110D] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
+                <div className='w-full flex flex-col  justify-between gap-2 bg-[#1BD4110D] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] mb-20'>
                     <div className='flex items-center gap-2 border-b-[1.06px] border-[#F1F5F9] pb-4 mb-4 '>
                         <SendMoney />
                         <div >
@@ -137,9 +136,7 @@ const page = () => {
 
 
                 </div>
-                {error && (
-                    <p className="text-red-500 text-sm text-center mt-2">{error}</p>
-                )}
+
                 {/* continue button */}
                 <div className=" flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
                     <Button

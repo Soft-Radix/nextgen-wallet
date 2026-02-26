@@ -11,6 +11,7 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
+import toast from "react-hot-toast";
 
 const SendMoneyPage = () => {
     const router = useRouter();
@@ -24,20 +25,19 @@ const SendMoneyPage = () => {
             : "+1"
     );
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+
 
     const handleContinue = async () => {
         if (!phoneNumber) {
-            setError("Please enter a phone number.");
+            toast.error("Please enter a phone number.")
             return;
         }
 
         setLoading(true);
-        setError(null);
+
 
         let receiverId: string | null = null;
         let receiverPhone: string | null = null;
-
         try {
             // Try to find an existing user in user_details
             const allDigits = String(phoneNumber).replace(/\D/g, "");
@@ -47,10 +47,10 @@ const SendMoneyPage = () => {
                 : allDigits;
 
             const user = await apiGetUserDetails(nationalNumber, countryCode);
-            console.log("=========${formattedAmount}=", user)
             receiverId = user.id;
             receiverPhone =
                 user.full_number || `${user.country_code}${user.mobile_number}`;
+
         } catch (err: any) {
             const status = err?.response?.status;
 
@@ -58,12 +58,14 @@ const SendMoneyPage = () => {
                 // No user record -> send to raw number
                 receiverId = null;
                 receiverPhone = `${countryCode}${String(phoneNumber).replace(/\D/g, "")}`;
+                toast.error(err?.response?.data?.error)
+                setLoading(false);
+                return
             } else {
-                setError(
-                    err?.response?.data?.error ||
+
+                toast.error(err?.response?.data?.error ||
                     err?.message ||
-                    "Failed to search recipient"
-                );
+                    "Failed to search recipient")
                 setLoading(false);
                 return;
             }
@@ -80,7 +82,7 @@ const SendMoneyPage = () => {
         );
 
         setLoading(false);
-        router.push("/user/enter-amount");
+        router.push("/user/recipient-otp");
     };
 
     return (
@@ -101,7 +103,7 @@ const SendMoneyPage = () => {
                     value={phoneNumber}
                     onChange={(value) => {
                         setPhoneNumber(value);
-                        if (error) setError(null);
+
                     }}
                     setCountry={setCountry}
                     country={country}
@@ -109,11 +111,7 @@ const SendMoneyPage = () => {
                     shadow={false}
                 />
 
-                {error && (
-                    <p className="text-red-500 text-sm mt-2">
-                        {error}
-                    </p>
-                )}
+
 
                 {/* quick select (still using dummy data for now) */}
                 <div className="  mt-6">

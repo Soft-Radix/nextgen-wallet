@@ -2,11 +2,62 @@
 import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { ArrowRightIcon, SuccessIcon, WalletIdIcon } from "@/lib/svg"
+import { useAppDispatch } from "@/store/hooks";
+import { RootState } from "@/store/store";
+import { AddTransaction, clearDraftTransfer, ResetTransaction } from "@/store/transactionSlice";
+import moment from "moment";
 import { useRouter } from "next/navigation";
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 export default function TransferSuccessPage() {
     const router = useRouter();
+    const date = new Date()
+    const [senderId, setSenderId] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
+    const dispatch = useAppDispatch()
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user?.id) setSenderId(user.id);
+            } catch {
+                // ignore
+            }
+        }
+    }, []);
+    const handleSendMoney = async () => {
+        if (!senderId) {
+            toast.error("Unable to find logged-in user.")
+            return;
+        }
+
+        setSubmitting(true);
+
+
+        const result = await dispatch(
+            AddTransaction({
+                sender_id: senderId,
+                receiver_id: draft?.receiver_id ?? null,
+                receiver_phone: draft?.receiver_phone ?? null,
+                amount: draft?.amount || 0,
+                note: draft?.note ?? null,
+            })
+        );
+
+        if (AddTransaction.fulfilled.match(result)) {
+            router.push("/user/transfer-success");
+        } else {
+
+            toast.error((result.payload as string) || "Transfer failed. Please try again.")
+        }
+
+        setSubmitting(false);
+    };
     return (
         <>
             <Topbar title="Transfer Success" />
@@ -14,7 +65,7 @@ export default function TransferSuccessPage() {
                 <div className="max-w-[524px] w-full py-6">
                     <div className=" flex flex-col gap-[20px] items-center">
                         <SuccessIcon />
-                        <p className="text-text font-semibold text-[24px] leading-[35px] text-center"> $50.00 sent to
+                        <p className="text-text font-semibold text-[24px] leading-[35px] text-center"> ${draft?.amount} sent to
                             John Doe!</p>
                         <p className="text-grey  text-[14px] text-center mb-[20px] ">Your transfer has been processed successfully.</p>
 
@@ -23,11 +74,11 @@ export default function TransferSuccessPage() {
                             <p className="text-[17px] font-semibold text-text">Transaction Details</p>
                             <div className='flex items-center justify-between gap-2'>
                                 <p className="text-grey text-[14px]  ">Date</p>
-                                <p className="text-text text-[14px] font-semibold text-right ">Oct 24, 2023</p>
+                                <p className="text-text text-[14px] font-semibold text-right ">{moment(date).format("ll")}</p>
                             </div>
                             <div className='flex items-center justify-between gap-2'>
                                 <p className="text-grey text-[14px]  ">Time</p>
-                                <p className="text-text text-[14px] font-semibold text-right ">10:45 AM</p>
+                                <p className="text-text text-[14px] font-semibold text-right ">{moment(date).format("hh:mm A")}</p>
                             </div>
                             <div className='flex items-center justify-between gap-2'>
                                 <p className="text-grey text-[14px]  ">Reference Number</p>
@@ -48,8 +99,8 @@ export default function TransferSuccessPage() {
 
                 {/* continue button */}
                 <div className=' flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4'>
-                    <Button fullWidth={true} onClick={() => router.push("/user/dashboard")}>Done</Button>
-                    <p className="text-[16px] font-medium text-[#4CCF44] text-center" onClick={() => router.push('/user/send-money')}>Send Money Again</p>
+                    <Button fullWidth={true} onClick={() => { dispatch(ResetTransaction()); router.push("/user/dashboard") }}>Done</Button>
+                    <p className="text-[16px] font-medium text-[#4CCF44] text-center" onClick={() => { submitting ? "" : handleSendMoney() }}>   {submitting ? "Sending..." : "Send Money Again"}</p>
                 </div>
 
             </div >

@@ -28,8 +28,8 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const { data, error } = await supabase.rpc("transfer_money", {
-      p_sender_id: sender_id,
-      p_receiver_id: receiver_id ?? null,
+      p_sender_profile_id: sender_id,
+      p_receiver_profile_id: receiver_id ?? null,
       p_receiver_phone: receiver_phone ?? null,
       p_amount: amount,
       p_note: note ?? null,
