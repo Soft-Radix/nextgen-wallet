@@ -13,6 +13,7 @@ const PhoneNumberInput = ({
   country,
   setCountry,
   onDialCodeChange,
+  shadow = true,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -21,6 +22,7 @@ const PhoneNumberInput = ({
   country: string;
   setCountry: (country: string) => void;
   onDialCodeChange?: (code: string) => void;
+  shadow?: boolean;
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -46,11 +48,12 @@ const PhoneNumberInput = ({
           handleChange(val);
         }}
         enableClickOutside={true}
+        containerClass={shadow ? "applied-shadow" : ""}
         inputClass={[
           "w-full h-[52px] rounded-[10px] border bg-background px-3 py-2 text-sm placeholder:text-muted focus:outline-none focus:ring-2",
           error
             ? "border-error focus:ring-error/50"
-            : "border-[#D8EBD7] focus:ring-[#D8EBD7] focus:border-[#D8EBD7]",
+            : shadow ? "border-[#D8EBD7] focus:ring-[#D8EBD7] focus:border-[#D8EBD7]" : "border-[#e2e8f0] focus:ring-[#e2e8f0] focus:border-[#e2e8f0]",
         ]
           .filter(Boolean)
           .join(" ")}

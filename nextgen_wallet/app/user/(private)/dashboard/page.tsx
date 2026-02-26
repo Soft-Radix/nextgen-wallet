@@ -2,11 +2,12 @@
 import { AccountSecurelyConnectedIcon, ArrowRightBlockIcon, NotificationIcon, PayScanIcon, SendIcon, WithdrawIcon } from "@/lib/svg";
 import TransactionsList from "./TransactionsList";
 import transactions from "./transactions.json";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-
+    const router = useRouter();
     return (
-        <>
+        <div className="p-5">
             <div className="flex items-center justify-between  gap-2">
 
                 {/* You can render user info here */}
@@ -37,7 +38,7 @@ export default function DashboardPage() {
             {/* Account Action */}
             <p className="text-text text-[14px] font-bold mt-6 uppercase">Quick Actions</p>
             <div className="flex items-center justify-between gap-2 mt-3">
-                <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]">
+                <div className="flex items-center flex-col justify-center gap-2 bg-[#ffffff] rounded-[14px] p-4 w-full shadow-[0_1px_2px_rgba(0, 0, 0, 0.05)]" onClick={() => router.push("/user/send-money")}>
                     <SendIcon />
                     <p className="text-greyDark text-[12px] font-semibold ">Send</p>
                 </div>
@@ -57,6 +58,6 @@ export default function DashboardPage() {
                 <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center ">View All <ArrowRightBlockIcon /></p>
             </div>
             <TransactionsList list={transactions.transactions} />
-        </>
+        </div>
     );
 }

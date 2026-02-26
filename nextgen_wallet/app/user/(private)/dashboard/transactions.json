@@ -6,7 +6,8 @@
       "date": "Feb 17, 2026",
       "status": "Completed",
       "amount": 125.50,
-      "type": "incoming"
+      "type": "incoming",
+      "full_number": "+1234567890"
     },
     {
       "id": "2",
@@ -14,7 +15,8 @@
       "date": "Feb 16, 2026",
       "status": "Completed",
       "amount": 8.75,
-      "type": "outgoing"
+      "type": "outgoing",
+      "full_number": "+1234567890"
     },
     {
       "id": "3",
@@ -22,7 +24,8 @@
       "date": "Feb 15, 2026",
       "status": "Completed",
       "amount": 50.00,
-      "type": "incoming"
+      "type": "incoming",
+      "full_number": "+1234567890"
     },
     {
       "id": "4",
@@ -30,7 +33,8 @@
       "date": "Feb 14, 2026",
       "status": "Completed",
       "amount": 67.32,
-      "type": "outgoing"
+      "type": "outgoing",
+      "full_number": "+1234567890"
     },
     {
       "id": "5",
@@ -38,7 +42,8 @@
       "date": "Feb 13, 2026",
       "status": "Pending",
       "amount": 200.00,
-      "type": "incoming"
+      "type": "incoming",
+      "full_number": "+1234567890"
     }
   ]
 }

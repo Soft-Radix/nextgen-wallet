@@ -7,7 +7,7 @@
   --text: #030200;
   --grey: #6f7b8f;
   --grey-dark: #334155;
-  --grey-light: #94A3B8;
+  --grey-light: #94a3b8;
   --primary: #2563eb;
   --muted: #71717a;
   --border: #e4e4e7;
@@ -59,9 +59,13 @@ body {
   width: 100% !important;
   height: 52px !important;
   border-radius: 14px !important;
-  border-color: #d8ebd7 !important;
-  box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: "none" !important;
   outline: none !important;
+}
+.applied-shadow.react-tel-input .form-control {
+  box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
+  border-color: #d8ebd7 !important;
 }
 .react-tel-input .flag-dropdown {
   border-radius: 14px 0 0 14px !important;
@@ -82,12 +86,17 @@ body {
   border-color: #d8ebd7 !important;
   box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
 }
-.react-tel-input .form-control:focus {
+.applied-shadow.react-tel-input .form-control:focus {
   border-color: #d8ebd7 !important;
   box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
   outline: none !important;
 }
-.react-tel-input .form-control:hover {
+.react-tel-input .form-control:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.applied-shadow.react-tel-input .form-control:hover {
   border-color: #d8ebd7 !important;
 }
 .react-tel-input .country-list {

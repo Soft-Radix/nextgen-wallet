@@ -367,3 +367,12 @@ export function OutgoingIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
 
   )
 }
+
+export function BackIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return(
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.828 11.9998L15.778 16.9498L14.364 18.3638L8 11.9998L14.364 5.63577L15.778 7.04977L10.828 11.9998Z" fill="#03053D"/>
+</svg>
+
+  )
+}
