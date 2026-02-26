@@ -369,9 +369,45 @@ export function OutgoingIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
 }
 
 export function BackIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
-  return(
+  return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.828 11.9998L15.778 16.9498L14.364 18.3638L8 11.9998L14.364 5.63577L15.778 7.04977L10.828 11.9998Z" fill="#03053D"/>
+      <path d="M10.828 11.9998L15.778 16.9498L14.364 18.3638L8 11.9998L14.364 5.63577L15.778 7.04977L10.828 11.9998Z" fill="#03053D" />
+    </svg>
+
+  )
+}
+
+export function QuickSelectIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return (<svg width="50" height="50" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0.8" y="0.8" width="62.4" height="62.4" rx="31.2" fill="white" />
+    <rect x="0.8" y="0.8" width="62.4" height="62.4" rx="31.2" stroke="url(#paint0_linear_100_745)" stroke-width="1.6" stroke-dasharray="6 4" />
+    <path d="M30.6666 33.3332H22.6666V30.6665H30.6666V22.6665H33.3333V30.6665H41.3333V33.3332H33.3333V41.3332H30.6666V33.3332Z" fill="url(#paint1_linear_100_745)" />
+    <defs>
+      <linearGradient id="paint0_linear_100_745" x1="66.5421" y1="43.4717" x2="15.9607" y2="43.772" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#00DE1C" />
+        <stop offset="1" stop-color="#169D25" />
+      </linearGradient>
+      <linearGradient id="paint1_linear_100_745" x1="42.0747" y1="35.3458" x2="27.3218" y2="35.4333" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#00DE1C" />
+        <stop offset="1" stop-color="#169D25" />
+      </linearGradient>
+    </defs>
+  </svg>)
+
+}
+
+export function VerifyOtpIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return(
+    <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.5" y="0.5" width="127" height="127" rx="63.5" fill="white"/>
+<rect x="0.5" y="0.5" width="127" height="127" rx="63.5" stroke="#D8EBD7"/>
+<path d="M61.2001 73.4668L76.2667 58.4002L72.4667 54.6002L61.2001 65.8668L55.6001 60.2668L51.8001 64.0668L61.2001 73.4668ZM64.0001 90.6668C57.8223 89.1113 52.7223 85.5668 48.7001 80.0335C44.6779 74.5002 42.6667 68.3557 42.6667 61.6002V45.3335L64.0001 37.3335L85.3334 45.3335V61.6002C85.3334 68.3557 83.3223 74.5002 79.3001 80.0335C75.2779 85.5668 70.1779 89.1113 64.0001 90.6668ZM64.0001 85.0668C68.6223 83.6002 72.4445 80.6668 75.4667 76.2668C78.489 71.8668 80.0001 66.9779 80.0001 61.6002V49.0002L64.0001 43.0002L48.0001 49.0002V61.6002C48.0001 66.9779 49.5112 71.8668 52.5334 76.2668C55.5556 80.6668 59.3779 83.6002 64.0001 85.0668Z" fill="url(#paint0_linear_108_3235)"/>
+<defs>
+<linearGradient id="paint0_linear_108_3235" x1="87.0281" y1="73.5599" x2="53.3068" y2="73.7201" gradientUnits="userSpaceOnUse">
+<stop stop-color="#00DE1C"/>
+<stop offset="1" stop-color="#169D25"/>
+</linearGradient>
+</defs>
 </svg>
 
   )

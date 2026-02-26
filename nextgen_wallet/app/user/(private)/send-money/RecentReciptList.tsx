@@ -1,4 +1,5 @@
 import { ArrowRightBlockIcon } from '@/lib/svg'
+import { useRouter } from 'next/navigation';
 import React from 'react'
 
 interface Transaction {
@@ -11,11 +12,11 @@ interface Transaction {
     full_number?: string;
 }
 const RecentReciptList = ({ list }: { list: Transaction[] }) => {
-    console.log(list);
+    const router = useRouter();
     return (
         <div>
             {list.map((item: Transaction) => (
-                <div key={item.id} className="flex items-center justify-between bg-[#ffffff] rounded-[14px] p-4 w-full border-[0.5px] border-buttonOutlineBorder my-3">
+                <div key={item.id} className="flex items-center justify-between bg-[#ffffff] rounded-[14px] p-4 w-full border-[0.5px] border-buttonOutlineBorder my-3" onClick={() => router.push("/user/recipient-otp")}>
                     <div className="flex items-center justify-between gap-2">
                         <div className="w-[40px] h-[40px] rounded-full bg-gray-200">
                             <img src="/user.png" alt="user" />
