@@ -42,7 +42,6 @@ const page = () => {
     if (!draft) {
         return null; // or a simple loading/redirect message
     }
-    console.log("======draft", draft)
     const amount = draft.amount;
     const formattedAmount = amount.toFixed(2);
 
