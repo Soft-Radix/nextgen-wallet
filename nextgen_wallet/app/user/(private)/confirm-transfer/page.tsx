@@ -3,25 +3,28 @@
 import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { SendMoney } from "@/lib/svg";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store/store";
 import { AddTransaction } from "@/store/transactionSlice";
 
 const page = () => {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const dispatch = useDispatch<AppDispatch>();
+
+    const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
 
     const [senderId, setSenderId] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const amount = Number(searchParams.get("amount") ?? "0");
-    const receiverId = searchParams.get("receiver_id");
-    const receiverPhone = searchParams.get("receiver_phone");
-    const note = searchParams.get("note") || undefined;
+    // Redirect back if user lands here without going through Enter Amount
+    useEffect(() => {
+        if (!draft) {
+            router.replace("/user/send-money/amount");
+        }
+    }, [draft, router]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -31,23 +34,21 @@ const page = () => {
                 const user = JSON.parse(userStr);
                 if (user?.id) setSenderId(user.id);
             } catch {
-                // ignore parse errors
+                // ignore
             }
         }
     }, []);
 
+    if (!draft) {
+        return null; // or a simple loading/redirect message
+    }
+
+    const amount = draft.amount;
+    const formattedAmount = amount.toFixed(2);
+
     const handleSendMoney = async () => {
-        debugger;
         if (!senderId) {
             setError("Unable to find logged-in user.");
-            return;
-        }
-        if (!amount || amount <= 0) {
-            setError("Please provide a valid amount.");
-            return;
-        }
-        if (!receiverId && !receiverPhone) {
-            setError("Receiver information is missing.");
             return;
         }
 
@@ -57,10 +58,10 @@ const page = () => {
         const result = await dispatch(
             AddTransaction({
                 sender_id: senderId,
-                receiver_id: receiverId ?? null,
-                receiver_phone: receiverPhone ?? null,
-                amount,
-                note,
+                receiver_id: draft.receiver_id ?? null,
+                receiver_phone: draft.receiver_phone ?? null,
+                amount: draft.amount,
+                note: draft.note ?? null,
             })
         );
 
@@ -74,8 +75,6 @@ const page = () => {
 
         setSubmitting(false);
     };
-
-    const formattedAmount = amount.toFixed(2);
     return (
 
         <>

@@ -1,12 +1,43 @@
-"use client"
-import Topbar from '@/components/Topbar'
-import { Button } from '@/components/ui'
-import { AccountSecurelyConnectedIcon, AmountSent } from '@/lib/svg'
-import { useRouter } from 'next/navigation'
-import React from 'react'
+"use client";
+
+import Topbar from "@/components/Topbar";
+import { Button } from "@/components/ui";
+import { AmountSent } from "@/lib/svg";
+import { useAppDispatch } from "@/store/hooks";
+import { setDraftTransfer } from "@/store/transactionSlice";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState } from "react";
 
 const page = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // later you can pass receiver_id/receiver_phone from previous screen via query
+    const receiverId = searchParams.get("receiver_id");
+    const receiverPhone = searchParams.get("receiver_phone");
+
+    const [amount, setAmount] = useState<string>("");
+    const [note, setNote] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
+    const dispatch = useAppDispatch()
+    const handleContinue = () => {
+        const numericAmount = Number(amount);
+        if (!numericAmount || numericAmount <= 0) {
+            setError("Please enter a valid amount.");
+            return;
+        }
+
+        dispatch(
+            setDraftTransfer({
+                amount: numericAmount,
+                note: note.trim() || null,
+                receiver_id: null,
+                receiver_phone: null,
+            })
+        );
+
+        router.push("/user/confirm-transfer");
+    };
     return (
         <>
             <Topbar title="Enter Amount" />
@@ -22,17 +53,27 @@ const page = () => {
                 {/* amount to send */}
                 <div className='w-full flex flex-col items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
                     <p className="text-grey text-[14px] font-semibold uppercase">Amount to send</p>
-                    <input type="number" placeholder='0.00' className='w-full text-[#6F7B8FB2] text-[48px] font-bold outline-none text-center' />
+                    <input type="number" placeholder='0.00' value={amount}
+                        onChange={(e) => {
+                            setAmount(e.target.value);
+                            if (error) setError(null);
+                        }} className='w-full text-[#6F7B8FB2] text-[48px] font-bold outline-none text-center' />
                     <p className="text-greyDark text-[14px] bg-[#F0F7F0] w-fit mx-auto  rounded-[30px] px-4 py-2 flex items-center justify-center gap-2"><AmountSent />Available:<span className="text-text font-medium">$2,450.00</span></p>
                 </div>
                 {/* note */}
                 <div className='w-full mt-6 pb-20'>
                     <p className="text-text text-[14px] font-semibold "> Note <span className="text-grey text-[14px] font-normal">(Optional)</span></p>
-                    <textarea rows={3} placeholder='What&apos;s it for?' className='w-full flex flex-col mt-1 items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-4  border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] focus:outline-none focus:ring-1 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]' />
+                    <textarea rows={3} value={note}
+                        onChange={(e) => setNote(e.target.value)} placeholder='What&apos;s it for?' className='w-full flex flex-col mt-1 items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-4  border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] focus:outline-none focus:ring-1 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]' />
                 </div>
+                {error && (
+                    <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+                )}
                 {/* continue button */}
-                <div className=' flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4'>
-                    <Button fullWidth={true} onClick={() => router.push("/user/confirm-transfer")}>Continue</Button>
+                <div className="flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
+                    <Button fullWidth={true} onClick={handleContinue}>
+                        Continue
+                    </Button>
                 </div>
             </div>
         </>
