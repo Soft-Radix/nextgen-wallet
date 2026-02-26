@@ -4,9 +4,11 @@ import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { AmountSent } from "@/lib/svg";
 import { useAppDispatch } from "@/store/hooks";
+import { RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
 const page = () => {
     const router = useRouter();
@@ -20,6 +22,9 @@ const page = () => {
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
     const dispatch = useAppDispatch()
+    const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
+
+    console.log()
     const handleContinue = () => {
         const numericAmount = Number(amount);
         if (!numericAmount || numericAmount <= 0) {
@@ -31,8 +36,8 @@ const page = () => {
             setDraftTransfer({
                 amount: numericAmount,
                 note: note.trim() || null,
-                receiver_id: null,
-                receiver_phone: null,
+                receiver_id: draft?.receiver_id,
+                receiver_phone: draft?.receiver_phone,
             })
         );
 
@@ -49,7 +54,7 @@ const page = () => {
                     </div>
                 </div>
                 <p className="text-text text-[20px] font-semibold"> John Doe </p>
-                <p className="text-grey text-[14px] text-center ">+1 (555) 000-0000</p>
+                <p className="text-grey text-[14px] text-center ">{draft?.receiver_phone || "N/A"}</p>
                 {/* amount to send */}
                 <div className='w-full flex flex-col items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
                     <p className="text-grey text-[14px] font-semibold uppercase">Amount to send</p>

@@ -42,7 +42,7 @@ const page = () => {
     if (!draft) {
         return null; // or a simple loading/redirect message
     }
-
+    console.log("======draft", draft)
     const amount = draft.amount;
     const formattedAmount = amount.toFixed(2);
 
@@ -82,7 +82,7 @@ const page = () => {
             <div className="p-5  py-[77px]  overflow-y-auto flex flex-col items-center justify-center gap-2">
 
                 <p className="text-grey text-[14px] font-medium mt-[30px] uppercase"> Sending Amount </p>
-                <p className="text-clip text-transparent bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-[48px] font-bold text-center ">$50.00</p>
+                <p className="text-clip text-transparent bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-[48px] font-bold text-center ">${formattedAmount}</p>
                 {/* amount to send */}
                 <div className='w-full flex flex-col  justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
                     <div className='flex items-start gap-5 border-b-[1.06px] border-[#F1F5F9] pb-4 mb-4'>
