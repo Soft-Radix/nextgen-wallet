@@ -1,7 +1,10 @@
 "use client";
 import { AccountSecurelyConnectedIcon, ArrowRightBlockIcon, NotificationIcon, PayScanIcon, SendIcon, WithdrawIcon } from "@/lib/svg";
+import TransactionsList from "./TransactionsList";
+import transactions from "./transactions.json";
 
 export default function DashboardPage() {
+
     return (
         <>
             <div className="flex items-center justify-between  gap-2">
@@ -19,7 +22,7 @@ export default function DashboardPage() {
                 <div className="w-[40px] h-[40px] rounded-full bg-[#ffffff] flex items-center justify-center">
                     <div className="relative">
                         <NotificationIcon />
-                        <div className="absolute -top-[2px] right-[0px] w-[7px] h-[7px] rounded-full bg-[#FF0000]"></div>
+                        <div className="absolute -top-[2px] right-0 w-[7px] h-[7px] rounded-full bg-[#FF0000]"></div>
                     </div>
                 </div>
 
@@ -53,6 +56,7 @@ export default function DashboardPage() {
                 <p className="text-text text-[14px] font-bold  uppercase">Recent Transactions</p>
                 <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center ">View All <ArrowRightBlockIcon /></p>
             </div>
+            <TransactionsList list={transactions.transactions} />
         </>
     );
 }

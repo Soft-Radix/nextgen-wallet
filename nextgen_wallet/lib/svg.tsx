@@ -335,7 +335,7 @@ export function PayScanIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
 export function ArrowRightBlockIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_237_15184)">
+      <g clipPath="url(#clip0_237_15184)">
         <path d="M13.172 12.0002L8.222 16.9502L9.636 18.3642L16 12.0002L9.636 5.63623L8.222 7.05023L13.172 12.0002Z" fill="#6F7B8F" />
       </g>
       <defs>
@@ -343,6 +343,26 @@ export function ArrowRightBlockIcon({ color = "#94A3B8", ...props }: SvgIconProp
           <rect width="24" height="24" fill="white" transform="matrix(-1 0 0 1 24 0)" />
         </clipPath>
       </defs>
+    </svg>
+
+  )
+}
+
+export function IncomingIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14.1667 5.8335L5.83333 14.1668" stroke="#00A63E" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.1667 14.1668H5.83333V5.8335" stroke="#00A63E" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+
+  )
+}
+
+export function OutgoingIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.83333 5.8335H14.1667V14.1668" stroke="#E7000B" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.83333 14.1668L14.1667 5.8335" stroke="#E7000B" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 
   )

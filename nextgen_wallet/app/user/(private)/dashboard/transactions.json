@@ -1,0 +1,44 @@
+{
+  "transactions": [
+    {
+      "id": "1",
+      "name": "Sarah Johnson",
+      "date": "Feb 17, 2026",
+      "status": "Completed",
+      "amount": 125.50,
+      "type": "incoming"
+    },
+    {
+      "id": "2",
+      "name": "Coffee Shop",
+      "date": "Feb 16, 2026",
+      "status": "Completed",
+      "amount": 8.75,
+      "type": "outgoing"
+    },
+    {
+      "id": "3",
+      "name": "John Smith",
+      "date": "Feb 15, 2026",
+      "status": "Completed",
+      "amount": 50.00,
+      "type": "incoming"
+    },
+    {
+      "id": "4",
+      "name": "Grocery Store",
+      "date": "Feb 14, 2026",
+      "status": "Completed",
+      "amount": 67.32,
+      "type": "outgoing"
+    },
+    {
+      "id": "5",
+      "name": "Emily Davis",
+      "date": "Feb 13, 2026",
+      "status": "Pending",
+      "amount": 200.00,
+      "type": "incoming"
+    }
+  ]
+}
