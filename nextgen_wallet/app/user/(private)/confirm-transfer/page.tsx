@@ -1,12 +1,81 @@
-"use client"
-import Topbar from '@/components/Topbar'
-import { Button } from '@/components/ui'
-import { AmountSent, SendMoney } from '@/lib/svg';
-import { useRouter } from 'next/navigation';
-import React from 'react'
+"use client";
+
+import Topbar from "@/components/Topbar";
+import { Button } from "@/components/ui";
+import { SendMoney } from "@/lib/svg";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/store/store";
+import { AddTransaction } from "@/store/transactionSlice";
 
 const page = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const dispatch = useDispatch<AppDispatch>();
+
+    const [senderId, setSenderId] = useState<string | null>(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const amount = Number(searchParams.get("amount") ?? "0");
+    const receiverId = searchParams.get("receiver_id");
+    const receiverPhone = searchParams.get("receiver_phone");
+    const note = searchParams.get("note") || undefined;
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user?.id) setSenderId(user.id);
+            } catch {
+                // ignore parse errors
+            }
+        }
+    }, []);
+
+    const handleSendMoney = async () => {
+        debugger;
+        if (!senderId) {
+            setError("Unable to find logged-in user.");
+            return;
+        }
+        if (!amount || amount <= 0) {
+            setError("Please provide a valid amount.");
+            return;
+        }
+        if (!receiverId && !receiverPhone) {
+            setError("Receiver information is missing.");
+            return;
+        }
+
+        setSubmitting(true);
+        setError(null);
+
+        const result = await dispatch(
+            AddTransaction({
+                sender_id: senderId,
+                receiver_id: receiverId ?? null,
+                receiver_phone: receiverPhone ?? null,
+                amount,
+                note,
+            })
+        );
+
+        if (AddTransaction.fulfilled.match(result)) {
+            router.push("/user/transfer-success");
+        } else {
+            setError(
+                (result.payload as string) || "Transfer failed. Please try again."
+            );
+        }
+
+        setSubmitting(false);
+    };
+
+    const formattedAmount = amount.toFixed(2);
     return (
 
         <>
@@ -44,7 +113,7 @@ const page = () => {
                     <hr className='border-[#E2E8F0]  border-dashed  boredr-2 my-6' />
                     <div className='flex items-center justify-between gap-2'>
                         <p className="text-grey text-[14px]  ">Total Deduction</p>
-                        <p className="text-text text-[14px] font-semibold text-right ">$50.00</p>
+                        <p className="text-text text-[14px] font-semibold text-right ">${formattedAmount}</p>
                     </div>
 
                 </div>
@@ -70,11 +139,24 @@ const page = () => {
 
 
                 </div>
-
+                {error && (
+                    <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+                )}
                 {/* continue button */}
-                <div className=' flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4'>
-                    <Button fullWidth={true} onClick={() => router.push("/user/transfer-success")}>Send Money</Button>
-                    <p className="text-[16px] font-medium text-[#4CCF44] text-center" onClick={() => router.push('/user/send-money')}>Cancel</p>
+                <div className=" flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
+                    <Button
+                        fullWidth={true}
+                        onClick={handleSendMoney}
+                        disabled={submitting}
+                    >
+                        {submitting ? "Sending..." : "Send Money"}
+                    </Button>
+                    <p
+                        className="text-[16px] font-medium text-[#4CCF44] text-center cursor-pointer"
+                        onClick={() => router.push("/user/send-money")}
+                    >
+                        Cancel
+                    </p>
                 </div>
             </div>
         </>
