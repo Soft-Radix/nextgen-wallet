@@ -3,9 +3,28 @@ import { AccountSecurelyConnectedIcon, ArrowRightBlockIcon, NotificationIcon, Pa
 import TransactionsList from "./TransactionsList";
 import transactions from "./transactions.json";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useEffect } from "react";
+import { useAppDispatch } from "@/store/hooks";
+import { loginUser } from "@/store/userDetailsSlice";
 
 export default function DashboardPage() {
     const router = useRouter();
+
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const dispatch = useAppDispatch();
+        useEffect(() => {
+            const fetchUserDetails = async () => {
+                if (user.id) {
+                    await dispatch(
+                        loginUser({ id: user.id })
+                    );
+                }
+        }
+        fetchUserDetails();
+    }, []);
+
     return (
         <div className=" ">
             <div className="flex items-center justify-between  gap-2 p-5">
@@ -32,7 +51,7 @@ export default function DashboardPage() {
                 {/* banner */}
                 <div className="w-full  bg-[#0c3332] rounded-[14px] p-5  text-center bg-[url('/Background.png')] bg-cover bg-center">
                     <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
-                    <p className="text-[#FFFFFF] text-[30px] font-bold">$2,450.00</p>
+                    <p className="text-[#FFFFFF] text-[30px] font-bold">${user?.wallet_balance?.toFixed(2)}</p>
                     <p className="text-[#FFFFFFB2] text-[10px] bg-[#FFFFFF1A] w-fit mx-auto mt-[14px] rounded-[30px] px-4 py-2 flex items-center justify-center gap-1"><AccountSecurelyConnectedIcon />Account Securely Connected</p>
                 </div>
 

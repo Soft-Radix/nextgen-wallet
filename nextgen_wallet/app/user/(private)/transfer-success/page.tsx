@@ -2,9 +2,11 @@
 import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { ArrowRightIcon, SuccessIcon, WalletIdIcon } from "@/lib/svg"
+import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useAppDispatch } from "@/store/hooks";
 import { RootState } from "@/store/store";
 import { AddTransaction, clearDraftTransfer, ResetTransaction } from "@/store/transactionSlice";
+import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react"
@@ -17,6 +19,7 @@ export default function TransferSuccessPage() {
     const [senderId, setSenderId] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
+    const user = getUserDetails();
     const dispatch = useAppDispatch()
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -49,6 +52,9 @@ export default function TransferSuccessPage() {
             })
         );
 
+        dispatch(
+            setUserBalanceUpdate(Number(user?.wallet_balance) - (draft?.amount || 0))
+        );
         if (AddTransaction.fulfilled.match(result)) {
             router.push("/user/transfer-success");
         } else {

@@ -7,12 +7,16 @@ export type UserDetails = {
   status?: string | null;
   created_at?: string;
   updated_at?: string | null;
+  wallet_balance?: number;
+  wallet_currency?: string | null;
 };
 
 import { ApiHelperFunction } from "@/lib/api/client";
 
 type UserDetailsResponse = {
   user: UserDetails;
+  wallet_balance?: number;
+  wallet_currency?: string | null;
 };
 
 export async function apiCreateUserDetails(
@@ -25,10 +29,15 @@ export async function apiCreateUserDetails(
     data: { mobile_number, country_code: country },
   });
 
-  return response.data.user;
+  return {
+    ...response.data.user,
+    wallet_balance: response.data.wallet_balance,
+    wallet_currency: response.data.wallet_currency,
+  };
 }
 
 export async function apiGetUserDetails(
+  id: string,
   mobile_number: string,
   country: string
 ): Promise<UserDetails> {
@@ -37,13 +46,18 @@ export async function apiGetUserDetails(
     method: "get",
     config: {
       params: {
+        id,
         mobile_number,
         country_code: country,
       },
     },
   });
 
-  return response.data.user;
+  return {
+    ...response.data.user,
+    wallet_balance: response.data.wallet_balance,
+    wallet_currency: response.data.wallet_currency,
+  };
 }
 
 export async function apiUpdateUserPin(
@@ -56,5 +70,9 @@ export async function apiUpdateUserPin(
     data: { id, pin },
   });
 
-  return response.data.user;
+  return {
+    ...response.data.user,
+    wallet_balance: response.data.wallet_balance,
+    wallet_currency: response.data.wallet_currency,
+  };
 }

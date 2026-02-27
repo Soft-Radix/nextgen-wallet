@@ -36,11 +36,11 @@ export const createUserDetails = createAsyncThunk<
 
 export const loginUser = createAsyncThunk<
   UserDetails,
-  { mobile_number: string; country: string },
+  {id?: string, mobile_number?: string; country?: string },
   { rejectValue: string }
->("userDetails/login", async ({ mobile_number, country }, { rejectWithValue }) => {
+>("userDetails/login", async ({ id, mobile_number, country }, { rejectWithValue }) => {
   try {
-    return await apiGetUserDetails(mobile_number, country);
+    return await apiGetUserDetails(id || "", mobile_number || "", country || "");
   } catch (err: any) {
     const message =
       err?.response?.data?.error ?? err?.message ?? "Failed to login";
@@ -69,7 +69,14 @@ const userDetailsSlice = createSlice({
     EmptyError: (state) => {
       state.error = null;
     },
-  },
+    setUserBalanceUpdate: (state, action: PayloadAction<number>) => {
+      if (!state.user) return;
+    
+      state.user.wallet_balance = action.payload ?? 0;
+    
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
+  },  
   extraReducers: (builder) => {
     builder
 
@@ -135,4 +142,4 @@ const userDetailsSlice = createSlice({
 });
 
 export default userDetailsSlice.reducer;
-export const { EmptyError } = userDetailsSlice.actions;
+export const { EmptyError, setUserBalanceUpdate } = userDetailsSlice.actions;

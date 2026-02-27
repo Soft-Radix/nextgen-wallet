@@ -46,7 +46,7 @@ const SendMoneyPage = () => {
                 ? allDigits.slice(dialDigits.length)
                 : allDigits;
 
-            const user = await apiGetUserDetails(nationalNumber, countryCode);
+            const user = await apiGetUserDetails("", nationalNumber, countryCode);
             receiverId = user.id;
             receiverPhone =
                 user.full_number || `${user.country_code}${user.mobile_number}`;

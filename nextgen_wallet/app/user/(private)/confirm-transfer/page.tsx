@@ -9,12 +9,15 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store/store";
 import { AddTransaction } from "@/store/transactionSlice";
 import toast from "react-hot-toast";
+import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
+import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 
 const page = () => {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
 
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
+    const user = getUserDetails();
 
     const [senderId, setSenderId] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -45,6 +48,11 @@ const page = () => {
     const amount = draft.amount;
     const formattedAmount = amount.toFixed(2);
 
+    const currentBalance = typeof user?.wallet_balance === "number" ? user.wallet_balance : 0;
+    const balanceAfterTransfer = currentBalance + amount;
+    const formattedCurrentBalance = balanceAfterTransfer.toFixed(2);
+    const formattedBalanceAfter = currentBalance.toFixed(2);
+
     const handleSendMoney = async () => {
         if (!senderId) {
             toast.error("Unable to find logged-in user.")
@@ -63,6 +71,7 @@ const page = () => {
                 note: draft.note ?? null,
             })
         );
+       
 
         if (AddTransaction.fulfilled.match(result)) {
             router.push("/user/transfer-success");
@@ -72,6 +81,14 @@ const page = () => {
         }
 
         setSubmitting(false);
+    };
+
+
+    const handleCancel = () => {
+        dispatch(
+            setUserBalanceUpdate(Number(user?.wallet_balance) + draft.amount || 0)
+        );
+        router.push("/user/send-money");
     };
     return (
 
@@ -121,14 +138,20 @@ const page = () => {
                         <SendMoney />
                         <div >
                             <div className='flex items-center justify-between gap-2'>
-                                <p className="text-grey text-[12.7px] font-semibold uppercase">Balance after
-                                    transfer</p>
-                                <p className="text-grey text-[10.58px]  text-right uppercase ">Current
-                                    Balance</p>
+                                <p className="text-grey text-[12.7px] font-semibold uppercase">
+                                    Balance after transfer
+                                </p>
+                                <p className="text-grey text-[10.58px]  text-right uppercase ">
+                                    Current Balance
+                                </p>
                             </div>
                             <div className='flex items-center justify-between gap-2'>
-                                <p className="text-text text-[21px] font-bold ">$2,400.00</p>
-                                <p className="text-greyDark text-[21px] font-medium text-right ">$2,450.00</p>
+                                <p className="text-text text-[21px] font-bold ">
+                                    ${formattedBalanceAfter}
+                                </p>
+                                <p className="text-greyDark text-[21px] font-medium text-right ">
+                                    ${formattedCurrentBalance}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -148,7 +171,7 @@ const page = () => {
                     </Button>
                     <p
                         className="text-[16px] font-medium text-[#4CCF44] text-center cursor-pointer"
-                        onClick={() => router.push("/user/send-money")}
+                        onClick={handleCancel}
                     >
                         Cancel
                     </p>

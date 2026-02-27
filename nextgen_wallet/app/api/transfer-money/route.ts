@@ -39,7 +39,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ transaction_id: data }, { status: 200 });
+    // Fetch updated sender wallet balance so frontend can update Redux
+    const { data: senderWallet, error: walletError } = await supabase
+      .from("wallets")
+      .select("balance, currency")
+      .eq("user_id", sender_id)
+      .maybeSingle();
+
+    if (walletError) {
+      // Still return transaction id; wallet info is optional
+      return NextResponse.json({ transaction_id: data }, { status: 200 });
+    }
+
+    return NextResponse.json(
+      {
+        transaction_id: data,
+        wallet_balance: senderWallet?.balance ?? null,
+        wallet_currency: senderWallet?.currency ?? null,
+      },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("transfer_money error:", err);
     return NextResponse.json(

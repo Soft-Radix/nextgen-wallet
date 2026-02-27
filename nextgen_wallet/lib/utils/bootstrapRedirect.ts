@@ -20,3 +20,9 @@ export function bootstrapRedirect(router: AppRouterInstance) {
     router.replace("/user/welcome");
   }
 }
+
+export function getUserDetails() {
+  if (typeof window === "undefined") return null;
+  const userRaw = window.localStorage.getItem("user");
+  return userRaw ? JSON.parse(userRaw) : null;
+}
