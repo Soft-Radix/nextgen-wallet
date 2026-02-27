@@ -44,7 +44,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       type={props.type ?? "button"}
       disabled={disabled ?? isLoading}
       className={[
-        "inline-flex items-center text-[16px] font-semibold h-[52px] rounded-[10px] justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center cursor-pointer text-[16px] font-semibold h-[52px] rounded-[10px] justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         variantStyles[variant],
         sizeStyles[size],
         fullWidth && "w-full",
