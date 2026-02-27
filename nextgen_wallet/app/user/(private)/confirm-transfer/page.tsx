@@ -49,7 +49,7 @@ const page = () => {
     const formattedAmount = amount.toFixed(2);
 
     const currentBalance = typeof user?.wallet_balance === "number" ? user.wallet_balance : 0;
-    const balanceAfterTransfer = currentBalance + amount;
+    const balanceAfterTransfer = currentBalance - amount;
     const formattedCurrentBalance = balanceAfterTransfer.toFixed(2);
     const formattedBalanceAfter = currentBalance.toFixed(2);
 
@@ -57,8 +57,9 @@ const page = () => {
 
 
     const handleCancel = () => {
+        const updatedUser = { ...user, wallet_balance: Number(user?.wallet_balance) + draft.amount || 0 };
         dispatch(
-            setUserBalanceUpdate(Number(user?.wallet_balance) + draft.amount || 0)
+            setUserBalanceUpdate(updatedUser)
         );
         router.push("/user/send-money");
     };
@@ -119,10 +120,10 @@ const page = () => {
                             </div>
                             <div className='flex items-center justify-between gap-2'>
                                 <p className="text-text text-[21px] font-bold ">
-                                    ${formattedBalanceAfter}
+                                    ${formattedCurrentBalance}
                                 </p>
                                 <p className="text-greyDark text-[21px] font-medium text-right ">
-                                    ${formattedCurrentBalance}
+                                    ${formattedBalanceAfter}
                                 </p>
                             </div>
                         </div>

@@ -36,7 +36,7 @@ const page = () => {
         }
 
         dispatch(
-            setUserBalanceUpdate(Number(user?.wallet_balance) - numericAmount || 0)
+            setUserBalanceUpdate({ ...user, wallet_balance: Number(user?.wallet_balance) - numericAmount || 0 })
         );
         dispatch(
             setDraftTransfer({

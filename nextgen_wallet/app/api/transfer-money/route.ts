@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       receiver_phone,
       amount,
       note,
+      pin,
     } = await request.json();
 
     if (!sender_id) {
@@ -25,7 +26,35 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!pin) {
+      return NextResponse.json(
+        { error: "PIN is required" },
+        { status: 400 }
+      );
+    }
+
     const supabase = await createClient();
+
+    // Validate PIN against user_details
+    const { data: senderDetails, error: senderError } = await supabase
+      .from("user_details")
+      .select("pin")
+      .eq("id", sender_id)
+      .maybeSingle();
+
+    if (senderError || !senderDetails?.pin) {
+      return NextResponse.json(
+        { error: "Unable to verify PIN" },
+        { status: 400 }
+      );
+    }
+
+    if (String(senderDetails.pin) !== String(pin)) {
+      return NextResponse.json(
+        { error: "Invalid PIN" },
+        { status: 400 }
+      );
+    }
 
     const { data, error } = await supabase.rpc("transfer_money", {
       p_sender_profile_id: sender_id,

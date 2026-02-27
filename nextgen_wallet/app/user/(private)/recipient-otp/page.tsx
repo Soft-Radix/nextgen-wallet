@@ -5,6 +5,7 @@ import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store/store';
 import { AddTransaction } from '@/store/transactionSlice';
+import { setUserBalanceUpdate } from '@/store/userDetailsSlice';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState, type KeyboardEvent, type ChangeEvent } from 'react'
 import toast from 'react-hot-toast';
@@ -46,10 +47,11 @@ const page = () => {
     const dispatch = useAppDispatch();
 
     const handleVerify = async () => {
-        if (otp.every(value => value == "")) {
-            setError("Please enter the OTP");
-            return;
+        const pin = otp.join("");
 
+        if (!pin || otp.some((value) => value === "")) {
+            setError("Please enter your full PIN");
+            return;
         }
         if (!user?.id) {
             toast.error("Unable to find logged-in user.")
@@ -66,9 +68,11 @@ const page = () => {
                 receiver_phone: draft?.receiver_phone ?? null,
                 amount: draft?.amount ?? 0,
                 note: draft?.note ?? null,
+                pin,
             })
         );
-
+        const updatedUser = { ...user, wallet_balance: Number(user?.wallet_balance) - (draft?.amount ?? 0) };
+        dispatch(setUserBalanceUpdate(updatedUser));
 
         if (AddTransaction.fulfilled.match(result)) {
             router.push("/user/transfer-success");

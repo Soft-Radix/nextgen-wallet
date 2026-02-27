@@ -7,6 +7,7 @@ type TransferPayload = {
   receiver_phone?: string | null;
   amount: number;
   note?: string | null;
+  pin: string;
 };
 
 type DraftTransfer = {
@@ -84,6 +85,7 @@ export const AddTransaction = createAsyncThunk<
         receiver_phone: payload.receiver_phone ?? null,
         amount: payload.amount,
         note: payload.note ?? null,
+        pin: payload.pin,
       },
     });
 

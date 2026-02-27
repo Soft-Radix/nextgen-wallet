@@ -70,11 +70,10 @@ const userDetailsSlice = createSlice({
       state.error = null;
     },
     setUserBalanceUpdate: (state, action: PayloadAction<number>) => {
-      if (!state.user) return;
+
+      state.user  =  action.payload as any;
     
-      state.user.wallet_balance = action.payload ?? 0;
-    
-      localStorage.setItem("user", JSON.stringify(state.user));
+      localStorage.setItem("user", JSON.stringify(action.payload));
     },
   },  
   extraReducers: (builder) => {

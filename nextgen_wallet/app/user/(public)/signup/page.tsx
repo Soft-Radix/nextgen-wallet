@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "@/components/ui/Phone";
@@ -24,6 +24,8 @@ export default function SignUpPage() {
 
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
     const [isChecked, setIsChecked] = useState(false);
+    const [email, setEmail] = useState("");
+    const [emailError, setEmailError] = useState("");
     const [country, setCountry] = useState("us"); // ISO code for UI
     const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
@@ -76,6 +78,15 @@ export default function SignUpPage() {
                     {error && (
                         <p className="text-red-500 text-xs w-full text-left">{error}</p>
                     )}
+                    <Input
+                        name="email"
+                        type="text"
+                        label="Email Address (Optional)"
+                        placeholder="Enter email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        error={emailError ? emailError : undefined}
+                    />
                     <Button fullWidth={true} onClick={handleSignUp} disabled={loading || !isChecked}>
                         {loading ? "Signing Up..." : "Sign Up"}
                     </Button>
