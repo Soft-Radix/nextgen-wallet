@@ -5,6 +5,7 @@ import {
   apiUpdateUserPin,
   type UserDetails,
 } from "@/lib/api/userDetails";
+import toast from "react-hot-toast";
 
 type UserDetailsState = {
   user: UserDetails | null;
@@ -95,7 +96,8 @@ const userDetailsSlice = createSlice({
       )
       .addCase(createUserDetails.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Something went wrong";
+        // state.error = action.payload ?? "Something went wrong";
+        toast.error(action.payload ?? "Something went wrong");
       })
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
@@ -119,11 +121,13 @@ const userDetailsSlice = createSlice({
       )
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Something went wrong";
+        // state.error = action.payload ?? "Something went wrong";
+        toast.error(action.payload ?? "Something went wrong");
       })
       .addCase(updateUserPin.pending, (state) => {
         state.loading = true;
         state.error = null;
+
       })
       .addCase(
         updateUserPin.fulfilled,
@@ -135,7 +139,8 @@ const userDetailsSlice = createSlice({
       )
       .addCase(updateUserPin.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload ?? "Something went wrong";
+        // state.error = action.payload ?? "Something went wrong";
+        toast.error(action.payload ?? "Something went wrong");
       });
   },
 });

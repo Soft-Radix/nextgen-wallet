@@ -29,35 +29,15 @@ export async function POST(request: Request) {
 
     if (existingError) {
       return NextResponse.json(
-        { error: "User already exists" },
+        { error: existingError.message },
         { status: 500 }
       );
     }
 
     if (existingUser) {
-      // Ensure the user has a wallet and return its details
-      const { data: wallet, error: walletError } = await supabase.rpc(
-        "ensure_wallet",
-        {
-          p_user_id: existingUser.id,
-        }
-      );
-
-      if (walletError) {
-        return NextResponse.json(
-          { error: walletError.message },
-          { status: 500 }
-        );
-      }
-
       return NextResponse.json(
-        {
-          user: sanitizeUser(existingUser),
-          wallet_balance: wallet.balance,
-          wallet_id: wallet.id,
-          wallet_currency: wallet.currency,
-        },
-        { status: 200 }
+        { error: "User already exists" },
+        { status: 409 }
       );
     }
 
