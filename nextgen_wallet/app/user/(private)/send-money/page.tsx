@@ -82,7 +82,7 @@ const SendMoneyPage = () => {
         );
 
         setLoading(false);
-        router.push("/user/recipient-otp");
+        router.push("/user/enter-amount");
     };
 
     return (

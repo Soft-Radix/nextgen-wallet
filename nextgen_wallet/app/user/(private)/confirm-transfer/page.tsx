@@ -53,35 +53,7 @@ const page = () => {
     const formattedCurrentBalance = balanceAfterTransfer.toFixed(2);
     const formattedBalanceAfter = currentBalance.toFixed(2);
 
-    const handleSendMoney = async () => {
-        if (!senderId) {
-            toast.error("Unable to find logged-in user.")
-            return;
-        }
 
-        setSubmitting(true);
-
-
-        const result = await dispatch(
-            AddTransaction({
-                sender_id: senderId,
-                receiver_id: draft.receiver_id ?? null,
-                receiver_phone: draft.receiver_phone ?? null,
-                amount: draft.amount,
-                note: draft.note ?? null,
-            })
-        );
-       
-
-        if (AddTransaction.fulfilled.match(result)) {
-            router.push("/user/transfer-success");
-        } else {
-
-            toast.error((result.payload as string) || "Transfer failed. Please try again.")
-        }
-
-        setSubmitting(false);
-    };
 
 
     const handleCancel = () => {
@@ -164,7 +136,7 @@ const page = () => {
                 <div className=" flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
                     <Button
                         fullWidth={true}
-                        onClick={handleSendMoney}
+                        onClick={() => router.push("/user/recipient-otp")}
                         disabled={submitting}
                     >
                         {submitting ? "Sending..." : "Send Money"}
