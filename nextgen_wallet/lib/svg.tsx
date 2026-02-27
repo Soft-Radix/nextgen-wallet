@@ -447,3 +447,18 @@ export function CopyIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
 
   )
 }
+
+export function EmailIcon({ color = "#94A3B8", ...props }: SvgIconProps) {
+  return (
+    <svg width="19" height="17" viewBox="0 0 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0.916667 0H17.4167C17.6598 0 17.8929 0.0965771 18.0648 0.268485C18.2368 0.440394 18.3333 0.673552 18.3333 0.916667V15.5833C18.3333 15.8264 18.2368 16.0596 18.0648 16.2315C17.8929 16.4034 17.6598 16.5 17.4167 16.5H0.916667C0.673552 16.5 0.440394 16.4034 0.268485 16.2315C0.0965771 16.0596 0 15.8264 0 15.5833V0.916667C0 0.673552 0.0965771 0.440394 0.268485 0.268485C0.440394 0.0965771 0.673552 0 0.916667 0V0ZM16.5 3.88483L9.23267 10.3932L1.83333 3.86467V14.6667H16.5V3.88483ZM2.30175 1.83333L9.22258 7.94017L16.0435 1.83333H2.30175Z" fill="url(#paint0_linear_442_509)" />
+      <defs>
+        <linearGradient id="paint0_linear_442_509" x1="19.0615" y1="11.2076" x2="4.57221" y2="11.3031" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#00DE1C" />
+          <stop offset="1" stop-color="#169D25" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+  )
+}

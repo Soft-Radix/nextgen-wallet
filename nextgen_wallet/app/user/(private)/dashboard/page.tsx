@@ -8,23 +8,26 @@ import { RootState } from "@/store/store";
 import { useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { loginUser } from "@/store/userDetailsSlice";
+import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 
 export default function DashboardPage() {
     const router = useRouter();
 
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        const dispatch = useAppDispatch();
-        useEffect(() => {
-            const fetchUserDetails = async () => {
-                if (user.id) {
-                    await dispatch(
-                        loginUser({ id: user.id })
-                    );
-                }
+    const user = getUserDetails();
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+        const fetchUserDetails = async () => {
+            if (user.id) {
+                await dispatch(
+                    loginUser({ id: user.id })
+                );
+            }
         }
         fetchUserDetails();
     }, []);
-
+    if (!user) {
+        return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    }
     return (
         <div className=" ">
             <div className="flex items-center justify-between  gap-2 p-5">

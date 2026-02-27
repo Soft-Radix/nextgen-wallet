@@ -35,9 +35,9 @@ const page = () => {
             return;
         }
 
-        dispatch(
-            setUserBalanceUpdate({ ...user, wallet_balance: Number(user?.wallet_balance) - numericAmount || 0 })
-        );
+        // dispatch(
+        //     setUserBalanceUpdate({ ...user, wallet_balance: Number(user?.wallet_balance) - numericAmount || 0 })
+        // );
         dispatch(
             setDraftTransfer({
                 amount: numericAmount,

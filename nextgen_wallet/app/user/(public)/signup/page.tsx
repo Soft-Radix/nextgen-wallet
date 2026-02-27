@@ -6,6 +6,7 @@ import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createUserDetails, EmptyError } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
+import { EmailIcon } from "@/lib/svg";
 
 export default function SignUpPage() {
     const savedNumber =
@@ -33,6 +34,16 @@ export default function SignUpPage() {
     const { loading, error } = useAppSelector((state: any) => state.userDetails);
 
     const handleSignUp = async () => {
+        setEmailError("");
+
+        if (email.trim()) {
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email.trim())) {
+                setEmailError("Please enter a valid email address.");
+                return;
+            }
+        }
+
         if (!phoneNumber) {
             // local validation error
             return;
@@ -53,7 +64,7 @@ export default function SignUpPage() {
             createUserDetails({
                 mobile_number: nationalNumber,
                 country: countryCode,
-
+                email: email,
             })
         );
         if (resultAction.meta?.requestStatus == "fulfilled") {
@@ -78,15 +89,30 @@ export default function SignUpPage() {
                     {error && (
                         <p className="text-red-500 text-xs w-full text-left">{error}</p>
                     )}
-                    <Input
-                        name="email"
-                        type="text"
-                        label="Email Address (Optional)"
-                        placeholder="Enter email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        error={emailError ? emailError : undefined}
-                    />
+                    <div className="w-full">
+                        <label
+
+                            className="mb-1.5 block text-sm font-semibold text-text text-left"
+                        >
+                            Email Address <span className="text-[14px] !font-medium text-greyDark">(Optional)</span>
+                        </label>
+
+                        <Input
+                            name="email"
+                            type="text"
+                            label=""
+                            placeholder="Enter email address"
+                            value={email}
+                            startIcon={<EmailIcon />}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (emailError) {
+                                    setEmailError("");
+                                }
+                            }}
+                            error={emailError ? emailError : undefined}
+                        />
+                    </div>
                     <Button fullWidth={true} onClick={handleSignUp} disabled={loading || !isChecked}>
                         {loading ? "Signing Up..." : "Sign Up"}
                     </Button>

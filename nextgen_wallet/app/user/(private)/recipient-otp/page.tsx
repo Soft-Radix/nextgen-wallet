@@ -71,10 +71,11 @@ const page = () => {
                 pin,
             })
         );
-        const updatedUser = { ...user, wallet_balance: Number(user?.wallet_balance) - (draft?.amount ?? 0) };
-        dispatch(setUserBalanceUpdate(updatedUser));
+
 
         if (AddTransaction.fulfilled.match(result)) {
+            const updatedUser = { ...user, wallet_balance: Number(user?.wallet_balance) - (draft?.amount ?? 0) };
+            dispatch(setUserBalanceUpdate(updatedUser));
             router.push("/user/transfer-success");
         } else {
 

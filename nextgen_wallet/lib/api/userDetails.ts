@@ -21,12 +21,13 @@ type UserDetailsResponse = {
 
 export async function apiCreateUserDetails(
   mobile_number: string,
-  country: string
+  country: string,
+  email?: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
     url: "user-details",
     method: "post",
-    data: { mobile_number, country_code: country },
+    data: { mobile_number, country_code: country, email },
   });
 
   return {

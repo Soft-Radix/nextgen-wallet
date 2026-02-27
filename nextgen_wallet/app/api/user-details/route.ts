@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
-    const { mobile_number, country_code } = await request.json();
+    const { mobile_number, country_code, email } = await request.json();
 
     if (!mobile_number) {
       return NextResponse.json(
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
         mobile_number,
         full_number: country_code + mobile_number,
         country_code,
+        email,
       })
       .select()
       .single();
@@ -78,10 +79,7 @@ export async function POST(request: Request) {
     );
 
     if (walletError) {
-      return NextResponse.json(
-        { error: walletError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: walletError.message }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -145,10 +143,7 @@ export async function PATCH(request: Request) {
     );
 
     if (walletError) {
-      return NextResponse.json(
-        { error: walletError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: walletError.message }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -216,10 +211,7 @@ export async function GET(request: Request) {
     );
 
     if (walletError) {
-      return NextResponse.json(
-        { error: walletError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: walletError.message }, { status: 500 });
     }
 
     return NextResponse.json(

@@ -20,11 +20,11 @@ const initialState: UserDetailsState = {
 
 export const createUserDetails = createAsyncThunk<
   UserDetails,
-  { mobile_number: string; country: string },
+  { mobile_number: string; country: string; email?: string },
   { rejectValue: string }
->("userDetails/create", async ({ mobile_number, country }, { rejectWithValue }) => {
+>("userDetails/create", async ({ mobile_number, country, email }, { rejectWithValue }) => {
   try {
-    return await apiCreateUserDetails(mobile_number,country);
+    return await apiCreateUserDetails(mobile_number,country, email);
   } catch (err: any) {
     const message =
       err?.response?.data?.error ??
