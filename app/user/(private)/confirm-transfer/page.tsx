@@ -109,8 +109,8 @@ const page = () => {
                 <div className='w-full flex flex-col  justify-between gap-2 bg-[#1BD4110D] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] mb-20'>
                     <div className='flex items-center gap-2 border-b-[1.06px] border-[#F1F5F9] pb-4 mb-4 '>
                         <SendMoney />
-                        <div >
-                            <div className='flex items-center justify-between gap-2'>
+                        <div className="flex-1">
+                            <div className='flex items-center justify-between gap-2 '>
                                 <p className="text-grey text-[12.7px] font-semibold uppercase">
                                     Balance after transfer
                                 </p>

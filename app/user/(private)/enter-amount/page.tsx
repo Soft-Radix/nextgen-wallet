@@ -93,7 +93,7 @@ const EnterAmountContent = () => {
                 <div className='w-full mt-6 pb-20'>
                     <p className="text-text text-[14px] font-semibold "> Note <span className="text-grey text-[14px] font-normal">(Optional)</span></p>
                     <textarea rows={3} value={note}
-                        onChange={(e) => setNote(e.target.value)} placeholder='What&apos;s it for?' className='w-full flex flex-col mt-1 items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-4  border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] focus:outline-none focus:ring-1 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]' />
+                        onChange={(e) => setNote(e.target.value)} placeholder='What&apos;s it for?' className='w-full flex flex-col mt-1 items-center justify-between gap-2 bg-[#ffffff] text-text rounded-[14px] p-4  border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)] focus:outline-none focus:ring-1 focus:ring-[#D8EBD7] focus:border-[#D8EBD7]' />
                 </div>
 
                 {/* continue button */}
