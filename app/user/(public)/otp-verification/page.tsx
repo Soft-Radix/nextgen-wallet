@@ -3,14 +3,28 @@ import { useRef, useState, type KeyboardEvent, type ChangeEvent, useEffect } fro
 import { Button } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
+
+type User = { id?: string; country_code?: string; mobile_number?: string; status?: string } | null;
+
 export default function OtpVerificationPage() {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const [user, setUser] = useState<User>(null);
 
     const [otp, setOtp] = useState(["", "", "", ""]);
     const [timer, setTimer] = useState(80);
     const [error, setError] = useState<string | null>(null);
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
+
+    useEffect(() => {
+        setUser(JSON.parse(localStorage.getItem("user") || "{}"));
+    }, []);
+
+    useEffect(() => {
+        if (user === null) return;
+        if (!user?.id) {
+            router.push("/user/welcome");
+        }
+    }, [user, router]);
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
         setError(null);
         const value = e.target.value;
@@ -65,14 +79,14 @@ export default function OtpVerificationPage() {
         }
     }
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        if (!user?.id) {
-            router.push("/user/welcome");
-        }
+    if (user === null) {
+        return (
+            <div className="max-w-[524px] w-full flex items-center justify-center min-h-[200px]">
+                Loading...
+            </div>
+        );
+    }
 
-    }, [])
     return (
         <>
             <div className="max-w-[524px] w-full">

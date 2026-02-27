@@ -8,7 +8,7 @@ import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateUserPin } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
 const CreatePinSchema = Yup.object({
@@ -22,19 +22,31 @@ const CreatePinSchema = Yup.object({
 
 export default function PinPage() {
     const router = useRouter();
-    const users = localStorage.getItem("user");
+    const [userFromStorage, setUserFromStorage] = useState<{ id?: string; pin?: string } | null>(null);
     const dispatch = useAppDispatch();
     const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
+
     useEffect(() => {
-        if (typeof window === "undefined") return;
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        if (!user?.id) {
+        const raw = localStorage.getItem("user");
+        const parsed = raw ? JSON.parse(raw) : {};
+        setUserFromStorage(parsed);
+        if (!parsed?.id) {
             router.push("/user/welcome");
+            return;
         }
-        if (user?.status == "active") {
+        if (parsed?.status === "active") {
             router.push("/user/dashboard");
         }
-    }, [])
+    }, [router]);
+
+    if (userFromStorage === null) {
+        return (
+            <div className="max-w-[524px] w-full flex items-center justify-center min-h-[200px]">
+                Loading...
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -47,13 +59,16 @@ export default function PinPage() {
                     </p>
 
                     <Formik
-                        initialValues={{ pin: users ? JSON.parse(users)?.pin || "" : "", confirmPin: users ? JSON.parse(users)?.pin || "" : "" }}
+                        initialValues={{
+                            pin: userFromStorage?.pin || "",
+                            confirmPin: userFromStorage?.pin || "",
+                        }}
                         validationSchema={CreatePinSchema}
                         onSubmit={async (values, { setSubmitting, setStatus }) => {
                             try {
                                 const res: any = await dispatch(
                                     updateUserPin({
-                                        id: user?.id || (users ? JSON.parse(users).id : ""),
+                                        id: user?.id || userFromStorage?.id || "",
                                         pin: values.pin,
                                     })
                                 );

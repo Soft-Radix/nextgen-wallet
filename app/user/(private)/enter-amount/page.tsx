@@ -9,10 +9,10 @@ import { RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useSelector } from "react-redux";
 
-const page = () => {
+const EnterAmountContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -105,6 +105,14 @@ const page = () => {
             </div>
         </>
     )
-}
+};
+
+const page = () => {
+    return (
+        <Suspense fallback={<div className="p-5 py-[77px] flex items-center justify-center min-h-[50vh]">Loading...</div>}>
+            <EnterAmountContent />
+        </Suspense>
+    );
+};
 
 export default page
