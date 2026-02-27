@@ -31,7 +31,7 @@ export default function SignUpPage() {
     const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const { loading, error } = useAppSelector((state: any) => state.userDetails);
+    const { loading } = useAppSelector((state: any) => state.userDetails);
 
     const handleSignUp = async () => {
         setEmailError("");
@@ -81,14 +81,12 @@ export default function SignUpPage() {
                         label="Phone number"
                         placeholder="Enter phone number"
                         value={phoneNumber}
-                        onChange={(value) => setPhoneNumber(value)}
+                        onChange={(value) => { setPhoneNumber(value);  }}
                         setCountry={setCountry}
                         country={country}
                         onDialCodeChange={setCountryCode}
                     />
-                    {error && (
-                        <p className="text-red-500 text-xs w-full text-left">{error}</p>
-                    )}
+                   
                     <div className="w-full">
                         <label
 
