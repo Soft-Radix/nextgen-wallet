@@ -9,22 +9,29 @@ import { useEffect } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { loginUser } from "@/store/userDetailsSlice";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { ResetTransaction } from "@/store/transactionSlice";
 
 export default function DashboardPage() {
     const router = useRouter();
-
-    const user = getUserDetails();
+    const storedUser = getUserDetails();
+    const reduxUser = useSelector((state: RootState) => state.userDetails.user);
+    const user = reduxUser || storedUser;
     const dispatch = useAppDispatch();
     useEffect(() => {
         const fetchUserDetails = async () => {
-            if (user.id) {
-                await dispatch(
-                    loginUser({ id: user.id })
-                );
+            if (storedUser?.id) {
+                await dispatch(loginUser({ id: storedUser.id }));
             }
-        }
+        };
+
         fetchUserDetails();
-    }, []);
+    }, [dispatch, storedUser?.id]);
+
+    const handleLogout = () => {
+        localStorage.clear();
+        dispatch(ResetTransaction());
+        router.push("/user/welcome");
+    }
     if (!user) {
         return <div className="flex items-center justify-center h-screen">Loading...</div>;
     }
@@ -43,7 +50,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
                 <div className="w-[40px] h-[40px] rounded-full bg-[#ffffff] flex items-center justify-center">
-                    <div className="relative">
+                    <div className="relative" onClick={() => handleLogout()}>
                         <NotificationIcon />
                         <div className="absolute -top-[2px] right-0 w-[7px] h-[7px] rounded-full bg-[#FF0000]"></div>
                     </div>

@@ -54,6 +54,7 @@ export default function BottomNav() {
             <p className={`text-greyLight text-[12px] ${activeItem == index ? "bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent font-bold" : "text-greyLight font-medium"}`}>{item.label}</p>
           </button>
         ))}
+
       </div>
     </div>
   );

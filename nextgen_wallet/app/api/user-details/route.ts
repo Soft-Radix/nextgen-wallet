@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+function sanitizeUser(user: any) {
+  const { pin, ...safeUser } = user || {};
+  return safeUser;
+}
+
 export async function POST(request: Request) {
   try {
     const { mobile_number, country_code, email } = await request.json();
@@ -47,8 +52,9 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          user: existingUser,
+          user: sanitizeUser(existingUser),
           wallet_balance: wallet.balance,
+          wallet_id: wallet.id,
           wallet_currency: wallet.currency,
         },
         { status: 200 }
@@ -84,8 +90,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        user: data,
+        user: sanitizeUser(data),
         wallet_balance: wallet.balance,
+        wallet_id: wallet.id,
         wallet_currency: wallet.currency,
       },
       { status: 201 }
@@ -148,8 +155,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(
       {
-        user: data,
+        user: sanitizeUser(data),
         wallet_balance: wallet.balance,
+        wallet_id: wallet.id,
         wallet_currency: wallet.currency,
       },
       { status: 200 }
@@ -216,8 +224,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       {
-        user: data,
+        user: sanitizeUser(data),
         wallet_balance: wallet.balance,
+        wallet_id: wallet.id,
         wallet_currency: wallet.currency,
       },
       { status: 200 }

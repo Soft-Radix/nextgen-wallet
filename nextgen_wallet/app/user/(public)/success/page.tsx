@@ -1,11 +1,13 @@
 "use client"
 import { Button, PhoneInput } from "@/components/ui"
 import { ArrowRightIcon, SuccessIcon, WalletIdIcon } from "@/lib/svg"
+import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useRouter } from "next/navigation";
 import { useState } from "react"
 
 export default function SuccessPage() {
     const router = useRouter();
+    const user = getUserDetails();
     return (
         <>
             <div className="max-w-[524px] w-full">
@@ -21,7 +23,7 @@ export default function SuccessPage() {
 
 
                         <p className="bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent text-[40px] font-bold leading-[40px]">
-                            $0.00
+                            ${user?.wallet_balance?.toFixed(2) || 0}
                         </p>
                         <p className="text-grey text-[14px] font-medium  text-center">Current Balance</p>
 
