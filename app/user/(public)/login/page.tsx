@@ -77,7 +77,7 @@ export default function LoginPage() {
 
 
 
-                    <p className="text-grey text-[14px] ">Don't have an account? <span className="text-text font-semibold" onClick={() => { dispatch(EmptyError()); router.push("/user/signup") }}>Sign Up</span> </p>
+                    <p className="text-grey text-[14px] ">Don't have an account? <span className="text-text font-semibold pointer" onClick={() => { dispatch(EmptyError()); router.push("/user/signup") }}>Sign Up</span> </p>
 
 
 

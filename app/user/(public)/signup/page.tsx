@@ -116,16 +116,16 @@ export default function SignUpPage() {
                     <Button fullWidth={true} onClick={handleSignUp} disabled={loading || !isChecked}>
                         {loading ? "Signing Up..." : "Sign Up"}
                     </Button>
-                    <p className="text-grey text-[14px] ">Already have an account? <span className="text-text font-semibold" onClick={() => { dispatch(EmptyError()); router.push("/user/login") }}>Log In</span> </p>
+                    <p className="text-grey text-[14px] ">Already have an account? <span className="text-text font-semibold pointer" onClick={() => { dispatch(EmptyError()); router.push("/user/login") }}>Log In</span> </p>
                 </div >
                 <div className="flex  gap-4  justify-center items-start mt-[28px]">
                     <input type="checkbox"
-                        style={{ accentColor: 'var(--button-primary-from)', borderColor: '#6F7B8F', borderWidth: "2px", width: "18px", height: "18px" }}
+                        style={{ accentColor: 'var(--button-primary-from)', borderColor: '#6F7B8F', borderWidth: "2px", width: "18px", height: "18px", cursor: "pointer" }}
                         checked={isChecked}
                         onChange={() => setIsChecked(!isChecked)}
                     />
                     <span className="text-grey text-[14px] font-medium">
-                        By continuing, you agree to our <span className="text-text underline"> Terms & Privacy Policy</span>.
+                        By continuing, you agree to our <span className="text-text underline "> Terms & Privacy Policy</span>.
                     </span>
                 </div>
             </div>

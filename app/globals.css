@@ -114,3 +114,6 @@ body {
   box-shadow: 0 10px 30px rgba(239, 68, 68, 0.08) !important;
   outline: none !important;
 }
+.react-tel-input .country-list .country-name {
+  color: #030200 !important;
+}

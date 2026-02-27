@@ -73,7 +73,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
 
         <div
           className={[
-            "relative flex items-center h-[52px] mt-2 w-full  rounded-[10px] border bg-background px-3 py-2",
+            "relative flex items-center h-[52px] text-text mt-2 w-full  rounded-[10px] border bg-background px-3 py-2",
             "border-[#D8EBD7]",
             "focus-within:outline-none focus-within:ring-2 focus-within:ring-[#D8EBD7] focus-within:border-[#D8EBD7]",
             "disabled:cursor-not-allowed disabled:opacity-50",

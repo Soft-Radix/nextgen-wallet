@@ -41,7 +41,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           ref={ref}
           id={inputId}
           className={[
-            "w-full rounded-lg h-[52px] border shadow-[0_2px_6px_rgba(0,166,62,0.1)] bg-background text-foreground placeholder:text-muted text-[14px]",
+            "w-full rounded-lg h-[52px] border shadow-[0_2px_6px_rgba(0,166,62,0.1)] bg-[#ffffff] text-text placeholder:text-muted text-[14px]",
             startIcon && !endIcon && "pl-10 pr-3 py-2",
             endIcon && !startIcon && "pl-3 pr-10 py-2",
             startIcon && endIcon && "pl-10 pr-10 py-2",
