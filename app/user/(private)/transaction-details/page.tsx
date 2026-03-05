@@ -16,6 +16,8 @@ interface TransactionDetails {
   counterparty_phone: string | null;
   note: string | null;
   reference: string | number | null;
+  sender_name: string | null;
+  receiver_name: string | null;
 }
 
 export default function TransactionDetailsPage() {
@@ -166,11 +168,10 @@ export default function TransactionDetailsPage() {
                 <CheckCircleIcon width="15" height="15" color="#fff" /> Completed
               </span>
               <p
-                className={`text-[40px] sm:text-[40px] font-bold ${
-                  isIncoming
-                    ? "text-clip text-transparent bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text"
-                    : "text-[#E7000B]"
-                }`}
+                className={`text-[40px] sm:text-[40px] font-bold ${isIncoming
+                  ? "text-clip text-transparent bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text"
+                  : "text-[#E7000B]"
+                  }`}
               >
                 {isIncoming ? "+" : "-"}${amount.toFixed(2)}
               </p>
@@ -215,17 +216,29 @@ export default function TransactionDetailsPage() {
                   <>
                     <div className="flex items-center justify-between text-[13px] text-grey">
                       <span>From</span>
-                      <span className="text-text font-semibold text-right">
-                        {effective?.sender_phone || "-"}
-                      </span>
+                      <div className="flex items-end flex-col justify-between gap-1">
+                        <span className="text-text font-semibold text-right">
+                          {effective?.sender_name || "-"}
+                        </span>
+                        <span className="text-grey  text-right">
+                          {effective?.sender_phone || "-"}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-[13px] text-grey">
                       <span>To</span>
-                      <span className="text-text font-semibold text-right">
-                        {effective?.receiver_phone ||
-                          effective?.counterparty_phone ||
-                          "-"}
-                      </span>
+                      <div className="flex items-end flex-col justify-between gap-1">
+                        <span className="text-text font-semibold text-right">
+                          {effective?.receiver_name ||
+
+                            "-"}
+                        </span>
+                        <span className="text-grey  text-right">
+                          {effective?.receiver_phone ||
+                            effective?.counterparty_phone ||
+                            "-"}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}

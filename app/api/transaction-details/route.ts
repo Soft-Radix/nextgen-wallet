@@ -56,7 +56,9 @@ export async function POST(request: Request) {
     // Default: money transfer transaction
     const { data: tx, error: txError } = await supabase
       .from("transactions")
-      .select("id, sender_profile_id, receiver_profile_id, amount, status, created_at, note")
+      .select(
+        "id, sender_profile_id, receiver_profile_id, amount, status, created_at, note, name"
+      )
       .eq("id", id)
       .maybeSingle();
 
@@ -80,31 +82,35 @@ export async function POST(request: Request) {
     ].filter((v): v is string | number => v != null);
 
     let phoneMap: Record<string, string | null> = {};
+    let nameMap: Record<string, string | null> = {};
 
     if (profileIds.length > 0) {
       const { data: users, error: usersError } = await supabase
         .from("user_details")
-        .select("id, mobile_number, country_code")
+        .select("id, mobile_number, country_code, name")
         .in("id", profileIds);
 
       if (usersError) {
         console.error("transaction-details user_details lookup error:", usersError);
       } else {
-        phoneMap = (users ?? []).reduce<Record<string, string | null>>(
-          (acc, user) => {
-            const dial = user.country_code ?? "";
-            const mobile = user.mobile_number ?? "";
-            acc[String(user.id)] =
-              dial || mobile ? `${dial}${mobile}` : mobile || null;
-            return acc;
-          },
-          {}
-        );
+        phoneMap = {};
+        nameMap = {};
+        (users ?? []).forEach((user: any) => {
+          const key = String(user.id);
+          const dial = user.country_code ?? "";
+          const mobile = user.mobile_number ?? "";
+          phoneMap[key] =
+            dial || mobile ? `${dial}${mobile}` : mobile || null;
+          nameMap[key] = user.name ?? null;
+        });
       }
     }
 
     const senderPhone = phoneMap[String(tx.sender_profile_id)] ?? null;
     const receiverPhone = phoneMap[String(tx.receiver_profile_id)] ?? null;
+    const senderName = nameMap[String(tx.sender_profile_id)] ?? null;
+    const receiverName = nameMap[String(tx.receiver_profile_id)] ?? null;
+    const txName = (tx as any).name ?? null;
 
     // Caller will infer direction (incoming/outgoing) from current user,
     // but we return the raw transaction.
@@ -117,6 +123,8 @@ export async function POST(request: Request) {
         created_at: tx.created_at,
         sender_phone: senderPhone,
         receiver_phone: receiverPhone,
+        sender_name: senderName ?? txName,
+        receiver_name: receiverName ?? txName,
         counterparty_phone: null,
         note: (tx as any).note ?? null,
         reference: tx.id,
