@@ -2,7 +2,7 @@
 import Topbar from '@/components/Topbar'
 import { Button } from '@/components/ui';
 import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, NotificationIconOutline, SecurityPinIcon, WalletIcon } from '@/lib/svg'
-import { getNameCapitalized, getUserDetails } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserDetails, getUserImage } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react'
@@ -35,11 +35,12 @@ const Page = () => {
                 {/* Avatar + edit */}
                 <div className="relative">
                     <div className="w-[94px] h-[94px] rounded-full bg-gray-200 border-[4px] border-[#1152D41A]  overflow-hidden">
-                        <img
+                        {/* <img
                             src="/user1.jpg"
                             alt="user avatar"
                             className="w-full h-full rounded-full object-cover"
-                        />
+                        /> */}
+                        {user?.user_image ? <img src={user?.user_image} alt="user" className='w-full h-full object-cover rounded-full' /> : <p className="text-[#00DE1C] text-[30px] font-semibold capitalize text-center leading-[94px]">{getUserImage(user?.name ?? "")}</p>}
                     </div>
                     <div className="absolute -right-1 bottom-1 border-2 border-[#ffffff] flex h-8 w-8 items-center justify-center rounded-full bg-[#000000] text-white shadow-lg">
                         <EditIcon />

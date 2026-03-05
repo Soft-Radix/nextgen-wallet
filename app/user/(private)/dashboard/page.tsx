@@ -7,7 +7,7 @@ import { RootState } from "@/store/store";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { loginUser } from "@/store/userDetailsSlice";
-import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails, getUserImage } from "@/lib/utils/bootstrapRedirect";
 import { ResetTransaction } from "@/store/transactionSlice";
 
 interface DashboardTransaction {
@@ -100,7 +100,7 @@ export default function DashboardPage() {
                 {/* You can render user info here */}
                 <div className="flex items-center justify-between  gap-2">
                     <div className="w-[50px] h-[50px] rounded-full bg-gray-200">
-                        <img src="/user.png" alt="user" />
+                        {user?.user_image ? <img src={user?.user_image} alt="user" /> : <p className="text-[#00DE1C] text-[16px] font-semibold capitalize text-center leading-[50px]">{getUserImage(user?.name ?? "")}</p>}
                     </div>
                     <div>
                         <p className="text-text  text-lg font-semibold">🌞 Good Morning, {getNameCapitalized(user?.name ?? "")}</p>

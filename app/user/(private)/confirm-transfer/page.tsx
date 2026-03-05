@@ -10,7 +10,7 @@ import type { AppDispatch, RootState } from "@/store/store";
 import { AddTransaction } from "@/store/transactionSlice";
 import toast from "react-hot-toast";
 import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
-import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails, getUserImage } from "@/lib/utils/bootstrapRedirect";
 
 const page = () => {
     const router = useRouter();
@@ -72,7 +72,7 @@ const page = () => {
                 <div className='w-full flex flex-col  justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
                     <div className='flex items-start gap-5 border-b-[1.06px] border-[#F1F5F9] pb-4 mb-4'>
                         <div className='w-[52px] h-[52px] rounded-full bg-gray-200 shadow-[0px_0px_4px_4px_rgba(17, 82, 212, 0.8)] relative ' >
-                            <img src="/user1.jpg" alt="user" className='w-full h-full object-cover rounded-full' />
+                            {draft?.user_image ? <img src={draft?.user_image} alt="user" className='w-full h-full object-cover rounded-full' /> : <p className="text-[#00DE1C] text-[16px] font-semibold capitalize text-center leading-[52px]">{getUserImage(draft?.name ?? "")}</p>}
 
                         </div>
                         <div>

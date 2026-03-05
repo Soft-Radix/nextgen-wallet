@@ -3,9 +3,22 @@ import Topbar from '@/components/Topbar'
 import { Button, Input } from '@/components/ui';
 import { CreatePin } from '@/lib/svg';
 import { Form, Formik } from 'formik';
+import * as Yup from "yup";
 import React from 'react'
 
 const page = () => {
+
+    const ChangePinSchema = Yup.object({
+        oldpin: Yup.string()
+            .required("PIN is required")
+            .matches(/^\d{4}$/, "PIN must be 4 digits"),
+        pin: Yup.string()
+            .required("New PIN is required")
+            .matches(/^\d{4}$/, "New PIN must be 4 digits"),
+        confirmPin: Yup.string()
+            .required("Confirm New PIN is required")
+            .oneOf([Yup.ref("pin")], "New PINs must match"),
+    });
     return (
         <>
             <Topbar title="Change Pin" />
@@ -19,11 +32,11 @@ const page = () => {
                     </p>
                     <Formik
                         initialValues={{
-                            old: "",
+                            oldpin: "",
                             pin: "",
                             confirmPin: "",
                         }}
-                        // validationSchema={CreatePinSchema}
+                        validationSchema={ChangePinSchema}
                         onSubmit={async (values, { setSubmitting, setStatus }) => {
                             // try {
                             //     const res: any = await dispatch(
@@ -64,23 +77,23 @@ const page = () => {
                                 <Input
                                     name="oldpin"
                                     type="text"
-                                    label="Create Pin"
-                                    placeholder="Enter 4 digit pin"
+                                    label="Current PIN"
+                                    placeholder="Enter 4 digit current pin"
                                     startIcon={<CreatePin />}
                                     maxLength={4}
-                                    value={values.pin}
+                                    value={values.oldpin}
                                     onChange={(e) => { handleChange(e); setStatus("") }}
                                     onBlur={handleBlur}
                                     error={
-                                        touched.pin && typeof errors.pin === "string"
-                                            ? errors.pin
+                                        touched.oldpin && typeof errors.oldpin === "string"
+                                            ? errors.oldpin
                                             : undefined
                                     }
                                 />
                                 <Input
                                     name="pin"
                                     type="text"
-                                    label="Create Pin"
+                                    label="New PIN"
                                     placeholder="Enter 4 digit pin"
                                     startIcon={<CreatePin />}
                                     maxLength={4}
@@ -97,7 +110,7 @@ const page = () => {
                                 <Input
                                     name="confirmPin"
                                     type="text"
-                                    label="Confirm Pin"
+                                    label="Confirm New PIN"
                                     placeholder="Confirm your pin"
                                     startIcon={<CreatePin />}
                                     maxLength={4}
@@ -111,18 +124,18 @@ const page = () => {
                                     }
                                 />
 
-                                {/* {status && (
+                                {status && (
                                     <p className="text-red-500 text-xs w-full text-left">
                                         {status}
                                     </p>
-                                )} */}
+                                )}
 
                                 {/* {error && (
                                     <p className="text-red-500 text-xs w-full text-left">
                                         {error}
                                     </p>
-                                )} */}
-                                {/* <Button
+                                )}
+                                <Button
                                     type="submit"
                                     fullWidth={true}
                                     disabled={isSubmitting || loading}

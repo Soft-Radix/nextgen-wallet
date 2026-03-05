@@ -12,7 +12,7 @@ import type { AppDispatch, RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
-import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails, getUserImage } from "@/lib/utils/bootstrapRedirect";
 
 const SendMoneyPage = () => {
     const router = useRouter();
@@ -254,7 +254,8 @@ const SendMoneyPage = () => {
                                         }}
                                     >
                                         <div className="w-[50px] h-[50px] rounded-full bg-gray-200">
-                                            <img src="/user.png" alt="user" />
+                                            {item.user_image ? <img src={item.user_image} alt="user" /> : <p className="text-[#00DE1C] text-[16px] font-semibold capitalize text-center leading-[50px]">{getUserImage(item?.name ?? "")}</p>}
+
                                         </div>
                                         <p className="text-[#1E2C44] text-[12px] font-semibold capitalize">
                                             {getNameCapitalized(item?.name ?? "") || item?.counterparty_mobile}

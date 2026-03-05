@@ -1,5 +1,5 @@
 import { ArrowRightBlockIcon } from '@/lib/svg'
-import { getNameCapitalized } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserImage } from '@/lib/utils/bootstrapRedirect';
 import { useAppDispatch } from '@/store/hooks';
 import { setDraftTransfer } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ interface Transaction {
     counterparty_mobile?: string;
     name?: string;
     is_contact?: boolean;
+    user_image?: string;
 }
 const RecentReciptList = ({ list }: { list: Transaction[] }) => {
     const router = useRouter();
@@ -31,7 +32,7 @@ const RecentReciptList = ({ list }: { list: Transaction[] }) => {
                 }}>
                     <div className="flex items-center justify-between gap-2">
                         <div className="w-[40px] h-[40px] rounded-full bg-gray-200">
-                            <img src="/user.png" alt="user" />
+                            {item.user_image ? <img src={item.user_image} alt="user" /> : <p className="text-[#00DE1C] text-[16px] font-semibold capitalize text-center leading-[40px]">{getUserImage(item?.name ?? "")}</p>}
                         </div>
                         <div>
                             <p className="text-text  text-sm font-semibold">{getNameCapitalized(item?.name ?? "") || item?.counterparty_mobile}</p>

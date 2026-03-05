@@ -19,6 +19,7 @@ type DraftTransfer = {
   note?: string | null;
   name?: string | null;
   is_contact?: boolean;
+  user_image?: string | null;
 };
 
 type TransactionState = {
