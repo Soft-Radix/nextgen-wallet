@@ -10,6 +10,7 @@ export type UserDetails = {
   wallet_balance?: number;
   wallet_currency?: string | null;
   name?: string | null;
+  is_contact?: boolean | null;
 };
 
 import { ApiHelperFunction } from "@/lib/api/client";

@@ -81,6 +81,8 @@ export async function POST(request: Request) {
           created_at: tx.created_at,
           transaction_type: transactionType,
           type: isSender ? "outgoing" : "incoming",
+          sender_profile_id: tx.sender_profile_id,
+          receiver_profile_id: tx.receiver_profile_id,
           sender_mobile: senderPhone,
           receiver_mobile: receiverPhone,
           name: tx.name ?? null,

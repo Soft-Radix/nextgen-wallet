@@ -19,21 +19,69 @@ const EnterAmountContent = () => {
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
 
     const [name, setName] = useState(draft?.name || "");
-    const [isChecked, setIsChecked] = useState(false);
+    const [isChecked, setIsChecked] = useState(true);
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
     const dispatch = useAppDispatch()
     const user = getUserDetails();
     const id = searchParams.get("id");
     useEffect(() => {
-        if (id && !draft?.name) {
-            const fetchUser = async () => {
-                const user = await apiGetUserDetails(id, "", "");
-                setName(user.name || "");
+        if (!id || draft?.name) return;
+
+        const fetchName = async () => {
+            let nameFromHistory: string | null = null;
+            let isContactFromHistory = false;
+
+            // 1) Try to find latest transaction name for this receiver
+            try {
+                if (user?.id) {
+                    const response = await fetch("/api/transactions", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            user_id: user.id,
+                            page: 1,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const items = data.items || [];
+
+                        const tx = items.find(
+                            (t: any) =>
+                                t.receiver_profile_id &&
+                                String(t.receiver_profile_id) === String(id) &&
+                                t.transaction_type === "sender" &&
+                                t.name
+                        );
+
+                        if (tx) {
+                            nameFromHistory = tx.name ?? null;
+                            isContactFromHistory = !!tx.is_contact;
+                        }
+                    }
+                }
+            } catch {
+                // ignore and fall back to user_details
             }
-            fetchUser();
-        }
-    }, [id]);
+
+            // 2) If no transaction name, fall back to user_details
+            if (!nameFromHistory) {
+                const details = await apiGetUserDetails(id, "", "");
+                nameFromHistory = details.name || "";
+            }
+
+            setName(nameFromHistory || "");
+            if (isContactFromHistory) {
+                setIsChecked(true);
+            }
+        };
+
+        fetchName();
+    }, [id, draft?.name, user?.id]);
 
     const handleContinue = () => {
         const nameValue = name?.trim() || null;

@@ -33,7 +33,6 @@ const SendMoneyPage = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
 
-    console.log(draft);
     useEffect(() => {
         const fetchTransactions = async () => {
             if (!user?.id) return;
@@ -99,6 +98,7 @@ const SendMoneyPage = () => {
 
         let receiverId: string | null = null;
         let receiverPhone: string | null = null;
+        let userbyId: any | null = null;
         try {
             // Try to find an existing user in user_details
             const allDigits = String(phoneNumber).replace(/\D/g, "");
@@ -107,10 +107,10 @@ const SendMoneyPage = () => {
                 ? allDigits.slice(dialDigits.length)
                 : allDigits;
 
-            const user = await apiGetUserDetails("", nationalNumber, countryCode);
-            receiverId = user.id;
+            userbyId = await apiGetUserDetails("", nationalNumber, countryCode);
+            receiverId = userbyId.id;
             receiverPhone =
-                user.full_number || `${user.country_code}${user.mobile_number}`;
+                userbyId.full_number || `${userbyId.country_code}${userbyId.mobile_number}`;
 
 
         } catch (err: any) {
@@ -133,6 +133,30 @@ const SendMoneyPage = () => {
             }
         }
 
+        // If we found a user in user_details and we have transaction history,
+        // try to reuse the latest edited name from a previous transfer
+        // to this receiver (regardless of contact flag).
+        let isContactFromHistory = false;
+        let nameFromHistory: string | null = null;
+
+        if (receiverId) {
+            const existingTx = transactions.find(
+                (tx) =>
+                    tx.receiver_profile_id &&
+                    String(tx.receiver_profile_id) === String(receiverId) &&
+                    tx.transaction_type === "sender" &&
+                    tx.name
+            );
+
+            if (existingTx) {
+                isContactFromHistory = !!existingTx.is_contact;
+                nameFromHistory = existingTx.name ?? null;
+            }
+        }
+
+        const finalIsContact = isContactFromHistory || (userbyId?.is_contact ?? false);
+        const finalName = nameFromHistory ?? userbyId?.name ?? null;
+
         // Seed draft transfer (amount/note will be added on Enter Amount screen)
         dispatch(
             setDraftTransfer({
@@ -140,13 +164,13 @@ const SendMoneyPage = () => {
                 receiver_phone: receiverPhone,
                 amount: 0,
                 note: null,
-                is_contact: user?.is_contact ?? false,
-                name: user?.name ?? null,
+                is_contact: finalIsContact,
+                name: finalName,
             })
         );
 
         setLoading(false);
-        if (!draft?.is_contact) {
+        if (!finalIsContact) {
             router.push("/user/enter-name?id=" + receiverId);
         } else {
             router.push("/user/enter-amount");
