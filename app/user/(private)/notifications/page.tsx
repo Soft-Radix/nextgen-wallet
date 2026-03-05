@@ -142,14 +142,14 @@ export default function NotificationsPage() {
     const title = isWithdrawal
       ? "Money Withdrawn"
       : isIncoming
-      ? "Money Received"
-      : "Money Sent";
+        ? "Money Received"
+        : "Money Sent";
 
     const subtitle = isWithdrawal
       ? "ATM Withdrawal"
       : isIncoming
-      ? `From ${item.counterparty_mobile || item.sender_mobile || ""}`
-      : `To ${item.counterparty_mobile || item.receiver_mobile || ""}`;
+        ? `From ${item.counterparty_mobile || item.sender_mobile || ""}`
+        : `To ${item.counterparty_mobile || item.receiver_mobile || ""}`;
 
     const amountSign = isIncoming ? "+" : "-";
     const amountColor = isIncoming ? "text-[#16A34A]" : "text-[#E7000B]";
@@ -176,9 +176,8 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between py-3 pt-1.5 pb-3.5 w-full border-b border-[#D7E1EB99]">
           <div className="flex items-center gap-3">
             <div
-              className={`w-[40px] h-[40px] rounded-xl flex items-center justify-center ${
-                isIncoming ? "bg-[#DCFCE7]" : "bg-[#FFE2E2]"
-              }`}
+              className={`w-[40px] h-[40px] rounded-xl flex items-center justify-center ${isIncoming ? "bg-[#DCFCE7]" : "bg-[#FFE2E2]"
+                }`}
             >
               {isIncoming ? <ReceivedIcon /> : <SentIcon />}
             </div>
@@ -202,7 +201,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <Topbar title="Notifications" />
+      <Topbar title="Notification Listings" />
       <div className="p-4 sm:p-5 pt-[95px] pb-16 overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
         <div className="w-full max-w-[420px]">
           {loading ? (

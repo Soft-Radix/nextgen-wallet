@@ -10,6 +10,7 @@ export async function POST(request: Request) {
       amount,
       note,
       name,
+      is_contact,
       pin,
     } = await request.json();
 
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       p_name: name ?? null,
       p_amount: amount,
       p_note: note ?? null,
+      p_is_contact: is_contact ?? false,
     });
 
     if (error) {

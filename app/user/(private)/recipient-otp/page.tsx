@@ -69,6 +69,7 @@ const page = () => {
                 amount: draft?.amount ?? 0,
                 note: draft?.note ?? null,
                 name: draft?.name ?? null,
+                is_contact: draft?.is_contact ?? false,
                 pin,
             })
         );

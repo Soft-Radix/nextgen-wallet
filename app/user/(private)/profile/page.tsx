@@ -2,7 +2,7 @@
 import Topbar from '@/components/Topbar'
 import { Button } from '@/components/ui';
 import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, NotificationIconOutline, SecurityPinIcon, WalletIcon } from '@/lib/svg'
-import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react'
@@ -48,7 +48,7 @@ const Page = () => {
 
                 {/* Name + phone + id */}
                 <div className="mt-4 flex flex-col items-center gap-1">
-                    <p className="text-[24px] font-bold text-clip bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent">{user?.name || "N/A"}</p>
+                    <p className="text-[24px] font-bold text-clip bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent">{getNameCapitalized(user?.name ?? "") || "N/A"}</p>
                     <p className="text-sm font-medium text-grey">
                         {user?.country_code}{' '}
                         {user?.mobile_number
@@ -91,7 +91,7 @@ const Page = () => {
                                     </span>
                                 </div>
                             </div>
-                            <ForwardIcon />
+                            <span onClick={() => router.push("/user/change-pin")}><ForwardIcon /></span>
                         </button>
 
                         <div className="my-1 h-px w-full bg-slate-100" />
@@ -111,7 +111,7 @@ const Page = () => {
                                     </span>
                                 </div>
                             </div>
-                            <ForwardIcon />
+                            <span onClick={() => router.push("/user/notifications")}><ForwardIcon /></span>
                         </button>
                     </div>
                 </div>
@@ -122,16 +122,16 @@ const Page = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-6 flex w-full max-w-md flex-col items-center text-center text-[10px] text-slate-400">
-                    <p className="text-[10px]">
+                <div className="mt-6 flex w-full max-w-md flex-col items-center text-center text-[12px] text-[#6F7B8F]">
+                    <p className="text-[12px]">
                         NexGenPay v2.4.0 — Securely Connected
                     </p>
-                    <div className="mt-1 flex items-center gap-2 text-[10px] font-medium">
-                        <button type="button" className="text-[#1152D4]">
+                    <div className="mt-1 flex items-center gap-4 text-[10px] font-medium">
+                        <button type="button" className="text-[#6F7B8F] text-[12px] underline">
                             About
                         </button>
-                        <span className="h-1 w-1 rounded-full bg-slate-300" />
-                        <button type="button" className="text-[#1152D4]">
+
+                        <button type="button" className="text-[#6F7B8F] text-[12px] underline">
                             Privacy Policy
                         </button>
                     </div>

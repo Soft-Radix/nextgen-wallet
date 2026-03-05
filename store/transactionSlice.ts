@@ -7,6 +7,7 @@ type TransferPayload = {
   receiver_phone?: string | null;
   amount?: number;
   note?: string | null;
+  is_contact?: boolean;
   pin: string;
   name?: string | null;
 };
@@ -17,6 +18,7 @@ type DraftTransfer = {
   amount?: number;
   note?: string | null;
   name?: string | null;
+  is_contact?: boolean;
 };
 
 type TransactionState = {
@@ -88,6 +90,7 @@ export const AddTransaction = createAsyncThunk<
         amount: payload.amount,
         note: payload.note ?? null,
         name: payload.name ?? null,
+        is_contact: payload.is_contact ?? false,
         pin: payload.pin,
       },
     });

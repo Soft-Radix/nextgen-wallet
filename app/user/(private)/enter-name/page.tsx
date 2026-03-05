@@ -2,6 +2,7 @@
 
 import Topbar from "@/components/Topbar";
 import { Button, Input } from "@/components/ui";
+import { apiGetUserDetails } from "@/lib/api/userDetails";
 import { AmountSent } from "@/lib/svg";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useAppDispatch } from "@/store/hooks";
@@ -9,7 +10,7 @@ import { RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 const EnterAmountContent = () => {
@@ -18,11 +19,21 @@ const EnterAmountContent = () => {
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
 
     const [name, setName] = useState(draft?.name || "");
+    const [isChecked, setIsChecked] = useState(false);
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
     const dispatch = useAppDispatch()
     const user = getUserDetails();
-
+    const id = searchParams.get("id");
+    useEffect(() => {
+        if (id && !draft?.name) {
+            const fetchUser = async () => {
+                const user = await apiGetUserDetails(id, "", "");
+                setName(user.name || "");
+            }
+            fetchUser();
+        }
+    }, [id]);
 
     const handleContinue = () => {
         const nameValue = name?.trim() || null;
@@ -36,6 +47,7 @@ const EnterAmountContent = () => {
                 note: note.trim() || null,
                 receiver_id: draft?.receiver_id,
                 receiver_phone: draft?.receiver_phone,
+                is_contact: isChecked,
             })
         );
 
@@ -65,7 +77,16 @@ const EnterAmountContent = () => {
                     onChange={(e) => { setError(null); setName(e.target.value) }}
                     error={error ? error : ""}
                 />
-
+                <div className="flex  gap-2  justify-start items-center mt-[28px] w-full">
+                    <input type="checkbox"
+                        style={{ accentColor: 'var(--button-primary-from)', borderColor: '#6F7B8F', borderWidth: "2px", width: "18px", height: "18px", cursor: "pointer" }}
+                        checked={isChecked}
+                        onChange={() => setIsChecked(!isChecked)}
+                    />
+                    <span className="text-grey text-[14px] font-medium">
+                        Save to my contacts
+                    </span>
+                </div>
 
                 {/* continue button */}
                 <div className="flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("transactions")
-      .select("id, sender_profile_id, receiver_profile_id, amount, status, created_at, name")
+      .select("id, sender_profile_id, receiver_profile_id, amount, status, created_at, name, is_contact")
       .or(`sender_profile_id.eq.${user_id},receiver_profile_id.eq.${user_id}`)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
           sender_mobile: senderPhone,
           receiver_mobile: receiverPhone,
           name: tx.name ?? null,
+          is_contact: tx.is_contact ?? false,
           counterparty_mobile: transactionType === "sender" ? receiverPhone : senderPhone,
         };
       });

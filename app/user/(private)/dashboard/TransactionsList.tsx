@@ -27,6 +27,7 @@ const formatDate = (iso?: string) => {
 };
 
 const TransactionsList = ({ list, onItemClick }: { list: Transaction[]; onItemClick?: (item: Transaction) => void }) => {
+
     return (
         <div>
             {list.map((item: Transaction) => (

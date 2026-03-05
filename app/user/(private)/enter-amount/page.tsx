@@ -45,6 +45,7 @@ const EnterAmountContent = () => {
                 note: note.trim() || null,
                 receiver_id: draft?.receiver_id,
                 receiver_phone: draft?.receiver_phone,
+                is_contact: draft?.is_contact,
             })
         );
 

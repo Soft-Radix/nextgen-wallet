@@ -12,7 +12,7 @@ import type { AppDispatch, RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
-import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
 
 const SendMoneyPage = () => {
     const router = useRouter();
@@ -29,9 +29,11 @@ const SendMoneyPage = () => {
     const storedUser = getUserDetails();
     const reduxUser = useSelector((state: RootState) => state.userDetails.user);
     const user = reduxUser || storedUser;
+    const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
 
+    console.log(draft);
     useEffect(() => {
         const fetchTransactions = async () => {
             if (!user?.id) return;
@@ -67,6 +69,24 @@ const SendMoneyPage = () => {
         fetchTransactions();
     }, [user?.id]);
 
+    const quickSelectItems = React.useMemo(() => {
+        const seen = new Set<string>();
+
+        return (transactions || [])
+            .filter((tx) => tx.is_contact)
+            .filter((tx) => {
+                const key =
+                    tx.counterparty_mobile ||
+                    tx.receiver_mobile ||
+                    tx.sender_mobile ||
+                    String(tx.id);
+
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+    }, [transactions]);
+
 
     const handleContinue = async () => {
         if (!phoneNumber) {
@@ -91,6 +111,7 @@ const SendMoneyPage = () => {
             receiverId = user.id;
             receiverPhone =
                 user.full_number || `${user.country_code}${user.mobile_number}`;
+
 
         } catch (err: any) {
             const status = err?.response?.status;
@@ -119,11 +140,17 @@ const SendMoneyPage = () => {
                 receiver_phone: receiverPhone,
                 amount: 0,
                 note: null,
+                is_contact: user?.is_contact ?? false,
+                name: user?.name ?? null,
             })
         );
 
         setLoading(false);
-        router.push("/user/enter-name");
+        if (!draft?.is_contact) {
+            router.push("/user/enter-name?id=" + receiverId);
+        } else {
+            router.push("/user/enter-amount");
+        }
     };
 
     return (
@@ -182,7 +209,7 @@ const SendMoneyPage = () => {
                                         New
                                     </p>
                                 </div>
-                                {transactions?.map((item) => (
+                                {quickSelectItems.map((item) => (
                                     <div
                                         key={item.id}
                                         className="flex items-center justify-center gap-1 flex-col"
@@ -195,6 +222,9 @@ const SendMoneyPage = () => {
                                                     receiver_phone: item.counterparty_mobile,
                                                     amount: 0,
                                                     note: null,
+                                                    is_contact: true,
+                                                    name: item?.name ?? null,
+
                                                 })
                                             );
                                         }}
@@ -203,7 +233,7 @@ const SendMoneyPage = () => {
                                             <img src="/user.png" alt="user" />
                                         </div>
                                         <p className="text-[#1E2C44] text-[12px] font-semibold capitalize">
-                                            {item?.counterparty_mobile}
+                                            {getNameCapitalized(item?.name ?? "") || item?.counterparty_mobile}
                                         </p>
                                     </div>
                                 ))}
