@@ -239,7 +239,7 @@ const SendMoneyPage = () => {
                                         className="flex items-center justify-center gap-1 flex-col"
                                         onClick={() => {
                                             // In future you can map these to real receiver_id/phone
-                                            setPhoneNumber(String(`+1${item.counterparty_mobile}` || "").replace(/\D/g, ""));
+                                            // setPhoneNumber(String(`+1${item.counterparty_mobile}` || "").replace(/\D/g, ""));
                                             dispatch(
                                                 setDraftTransfer({
                                                     receiver_id: item.id,
@@ -251,6 +251,7 @@ const SendMoneyPage = () => {
 
                                                 })
                                             );
+                                            router.push("/user/enter-amount");
                                         }}
                                     >
                                         <div className="w-[50px] h-[50px] rounded-full bg-gray-200">

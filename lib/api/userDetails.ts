@@ -66,12 +66,13 @@ export async function apiGetUserDetails(
 export async function apiUpdateUserPin(
   id: string,
   pin?: string,
-  name?: string
+  name?: string,
+  oldPin?: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
     url: "user-details",
     method: "patch",
-    data: { id, pin, name },
+    data: { id, pin, name, old_pin: oldPin },
   });
 
   return {

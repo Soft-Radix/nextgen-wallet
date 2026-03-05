@@ -51,11 +51,11 @@ export const loginUser = createAsyncThunk<
 
 export const updateUserPin = createAsyncThunk<
   UserDetails,
-  { id: string; pin?: string, name?: string },
+  { id: string; pin?: string; name?: string; old_pin?: string },
   { rejectValue: string }
->("userDetails/updatePin", async ({ id, pin, name }, { rejectWithValue }) => {
+>("userDetails/updatePin", async ({ id, pin, name, old_pin }, { rejectWithValue }) => {
   try {
-    return await apiUpdateUserPin(id, pin || "", name || "");
+    return await apiUpdateUserPin(id, pin || "", name || "", old_pin);
   } catch (err: any) {
     const message =
       err?.response?.data?.error ?? err?.message ?? "Failed to update PIN";

@@ -88,13 +88,44 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { id, pin, name } = await request.json();
+    const { id, pin, name, old_pin } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
+
+    // Load existing user to verify current PIN when changing an already-set PIN
+    const { data: existing, error: existingError } = await supabase
+      .from("user_details")
+      .select("id, pin")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: existingError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "User not found for given id" },
+        { status: 404 }
+      );
+    }
+
+    // If a PIN already exists, require the correct old_pin before updating
+    if (existing.pin && pin) {
+      if (!old_pin || String(existing.pin) !== String(old_pin)) {
+        return NextResponse.json(
+          { error: "Current PIN is incorrect" },
+          { status: 400 }
+        );
+      }
+    }
 
     const { data, error } = await supabase
       .from("user_details")
@@ -110,13 +141,6 @@ export async function PATCH(request: Request) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    if (!data) {
-      return NextResponse.json(
-        { error: "User not found for given id" },
-        { status: 404 }
-      );
     }
 
     // Ensure wallet exists and return wallet info with the user

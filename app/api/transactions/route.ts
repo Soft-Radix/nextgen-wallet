@@ -22,16 +22,15 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("transactions")
-      .select("id, sender_profile_id, receiver_profile_id, amount, status, created_at, name, is_contact")
+      .select(
+        "id, sender_profile_id, receiver_profile_id, amount, status, created_at, name, is_contact"
+      )
       .or(`sender_profile_id.eq.${user_id},receiver_profile_id.eq.${user_id}`)
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     const txList = data ?? [];
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
     if (profileIds.length > 0) {
       const { data: users, error: usersError } = await supabase
         .from("user_details")
-        .select("id, mobile_number")
+        .select("id, full_number")
         .in("id", profileIds);
 
       if (usersError) {
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
       } else {
         phoneMap = (users ?? []).reduce<Record<string, string | null>>(
           (acc, user) => {
-            acc[String(user.id)] = user.mobile_number ?? null;
+            acc[String(user.id)] = user.full_number ?? null;
             return acc;
           },
           {}
@@ -66,30 +65,30 @@ export async function POST(request: Request) {
       }
     }
 
-    let items =
-      txList.map((tx) => {
-        const isSender = String(tx.sender_profile_id) === String(user_id);
-        const transactionType = isSender ? "sender" : "receiver";
+    let items = txList.map((tx) => {
+      const isSender = String(tx.sender_profile_id) === String(user_id);
+      const transactionType = isSender ? "sender" : "receiver";
 
-        const senderPhone = phoneMap[String(tx.sender_profile_id)] ?? null;
-        const receiverPhone = phoneMap[String(tx.receiver_profile_id)] ?? null;
+      const senderPhone = phoneMap[String(tx.sender_profile_id)] ?? null;
+      const receiverPhone = phoneMap[String(tx.receiver_profile_id)] ?? null;
 
-        return {
-          id: tx.id,
-          amount: Number(tx.amount) || 0,
-          status: tx.status ?? "Completed",
-          created_at: tx.created_at,
-          transaction_type: transactionType,
-          type: isSender ? "outgoing" : "incoming",
-          sender_profile_id: tx.sender_profile_id,
-          receiver_profile_id: tx.receiver_profile_id,
-          sender_mobile: senderPhone,
-          receiver_mobile: receiverPhone,
-          name: tx.name ?? null,
-          is_contact: tx.is_contact ?? false,
-          counterparty_mobile: transactionType === "sender" ? receiverPhone : senderPhone,
-        };
-      });
+      return {
+        id: tx.id,
+        amount: Number(tx.amount) || 0,
+        status: tx.status ?? "Completed",
+        created_at: tx.created_at,
+        transaction_type: transactionType,
+        type: isSender ? "outgoing" : "incoming",
+        sender_profile_id: tx.sender_profile_id,
+        receiver_profile_id: tx.receiver_profile_id,
+        sender_mobile: senderPhone,
+        receiver_mobile: receiverPhone,
+        name: tx.name ?? null,
+        is_contact: tx.is_contact ?? false,
+        counterparty_mobile:
+          transactionType === "sender" ? receiverPhone : senderPhone,
+      };
+    });
 
     if (typeof search === "string" && search.trim()) {
       const q = search.toLowerCase();
@@ -101,8 +100,7 @@ export async function POST(request: Request) {
           "";
         const status = item.status || "";
         return (
-          phone.toLowerCase().includes(q) ||
-          status.toLowerCase().includes(q)
+          phone.toLowerCase().includes(q) || status.toLowerCase().includes(q)
         );
       });
     }
@@ -123,4 +121,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

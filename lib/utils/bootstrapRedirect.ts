@@ -36,7 +36,7 @@ export function getNameCapitalized(name: string) {
 }
 
 export function getUserImage(name: string) {
-  if (!name) return null;
+  if (!name) return "N/A";
   const nameArray = name.split(" ");
   return nameArray.map((name) => name.charAt(0).toUpperCase()).join("");
 }
