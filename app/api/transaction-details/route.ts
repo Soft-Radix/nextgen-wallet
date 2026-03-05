@@ -6,10 +6,7 @@ export async function POST(request: Request) {
     const { id, kind } = await request.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "id is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -22,10 +19,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       if (!data) {
@@ -63,10 +57,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (txError) {
-      return NextResponse.json(
-        { error: txError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: txError.message }, { status: 500 });
     }
 
     if (!tx) {
@@ -76,10 +67,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const profileIds = [
-      tx.sender_profile_id,
-      tx.receiver_profile_id,
-    ].filter((v): v is string | number => v != null);
+    const profileIds = [tx.sender_profile_id, tx.receiver_profile_id].filter(
+      (v): v is string | number => v != null
+    );
 
     let phoneMap: Record<string, string | null> = {};
     let nameMap: Record<string, string | null> = {};
@@ -91,7 +81,10 @@ export async function POST(request: Request) {
         .in("id", profileIds);
 
       if (usersError) {
-        console.error("transaction-details user_details lookup error:", usersError);
+        console.error(
+          "transaction-details user_details lookup error:",
+          usersError
+        );
       } else {
         phoneMap = {};
         nameMap = {};
@@ -99,8 +92,7 @@ export async function POST(request: Request) {
           const key = String(user.id);
           const dial = user.country_code ?? "";
           const mobile = user.mobile_number ?? "";
-          phoneMap[key] =
-            dial || mobile ? `${dial}${mobile}` : mobile || null;
+          phoneMap[key] = dial || mobile ? `${dial}${mobile}` : mobile || null;
           nameMap[key] = user.name ?? null;
         });
       }
@@ -123,8 +115,9 @@ export async function POST(request: Request) {
         created_at: tx.created_at,
         sender_phone: senderPhone,
         receiver_phone: receiverPhone,
-        sender_name: senderName ?? txName,
-        receiver_name: receiverName ?? txName,
+        // Prefer edited transaction name over profile name
+        sender_name: senderName,
+        receiver_name: txName ?? receiverName,
         counterparty_phone: null,
         note: (tx as any).note ?? null,
         reference: tx.id,
@@ -139,4 +132,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

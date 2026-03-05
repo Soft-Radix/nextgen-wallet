@@ -242,7 +242,7 @@ const SendMoneyPage = () => {
                                             // setPhoneNumber(String(`+1${item.counterparty_mobile}` || "").replace(/\D/g, ""));
                                             dispatch(
                                                 setDraftTransfer({
-                                                    receiver_id: item.id,
+                                                    receiver_id: item.receiver_profile_id,
                                                     receiver_phone: item.counterparty_mobile,
                                                     amount: 0,
                                                     note: null,
