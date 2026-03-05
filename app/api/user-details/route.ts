@@ -88,13 +88,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { id, pin } = await request.json();
+    const { id, pin, name } = await request.json();
 
-    if (!id || !pin) {
-      return NextResponse.json(
-        { error: "id and pin are required" },
-        { status: 400 }
-      );
+    if (!id) {
+      return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -102,8 +99,9 @@ export async function PATCH(request: Request) {
     const { data, error } = await supabase
       .from("user_details")
       .update({
-        pin,
-        status: "active",
+        pin: pin ? pin : null,
+        name: name ? name : null,
+        status: pin ? "active" : "inactive",
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)

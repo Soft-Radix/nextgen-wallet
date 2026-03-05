@@ -4,7 +4,7 @@ import { Button } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
 
-type User = { id?: string; country_code?: string; mobile_number?: string; status?: string } | null;
+type User = { id?: string; country_code?: string; mobile_number?: string; status?: string, name?: string } | null;
 
 export default function OtpVerificationPage() {
     const [user, setUser] = useState<User>(null);
@@ -71,6 +71,10 @@ export default function OtpVerificationPage() {
         }
         else if (user?.status == "active") {
             router.push("/user/dashboard");
+            return;
+        }
+        else if (!user?.name) {
+            router.push("/user/create-profile");
             return;
         }
         else {

@@ -6,12 +6,8 @@ import React from 'react'
 
 interface Transaction {
     id?: string;
-    name?: string;
-    date?: string;
-    status?: string;
     amount?: number;
-    type?: string;
-    full_number?: string;
+    counterparty_mobile?: string;
 }
 const RecentReciptList = ({ list }: { list: Transaction[] }) => {
     const router = useRouter();
@@ -23,8 +19,8 @@ const RecentReciptList = ({ list }: { list: Transaction[] }) => {
                     router.push("/user/confirm-transfer"); dispatch(
                         setDraftTransfer({
                             receiver_id: item.id,
-                            receiver_phone: item.full_number,
-                            amount: 0,
+                            receiver_phone: item.counterparty_mobile,
+                            amount: item?.amount || 0,
                             note: null,
                         }))
                 }}>
@@ -33,8 +29,8 @@ const RecentReciptList = ({ list }: { list: Transaction[] }) => {
                             <img src="/user.png" alt="user" />
                         </div>
                         <div>
-                            <p className="text-text  text-sm font-semibold">{item.name}</p>
-                            <p className="text-grey text-[12px]">{item.full_number}</p>
+                            <p className="text-text  text-sm font-semibold">{item.counterparty_mobile}</p>
+                            {/* <p className="text-grey text-[12px]">{item.full_number}</p> */}
                         </div>
                     </div>
 

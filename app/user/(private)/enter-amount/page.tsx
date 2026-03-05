@@ -40,6 +40,7 @@ const EnterAmountContent = () => {
         // );
         dispatch(
             setDraftTransfer({
+                name: draft?.name,
                 amount: numericAmount,
                 note: note.trim() || null,
                 receiver_id: draft?.receiver_id,
@@ -61,7 +62,7 @@ const EnterAmountContent = () => {
 
                     </div>
                 </div>
-                <p className="text-text text-[20px] font-semibold"> John Doe </p>
+                <p className="text-text text-[20px] font-semibold"> {draft?.name || "N/A"}</p>
                 <p className="text-grey text-[14px] text-center ">{draft?.receiver_phone || "N/A"}</p>
                 {/* amount to send */}
                 <div className='w-full flex flex-col items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>

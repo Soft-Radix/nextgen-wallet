@@ -68,6 +68,7 @@ const page = () => {
                 receiver_phone: draft?.receiver_phone ?? null,
                 amount: draft?.amount ?? 0,
                 note: draft?.note ?? null,
+                name: draft?.name ?? null,
                 pin,
             })
         );
@@ -101,7 +102,7 @@ const page = () => {
                     </div>
                 </div>
                 <p className="text-text text-[20px] font-semibold"> Pay ${draft?.amount || 0} </p>
-                <p className="text-grey text-[14px] text-center ">To {draft?.receiver_phone || "N/A"}</p>
+                <p className="text-grey text-[14px] text-center ">To {draft?.name || "N/A"}</p>
                 <div className="flex flex-col gap-1 mb-[30px] mt-[20px]">
                     <p className="text-grey text-[14px] text-center uppercase mb-[10px]">Enter your pin</p>
                     <div className="flex items-center justify-center gap-3 ">

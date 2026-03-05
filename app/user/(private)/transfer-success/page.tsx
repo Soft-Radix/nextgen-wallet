@@ -24,8 +24,8 @@ export default function TransferSuccessPage() {
                 <div className="max-w-[524px] w-full py-6">
                     <div className=" flex flex-col gap-[20px] items-center">
                         <SuccessIcon />
-                        <p className="text-text font-semibold text-[24px] leading-[35px] text-center"> ${draft?.amount} sent to
-                            John Doe!</p>
+                        <p className="text-text font-semibold text-[24px] leading-[35px] text-center"> ${draft?.amount} sent to &nbsp;
+                            {draft?.name || "N/A"}!</p>
                         <p className="text-grey  text-[14px] text-center mb-[20px] ">Your transfer has been processed successfully.</p>
 
 

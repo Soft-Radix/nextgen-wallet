@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
@@ -13,7 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function BottomNav() {
-  const [activeItem, setActiveItem] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
   const menuItems = [
@@ -37,24 +35,34 @@ export default function BottomNav() {
     },
   ];
 
-  return pathname == "/user/dashboard" && (
+  const shouldShowNav =
+    pathname.startsWith("/user/dashboard") ||
+    pathname.startsWith("/user/transactions") ||
+    pathname.startsWith("/user/profile");
+
+  const activePath =
+    pathname.startsWith("/user/transactions")
+      ? "/user/transactions"
+      : pathname.startsWith("/user/profile")
+        ? "/user/profile"
+        : "/user/dashboard";
+
+  return shouldShowNav && (
     <div className="w-full h-[100px] bg-[#ffffff] p-6 fixed bottom-0 left-0 right-0 border-t border-[#E2E8F0] ">
       <div className="flex items-center justify-between">
-        {menuItems.map((item, index) => (
+        {menuItems.map((item) => (
           <button
-            key={index}
+            key={item.path}
             type="button"
             onClick={() => {
-              setActiveItem(index);
               router.push(item.path);
             }}
             className="flex flex-col items-center gap-[5px]"
           >
-            {activeItem == index ? item.activeIcon : item.icon}
-            <p className={`text-greyLight text-[12px] ${activeItem == index ? "bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent font-bold" : "text-greyLight font-medium"}`}>{item.label}</p>
+            {activePath === item.path ? item.activeIcon : item.icon}
+            <p className={`text-greyLight text-[12px] ${activePath === item.path ? "bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] bg-clip-text text-transparent font-bold" : "text-greyLight font-medium"}`}>{item.label}</p>
           </button>
         ))}
-
       </div>
     </div>
   );
