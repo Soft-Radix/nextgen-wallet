@@ -10,7 +10,7 @@ import type { AppDispatch, RootState } from "@/store/store";
 import { AddTransaction } from "@/store/transactionSlice";
 import toast from "react-hot-toast";
 import { setUserBalanceUpdate } from "@/store/userDetailsSlice";
-import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
 
 const page = () => {
     const router = useRouter();
@@ -77,7 +77,7 @@ const page = () => {
                         </div>
                         <div>
                             <p className="text-grey text-[14px]  ">To</p>
-                            <p className="text-text text-[20px] font-bold ">{draft?.name || "N/A"}</p>
+                            <p className="text-text text-[20px] font-bold ">{getNameCapitalized(draft?.name ?? "") || "N/A"}</p>
                             <p className="text-grey text-[14px] font-medium ">{draft?.note || "No note"}</p>
                         </div>
                     </div>

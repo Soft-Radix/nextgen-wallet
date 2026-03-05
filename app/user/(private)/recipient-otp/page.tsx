@@ -1,7 +1,7 @@
 "use client"
 import { Button } from '@/components/ui';
 import { BackIcon, VerifyOtpIcon } from '@/lib/svg';
-import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store/store';
 import { AddTransaction } from '@/store/transactionSlice';
@@ -102,7 +102,7 @@ const page = () => {
                     </div>
                 </div>
                 <p className="text-text text-[20px] font-semibold"> Pay ${draft?.amount || 0} </p>
-                <p className="text-grey text-[14px] text-center ">To {draft?.name || "N/A"}</p>
+                <p className="text-grey text-[14px] text-center ">To {getNameCapitalized(draft?.name ?? "") || "N/A"}</p>
                 <div className="flex flex-col gap-1 mb-[30px] mt-[20px]">
                     <p className="text-grey text-[14px] text-center uppercase mb-[10px]">Enter your pin</p>
                     <div className="flex items-center justify-center gap-3 ">

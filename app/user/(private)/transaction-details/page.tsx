@@ -4,6 +4,7 @@ import Topbar from "@/components/Topbar";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRightBlockIcon, CalenderIcon, CheckCircleIcon, ReceivedIcon, SentIcon } from "@/lib/svg";
+import { getNameCapitalized } from "@/lib/utils/bootstrapRedirect";
 
 interface TransactionDetails {
   id: string;
@@ -218,7 +219,7 @@ export default function TransactionDetailsPage() {
                       <span>From</span>
                       <div className="flex items-end flex-col justify-between gap-1">
                         <span className="text-text font-semibold text-right">
-                          {effective?.sender_name || "-"}
+                          {getNameCapitalized(effective?.sender_name ?? "") || "-"}
                         </span>
                         <span className="text-grey  text-right">
                           {effective?.sender_phone || "-"}
@@ -229,7 +230,7 @@ export default function TransactionDetailsPage() {
                       <span>To</span>
                       <div className="flex items-end flex-col justify-between gap-1">
                         <span className="text-text font-semibold text-right">
-                          {effective?.receiver_name ||
+                          {getNameCapitalized(effective?.receiver_name ?? "") ||
 
                             "-"}
                         </span>

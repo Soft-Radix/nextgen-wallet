@@ -2,7 +2,7 @@
 import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { ArrowRightIcon, SuccessIcon, WalletIdIcon } from "@/lib/svg"
-import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useAppDispatch } from "@/store/hooks";
 import { RootState } from "@/store/store";
 import { ResetTransaction } from "@/store/transactionSlice";
@@ -25,7 +25,7 @@ export default function TransferSuccessPage() {
                     <div className=" flex flex-col gap-[20px] items-center">
                         <SuccessIcon />
                         <p className="text-text font-semibold text-[24px] leading-[35px] text-center"> ${draft?.amount} sent to &nbsp;
-                            {draft?.name || "N/A"}!</p>
+                            {getNameCapitalized(draft?.name ?? "") || "N/A"}!</p>
                         <p className="text-grey  text-[14px] text-center mb-[20px] ">Your transfer has been processed successfully.</p>
 
 

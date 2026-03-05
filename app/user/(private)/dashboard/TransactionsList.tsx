@@ -1,4 +1,5 @@
 import { IncomingIcon, OutgoingIcon } from '@/lib/svg'
+import { getNameCapitalized } from '@/lib/utils/bootstrapRedirect';
 import React from 'react'
 
 interface Transaction {
@@ -41,8 +42,8 @@ const TransactionsList = ({ list, onItemClick }: { list: Transaction[]; onItemCl
                         <div>
                             <p className="text-text  text-[13px] font-semibold">
                                 {(item.transaction_type === "sender"
-                                    ? (item.name || item.receiver_mobile)
-                                    : (item.name || item.sender_mobile)) ||
+                                    ? (getNameCapitalized(item.name ?? "") || item.receiver_mobile)
+                                    : (getNameCapitalized(item.name ?? "") || item.sender_mobile)) ||
                                     item.counterparty_mobile?.replace("ATM Withdrawal", "Withdrawals") ||
                                     "Unknown"}
                             </p>

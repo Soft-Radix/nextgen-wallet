@@ -7,7 +7,7 @@ import { RootState } from "@/store/store";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { loginUser } from "@/store/userDetailsSlice";
-import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { ResetTransaction } from "@/store/transactionSlice";
 
 interface DashboardTransaction {
@@ -89,11 +89,7 @@ export default function DashboardPage() {
         fetchData();
     }, [user?.id]);
 
-    const handleLogout = () => {
-        localStorage.clear();
-        dispatch(ResetTransaction());
-        router.push("/user/welcome");
-    }
+
     if (!user) {
         return <div className="flex items-center justify-center h-screen">Loading...</div>;
     }
@@ -107,7 +103,7 @@ export default function DashboardPage() {
                         <img src="/user.png" alt="user" />
                     </div>
                     <div>
-                        <p className="text-text  text-lg font-semibold">🌞 Good Morning, {user?.name}</p>
+                        <p className="text-text  text-lg font-semibold">🌞 Good Morning, {getNameCapitalized(user?.name ?? "")}</p>
                         <p className="text-grey text-[12px]">Welcome to your secure dashboard.</p>
                     </div>
                 </div>
