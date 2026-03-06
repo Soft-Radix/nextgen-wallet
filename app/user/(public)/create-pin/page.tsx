@@ -22,7 +22,7 @@ const CreatePinSchema = Yup.object({
 
 export default function PinPage() {
     const router = useRouter();
-    const [userFromStorage, setUserFromStorage] = useState<{ id?: string; pin?: string } | null>(null);
+    const [userFromStorage, setUserFromStorage] = useState<{ id?: string; pin?: string, name?: string } | null>(null);
     const dispatch = useAppDispatch();
     const { loading, error, user } = useAppSelector((state: RootState) => state.userDetails);
 
@@ -30,12 +30,17 @@ export default function PinPage() {
         const raw = localStorage.getItem("user");
         const parsed = raw ? JSON.parse(raw) : {};
         setUserFromStorage(parsed);
+
         if (!parsed?.id) {
             router.push("/user/welcome");
             return;
         }
         if (parsed?.status === "active") {
             router.push("/user/dashboard");
+        }
+        if (!parsed?.name) {
+            router.push("/user/create-profile");
+            return;
         }
     }, [router]);
 
@@ -70,6 +75,7 @@ export default function PinPage() {
                                     updateUserPin({
                                         id: user?.id || userFromStorage?.id || "",
                                         pin: values.pin,
+                                        name: user?.name || userFromStorage?.name || "",
                                     })
                                 );
 

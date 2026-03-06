@@ -26,3 +26,17 @@ export function getUserDetails() {
   const userRaw = window.localStorage.getItem("user");
   return userRaw ? JSON.parse(userRaw) : null;
 }
+
+export function getNameCapitalized(name: string) {
+  if (!name) return null;
+  const nameArray = name.split(" ");
+  return nameArray
+    .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
+    .join(" ");
+}
+
+export function getUserImage(name: string) {
+  if (!name) return "N/A";
+  const nameArray = name.split(" ");
+  return nameArray.map((name) => name.charAt(0).toUpperCase()).join("");
+}

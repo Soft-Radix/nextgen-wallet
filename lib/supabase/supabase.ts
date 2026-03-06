@@ -9,6 +9,8 @@ export default async function Home() {
 
   if (user.status == "active") {
     redirect("/user/dashboard");
+  } else if (!user.name) {
+    redirect("/user/create-profile");
   } else if (user.mobile_number && user.country_code) {
     redirect("/user/create-pin");
   } else {

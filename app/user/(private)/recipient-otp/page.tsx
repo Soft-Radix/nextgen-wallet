@@ -1,7 +1,7 @@
 "use client"
 import { Button } from '@/components/ui';
 import { BackIcon, VerifyOtpIcon } from '@/lib/svg';
-import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserDetails, getUserImage } from '@/lib/utils/bootstrapRedirect';
 import { useAppDispatch } from '@/store/hooks';
 import { RootState } from '@/store/store';
 import { AddTransaction } from '@/store/transactionSlice';
@@ -68,6 +68,8 @@ const page = () => {
                 receiver_phone: draft?.receiver_phone ?? null,
                 amount: draft?.amount ?? 0,
                 note: draft?.note ?? null,
+                name: draft?.name ?? null,
+                is_contact: draft?.is_contact ?? false,
                 pin,
             })
         );
@@ -95,13 +97,13 @@ const page = () => {
             </div>
             <div className="p-5 max-h-[calc(100vh-140px)] h-full overflow-y-auto flex flex-col items-center justify-center gap-2">
                 <div className='w-[94px] h-[94px] rounded-full bg-gray-200 mt-[20px] border-4 border-[#dfe9f3] shadow-[0px_0px_4px_4px_rgba(17, 82, 212, 0.8)] relative ' >
-                    <img src="/user1.jpg" alt="user" className='w-full h-full object-cover rounded-full' />
+                    {draft?.user_image ? <img src={draft?.user_image} alt="user" className='w-full h-full object-cover rounded-full' /> : <p className="text-[#00DE1C] text-[30px] font-semibold capitalize text-center leading-[94px]">{getUserImage(draft?.name ?? "")}</p>}
                     <div className='absolute bottom-0 right-0 w-[20px] h-[20px] border-2 border-white rounded-full bg-green-500'>
 
                     </div>
                 </div>
                 <p className="text-text text-[20px] font-semibold"> Pay ${draft?.amount || 0} </p>
-                <p className="text-grey text-[14px] text-center ">To {draft?.receiver_phone || "N/A"}</p>
+                <p className="text-grey text-[14px] text-center ">To {getNameCapitalized(draft?.name ?? "") || "N/A"}</p>
                 <div className="flex flex-col gap-1 mb-[30px] mt-[20px]">
                     <p className="text-grey text-[14px] text-center uppercase mb-[10px]">Enter your pin</p>
                     <div className="flex items-center justify-center gap-3 ">

@@ -81,18 +81,18 @@ export default function SignUpPage() {
                         label="Phone number"
                         placeholder="Enter phone number"
                         value={phoneNumber}
-                        onChange={(value) => { setPhoneNumber(value);  }}
+                        onChange={(value) => { setPhoneNumber(value); }}
                         setCountry={setCountry}
                         country={country}
                         onDialCodeChange={setCountryCode}
                     />
-                   
+
                     <div className="w-full">
                         <label
 
                             className="mb-1.5 block text-sm font-semibold text-text text-left"
                         >
-                            Email Address <span className="text-[14px] !font-medium text-greyDark">(Optional)</span>
+                            Email Address <span className="text-[14px] font-medium! text-greyDark">(Optional)</span>
                         </label>
 
                         <Input

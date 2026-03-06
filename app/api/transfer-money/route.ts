@@ -9,6 +9,8 @@ export async function POST(request: Request) {
       receiver_phone,
       amount,
       note,
+      name,
+      is_contact,
       pin,
     } = await request.json();
 
@@ -27,10 +29,7 @@ export async function POST(request: Request) {
     }
 
     if (!pin) {
-      return NextResponse.json(
-        { error: "PIN is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "PIN is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -50,18 +49,17 @@ export async function POST(request: Request) {
     }
 
     if (String(senderDetails.pin) !== String(pin)) {
-      return NextResponse.json(
-        { error: "Invalid PIN" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid PIN" }, { status: 400 });
     }
 
     const { data, error } = await supabase.rpc("transfer_money", {
       p_sender_profile_id: sender_id,
       p_receiver_profile_id: receiver_id ?? null,
       p_receiver_phone: receiver_phone ?? null,
+      p_name: name ?? null,
       p_amount: amount,
       p_note: note ?? null,
+      p_is_contact: is_contact ?? false,
     });
 
     if (error) {

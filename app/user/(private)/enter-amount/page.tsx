@@ -3,7 +3,7 @@
 import Topbar from "@/components/Topbar";
 import { Button } from "@/components/ui";
 import { AmountSent } from "@/lib/svg";
-import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { getNameCapitalized, getUserDetails, getUserImage } from "@/lib/utils/bootstrapRedirect";
 import { useAppDispatch } from "@/store/hooks";
 import { RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
@@ -40,10 +40,12 @@ const EnterAmountContent = () => {
         // );
         dispatch(
             setDraftTransfer({
+                name: draft?.name,
                 amount: numericAmount,
                 note: note.trim() || null,
                 receiver_id: draft?.receiver_id,
                 receiver_phone: draft?.receiver_phone,
+                is_contact: draft?.is_contact,
             })
         );
 
@@ -56,12 +58,12 @@ const EnterAmountContent = () => {
             <Topbar title="Enter Amount" />
             <div className="p-5  py-[77px]  overflow-y-auto flex flex-col items-center justify-center gap-2">
                 <div className='w-[94px] h-[94px] rounded-full bg-gray-200 mt-[20px] border-4 border-[#dfe9f3] shadow-[0px_0px_4px_4px_rgba(17, 82, 212, 0.8)] relative ' >
-                    <img src="/user1.jpg" alt="user" className='w-full h-full object-cover rounded-full' />
+                    {draft?.user_image ? <img src={draft?.user_image} alt="user" className='w-full h-full object-cover rounded-full' /> : <p className="text-[#00DE1C] text-[30px] font-semibold capitalize text-center leading-[94px]">{getUserImage(draft?.name ?? "")}</p>}
                     <div className='absolute bottom-0 right-0 w-[20px] h-[20px] border-2 border-white rounded-full bg-green-500'>
 
                     </div>
                 </div>
-                <p className="text-text text-[20px] font-semibold"> John Doe </p>
+                <p className="text-text text-[20px] font-semibold"> {getNameCapitalized(draft?.name ?? "") || "N/A"}</p>
                 <p className="text-grey text-[14px] text-center ">{draft?.receiver_phone || "N/A"}</p>
                 {/* amount to send */}
                 <div className='w-full flex flex-col items-center justify-between gap-2 bg-[#ffffff] rounded-[14px] p-6 mt-[20px] border-[0.5px] border-buttonOutlineBorder shadow-[0px_6px_10px_rgba(0, 0, 0, 0.2)]'>
