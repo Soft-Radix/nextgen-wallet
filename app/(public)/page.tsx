@@ -15,8 +15,8 @@ export default function WelcomePage() {
                         Real Control.</p>
                     <p className="text-grey  text-[14px] text-center mb-[20px]">Send, receive, and manage money instantly with secure digital banking.</p>
 
-                    <Button fullWidth={true} onClick={() => router.push("/login")}>Login</Button>
-                    <Button variant="outline" fullWidth={true} onClick={() => router.push("/signup")}>Register</Button>
+                    <Button fullWidth={true} onClick={() => router.push("/signup")}>Sign Up</Button>
+                    <Button variant="outline" fullWidth={true} onClick={() => router.push("/login")}>Log In</Button>
                     <div className="flex px-4 w-full gap-2 items-center">
 
                         <hr className="border-[1.5px] border-[#F0F3F7] border-dashed w-full" />
@@ -48,7 +48,7 @@ export default function WelcomePage() {
                     </div>
                 </div >
                 <div className="flex items-center gap-2  justify-center mt-[28px]">
-                    <span className="text-sm text-text font-medium">
+                    <span className="text-sm text-text font-medium  mt-1 ">
                         Powered by -
                     </span><PoweredBy />
                 </div>
