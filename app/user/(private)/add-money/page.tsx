@@ -47,38 +47,7 @@ const AddMoneyPage = () => {
         effectiveAmount > 0 &&
         effectiveAmount <= MAX_DAILY_WITHDRAWAL;
 
-    const handleGenerateCode = async () => {
-        if (!canGenerate || !user?.id) return;
-
-        const formattedAmount = effectiveAmount.toFixed(2);
-
-        try {
-            const response = await fetch("/api/add-money", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    user_id: user.id,
-                    amount: formattedAmount,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                console.error("Add money error:", data?.error || "Unknown error");
-            }
-        } catch (error) {
-            console.error("Add money network error:", error);
-        }
-
-        router.push(
-            `/user/add-money/barcode?amount=${encodeURIComponent(
-                formattedAmount
-            )}`
-        );
-    };
+   
 
     return (
         <>
@@ -166,14 +135,18 @@ const AddMoneyPage = () => {
                             size="lg"
                             fullWidth
                             disabled={!canGenerate || !manualAmount}
-                            onClick={handleGenerateCode}
+                            onClick={() => router.push(
+                                `/user/add-money/barcode?amount=${encodeURIComponent(
+                                    effectiveAmount.toFixed(2)
+                                )}`
+                            )}
                             className="rounded-[10px] h-[52px] text-base font-semibold"
                         >
                             Generate QR Code
                         </Button>
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     );
 };

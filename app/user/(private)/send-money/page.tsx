@@ -307,7 +307,7 @@ const SendMoneyPage = () => {
                     <RecentReciptList
                         list={
                             (transactions || []).filter(
-                                (tx) => tx.is_contact && tx.transaction_type === "sender"
+                                (tx) => tx.transaction_type === "sender"
                             )
                         }
                     />

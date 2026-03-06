@@ -13,6 +13,7 @@ interface Transaction {
     receiver_mobile?: string | null;
     counterparty_mobile?: string | null;
     name?: string | null;
+    sender_name?: string | null;
 }
 
 const formatDate = (iso?: string) => {
@@ -42,9 +43,9 @@ const TransactionsList = ({ list, onItemClick }: { list: Transaction[]; onItemCl
                         </div>
                         <div>
                             <p className="text-text  text-[13px] font-semibold">
-                                {(item.transaction_type === "sender"
-                                    ? (getNameCapitalized(item.name ?? "") || item.receiver_mobile)
-                                    : (getNameCapitalized(item.name ?? "") || item.sender_mobile)) ||
+                                {(item.type === "incoming"
+                                    ? (getNameCapitalized(item.sender_name ?? "") || item.sender_mobile)
+                                    : (getNameCapitalized(item.name ?? "") || item.receiver_mobile)) ||
                                     item.counterparty_mobile?.replace("ATM Withdrawal", "Withdrawals") ||
                                     "Unknown"}
                             </p>
