@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios";
 import type { AppDispatch } from "@/store/store";
+import { logoutUser } from "@/lib/utils/bootstrapRedirect";
 
 type ApiHelperConfig = {
   url: string;
@@ -9,6 +10,18 @@ type ApiHelperConfig = {
   dispatch?: AppDispatch;
   config?: AxiosRequestConfig;
 };
+
+// Setup axios interceptor to handle 401 responses
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // User is unauthorized, logout and redirect
+      logoutUser();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export async function ApiHelperFunction<T = any>({
   url,

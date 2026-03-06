@@ -23,6 +23,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: keyof typeof sizeStyles;
   fullWidth?: boolean;
   isLoading?: boolean;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -34,6 +36,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     disabled,
     className = "",
     children,
+    startIcon,
+    endIcon,
     ...props
   },
   ref
@@ -54,14 +58,27 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         .join(" ")}
       {...props}
     >
+      
+     
+
+    
       {isLoading ? (
         <>
           <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
           Loading...
         </>
       ) : (
-        children
+        <>
+        {startIcon && (
+          <span className="mr-2">{startIcon}</span>
+        )}
+        {children}
+        {endIcon && (
+          <span className="ml-2">{endIcon}</span>
+        )}
+        </>
       )}
+      
     </button>
   );
 });

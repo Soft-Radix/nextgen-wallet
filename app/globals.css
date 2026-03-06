@@ -96,6 +96,7 @@ body {
   border-color: #e2e8f0 !important;
   box-shadow: "none" !important;
   outline: none !important;
+  font-size: 16px !important;
 }
 .applied-shadow.react-tel-input .form-control {
   box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
@@ -124,11 +125,13 @@ body {
   border-color: #d8ebd7 !important;
   box-shadow: 0 10px 30px rgba(25, 33, 61, 0.08) !important;
   outline: none !important;
+  font-size: 16px !important;
 }
 .react-tel-input .form-control:focus {
   outline: none !important;
   box-shadow: none !important;
   outline: none !important;
+  font-size: 16px !important;
 }
 .applied-shadow.react-tel-input .form-control:hover {
   border-color: #d8ebd7 !important;

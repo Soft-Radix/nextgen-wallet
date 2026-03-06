@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
+import WelcomePage from "./(public)/page";
+import PublicLayout from "./(public)/layout";
 
 export default function Home() {
   const router = useRouter();
@@ -11,5 +13,9 @@ export default function Home() {
     bootstrapRedirect(router);
   }, [router]);
 
-  return null;
+  return (
+    <PublicLayout>
+      <WelcomePage />
+    </PublicLayout>
+  );
 }

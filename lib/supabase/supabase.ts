@@ -8,10 +8,12 @@ export default async function Home() {
   console.log("========user==", user);
 
   if (user.status == "active") {
-    redirect("/user/dashboard");
+    redirect("/dashboard");
+  } else if (!user.name) {
+    redirect("/create-profile");
   } else if (user.mobile_number && user.country_code) {
-    redirect("/user/create-pin");
+    redirect("/create-pin");
   } else {
-    redirect("/user/welcome");
+    redirect("/");
   }
 }

@@ -9,6 +9,8 @@ export type UserDetails = {
   updated_at?: string | null;
   wallet_balance?: number;
   wallet_currency?: string | null;
+  name?: string | null;
+  is_contact?: boolean | null;
 };
 
 import { ApiHelperFunction } from "@/lib/api/client";
@@ -63,12 +65,14 @@ export async function apiGetUserDetails(
 
 export async function apiUpdateUserPin(
   id: string,
-  pin: string
+  pin?: string,
+  name?: string,
+  oldPin?: string
 ): Promise<UserDetails> {
   const response = await ApiHelperFunction<UserDetailsResponse>({
     url: "user-details",
     method: "patch",
-    data: { id, pin },
+    data: { id, pin, name, old_pin: oldPin },
   });
 
   return {
