@@ -91,7 +91,7 @@ const userDetailsSlice = createSlice({
           state.user = action.payload;
           localStorage.setItem("country_code", action.payload.country_code || "");
           localStorage.setItem("mobile_number", action.payload.mobile_number || "");
-          localStorage.setItem("user", JSON.stringify(action.payload));
+          // localStorage.setItem("user", JSON.stringify(action.payload));
         }
       )
       .addCase(createUserDetails.rejected, (state, action) => {

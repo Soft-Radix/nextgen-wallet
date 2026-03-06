@@ -2,29 +2,31 @@
 import { useRef, useState, type KeyboardEvent, type ChangeEvent, useEffect } from "react";
 import { Button } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { bootstrapRedirect } from "@/lib/utils/bootstrapRedirect";
+import { bootstrapRedirect, getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import { apiGetUserDetails, type UserDetails } from "@/lib/api/userDetails";
 
-type User = { id?: string; country_code?: string; mobile_number?: string; status?: string, name?: string } | null;
+type User = UserDetails | { country_code?: string; mobile_number?: string } | null;
 
 export default function OtpVerificationPage() {
     const [user, setUser] = useState<User>(null);
-
     const [otp, setOtp] = useState(["", "", "", ""]);
+    const localUser = getUserDetails();
     const [timer, setTimer] = useState(80);
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
+    const countryCode = typeof window !== "undefined" ? localStorage.getItem("country_code") || "" : "";
+    const mobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") || "" : "";
+
+
 
     useEffect(() => {
-        setUser(JSON.parse(localStorage.getItem("user") || "{}"));
-    }, []);
-
-    useEffect(() => {
-        if (user === null) return;
-        if (!user?.id) {
-            router.push("/");
+        if (user === null && countryCode && mobileNumber) {
+            // User is removed, show the form
+            setUser({ country_code: countryCode, mobile_number: mobileNumber } as User);
         }
-    }, [user, router]);
+    }, [countryCode, mobileNumber]);
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
         setError(null);
         const value = e.target.value;
@@ -60,40 +62,70 @@ export default function OtpVerificationPage() {
         .toString()
         .padStart(2, "0")}`;
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         if (otp.every(value => value == "")) {
             setError("Please enter the OTP");
             return;
+        }
 
-        } else if (otp.join("") != "1234") {
+        if (otp.join("") != "1234") {
             setError("Invalid OTP");
             return;
         }
-        else if (user?.status == "active") {
-            router.push("/dashboard");
-            return;
-        }
-        else if (!user?.name) {
-            router.push("/create-profile");
-            return;
-        }
-        else {
-            router.push("/create-pin");
-            return;
+
+        // OTP is correct, fetch user details
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Call user details API with mobile_number and country_code
+            const userDetails = await apiGetUserDetails("", mobileNumber, countryCode);
+
+            // Set user details in localStorage
+            if (typeof window !== "undefined") {
+                localStorage.setItem("user", JSON.stringify(userDetails));
+                localStorage.setItem("country_code", userDetails.country_code || "");
+                localStorage.setItem("mobile_number", userDetails.mobile_number || "");
+            }
+
+            // Update local state
+            setUser(userDetails);
+
+            // Navigate based on user status
+            if (userDetails.status === "active") {
+                router.push("/dashboard");
+                return;
+            } else if (!userDetails.name) {
+                router.push("/create-profile");
+                return;
+            } else {
+                router.push("/create-pin");
+                return;
+            }
+        } catch (err: any) {
+            setError(err?.response?.data?.error || err?.message || "Failed to fetch user details");
+            setLoading(false);
         }
     }
 
-    if (user === null) {
-        return (
-            <div className="max-w-[524px] w-full flex items-center justify-center min-h-[200px]">
-                Loading...
-            </div>
-        );
+    if (!countryCode || !mobileNumber) {
+        return router.push("/");
     }
+
+    useEffect(() => {
+        if (localUser?.status === "active") {
+            router.push("/dashboard");
+        } else if (!localUser?.name) {
+            router.push("/create-profile");
+        } else {
+            router.push("/create-pin");
+        }
+    }, [localUser]);
+
 
     return (
         <>
-            <div className="max-w-[524px] w-full">
+            <div className="max-w-[524px] w-full h-100vh">
                 <div className="bg-white pt-[48px] p-6 rounded-[14px] flex flex-col gap-[20px] items-center border-[0.5px] border-[var(--button-outline-border)] shadow-[0_23px_50px_rgba(25,33,61,0.02)] ">
                     <p className="text-text font-semibold text-[24px] leading-[35px]">
                         OTP Verification
@@ -123,7 +155,9 @@ export default function OtpVerificationPage() {
                         {error && <p className="text-red-500 text-[14px] text-left">{error}</p>}
                     </div>
 
-                    <Button fullWidth={true} onClick={() => handleVerify()}>Verify</Button>
+                    <Button fullWidth={true} onClick={() => handleVerify()} disabled={loading}>
+                        {loading ? "Verifying..." : "Verify"}
+                    </Button>
 
                     {timer > 0 ? (
                         <p className="text-[#4CCF44] font-medium text-[16px]">

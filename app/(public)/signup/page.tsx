@@ -1,6 +1,6 @@
 "use client";
 import { Button, Input } from "@/components/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -26,6 +26,7 @@ export default function SignUpPage() {
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
     const [isChecked, setIsChecked] = useState(false);
     const [email, setEmail] = useState("");
+
     const [emailError, setEmailError] = useState("");
     const [country, setCountry] = useState("us"); // ISO code for UI
     const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
@@ -34,6 +35,7 @@ export default function SignUpPage() {
     const { loading } = useAppSelector((state: any) => state.userDetails);
 
     const handleSignUp = async () => {
+
         setEmailError("");
 
         if (email.trim()) {
@@ -48,10 +50,6 @@ export default function SignUpPage() {
             // local validation error
             return;
         }
-        if (savedNumber && savedNumber.length > 0) {
-            router.push("/otp-verification");
-            return;
-        }
 
         // Strip country dial code from the full phone value for API
         const allDigits = phoneNumber.replace(/\D/g, "");
@@ -60,6 +58,25 @@ export default function SignUpPage() {
             ? allDigits.slice(dialDigits.length)
             : allDigits;
 
+        // Check localStorage for user and mobile_number
+        const savedUser = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+        const savedMobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") : null;
+        const user = savedUser ? JSON.parse(savedUser) : null;
+
+        // If user doesn't exist in localStorage but mobile_number exists, redirect to OTP without API call
+        if (!user && savedMobileNumber && savedMobileNumber === nationalNumber) {
+            router.push("/otp-verification");
+            return;
+        }
+
+        // If user exists AND the phone number matches, redirect to OTP
+        if (user && user.mobile_number === nationalNumber && user.country_code === countryCode) {
+            router.push("/otp-verification");
+            return;
+        }
+
+        // Call API for new signups or different phone numbers
+        // The API will handle duplicate user cases (returns 409)
         const resultAction: any = await dispatch(
             createUserDetails({
                 mobile_number: nationalNumber,
@@ -71,6 +88,11 @@ export default function SignUpPage() {
             router.push("/otp-verification");
         }
     };
+    if (savedCountryCode || savedNumber) {
+        return router.push("/otp-verification");
+    }
+
+
     return (
         <>
             <div className="max-w-[524px] w-full">
