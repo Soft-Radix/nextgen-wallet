@@ -49,6 +49,10 @@ const PhoneNumberInput = ({
         }}
         enableClickOutside={true}
         containerClass={shadow ? "applied-shadow" : ""}
+        inputStyle={{
+          fontSize: "16px",
+          width: "100%",
+        }}
         inputClass={[
           "w-full h-[52px] rounded-[10px]  text-text border bg-[#ffffff] px-3 py-2 text-base placeholder:text-muted focus:outline-none focus:ring-2",
           error

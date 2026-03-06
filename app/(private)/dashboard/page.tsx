@@ -41,8 +41,32 @@ export default function DashboardPage() {
     }, [dispatch, storedUser?.id]);
 
     useEffect(() => {
+        // Check if mobile_number exists but user doesn't exist in localStorage
+        const savedMobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") : null;
+        const savedUser = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+        
+        if (!savedUser && savedMobileNumber) {
+            // User doesn't exist but mobile_number exists, redirect to OTP verification
+            router.replace("/otp-verification");
+            return;
+        }
+
+        // Check user status and redirect if not active
+        if (user && user.status !== "active") {
+            if (!user.name) {
+                router.replace("/create-profile");
+            } else if (user.mobile_number && user.country_code) {
+                router.replace("/create-pin");
+            } else {
+                router.replace("/otp-verification");
+            }
+            return;
+        }
+    }, [user, router]);
+
+    useEffect(() => {
         const fetchData = async () => {
-            if (!user?.id) return;
+            if (!user?.id || user?.status !== "active") return;
 
             try {
                 const [txRes, wdRes] = await Promise.all([
@@ -79,7 +103,7 @@ export default function DashboardPage() {
                 if (!wdRes.ok) {
                     console.error("Withdrawals fetch error:", wdData?.error || "Unknown error");
                 } else {
-                    setWithdrawals(wdData.items || []);
+                    setWithdrawals(wdData.items || []); 
                 }
             } catch (error) {
                 console.error("Dashboard transactions/withdrawals network error:", error);
@@ -87,11 +111,16 @@ export default function DashboardPage() {
         };
 
         fetchData();
-    }, [user?.id]);
+    }, [user?.id, user?.status]);
 
 
     if (!user) {
         return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    }
+
+    // Don't render dashboard if user status is not active
+    if (user.status !== "active") {
+        return <div className="flex items-center justify-center h-screen">Redirecting...</div>;
     }
     return (
         <div className=" ">

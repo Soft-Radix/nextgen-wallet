@@ -1,10 +1,34 @@
 "use client";
 import { Button } from "@/components/ui";
 import { Checkcircle, FeedNow, PoweredBy } from "@/lib/svg";
+import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function WelcomePage() {
     const router = useRouter();
+    const localUser = getUserDetails();
+    const countryCode = typeof window !== "undefined" ? localStorage.getItem("country_code") || "" : "";
+    const mobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") || "" : "";
+
+
+    useEffect(() => {
+        if (!localUser) {
+            if (countryCode || mobileNumber) {
+                return router.push("/otp-verification");
+            }
+        } else {
+            if (localUser?.status === "active") {
+                router.push("/dashboard");
+            } else if (!localUser?.name) {
+                router.push("/create-profile");
+            } else {
+                router.push("/create-pin");
+            }
+        }
+
+
+    }, [localUser, countryCode, mobileNumber, router]);
 
     return (
 
