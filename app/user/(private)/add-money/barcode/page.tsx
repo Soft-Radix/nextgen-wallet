@@ -2,6 +2,7 @@
 import Topbar from '@/components/Topbar'
 import { Button } from '@/components/ui';
 import { ClockIcon } from '@/lib/svg'
+import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useMemo } from 'react'
 import QRCode from "react-qr-code";
@@ -22,6 +23,33 @@ const BarcodeContent = () => {
     const formattedAmount = amount.toFixed(2);
     // Deep link that opens PayPal with this phone as recipient and amount prefilled
     const qrValue = `https://paypal.me/${COUNTRY_CODE.replace("+", "")}${MOBILE_NUMBER}/${formattedAmount}`;
+    const user = getUserDetails();
+    const handleGenerateCode = async () => {
+        if (!amount) return;
+
+        try {
+            const response = await fetch("/api/add-money", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    amount: formattedAmount,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("Add money error:", data?.error || "Unknown error");
+            }
+        } catch (error) {
+            console.error("Add money network error:", error);
+        }
+        router.push("/user/dashboard");
+
+    };
     return (
         <>
             <Topbar title="Your Cash-in QR Code" />
@@ -62,7 +90,7 @@ const BarcodeContent = () => {
                             variant="primary"
                             size="lg"
                             fullWidth
-                            onClick={() => router.push("/user/dashboard")}
+                            onClick={handleGenerateCode}
                             className="rounded-[10px] h-[52px] text-base font-semibold bg-[#4CCF44] from-[#4CCF44] to-[#4CCF44] hover:from-[#45b83d] hover:to-[#45b83d]"
                         >
                             Done

@@ -27,7 +27,7 @@ const SendMoneyPage = () => {
     );
     const [loading, setLoading] = useState(false);
     const storedUser = getUserDetails();
-    const reduxUser = useSelector((state: RootState) => state.userDetails.user);
+    const reduxUser = useSelector((state: RootState) => state.userDetails as any).user;
     const user = reduxUser || storedUser;
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -72,7 +72,8 @@ const SendMoneyPage = () => {
         const seen = new Set<string>();
 
         return (transactions || [])
-            .filter((tx) => tx.is_contact)
+            // Only show contacts where the logged-in user was the sender
+            .filter((tx) => tx.is_contact && tx.transaction_type === "sender")
             .filter((tx) => {
                 const key =
                     tx.counterparty_mobile ||
@@ -303,7 +304,13 @@ const SendMoneyPage = () => {
                         ))}
                     </div>
                 ) : (
-                    <RecentReciptList list={transactions} />
+                    <RecentReciptList
+                        list={
+                            (transactions || []).filter(
+                                (tx) => tx.transaction_type === "sender"
+                            )
+                        }
+                    />
                 )}
             </div>
             <div className="px-5 fixed bottom-4 left-0 right-0 max-w-[968px] w-full mx-auto">

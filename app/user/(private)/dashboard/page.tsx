@@ -119,7 +119,7 @@ export default function DashboardPage() {
                 </button>
 
             </div>
-            <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-5 pb-10">
+            <div className="max-h-[calc(100vh-190px)] overflow-y-auto p-5 pb-10">
                 {/* banner */}
                 <div className="w-full  bg-[#0c3332] rounded-[14px] p-5  text-center bg-[url('/Background.png')] bg-cover bg-center">
                     <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
