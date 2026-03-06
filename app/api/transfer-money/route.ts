@@ -177,14 +177,42 @@ export async function POST(request: Request) {
       }
     }
 
+    // When sender sends money to receiver with a name, update ALL previous transactions
+    // where sender sent to the same receiver with the latest name
+    // This ensures all previous transactions show the most recent name
+    if (name && transactionId && receiver_id) {
+      // Update ALL previous transactions where:
+      // - current sender was the sender (sender_id was sender_profile_id)
+      // - current receiver was the receiver (receiver_id was receiver_profile_id)
+      const { data: updatedTxs, error: updatePrevError } = await supabase
+        .from("transactions")
+        .update({ name: name })
+        .eq("sender_profile_id", sender_id) // Previous sender = current sender
+        .eq("receiver_profile_id", receiver_id) // Previous receiver = current receiver
+        .neq("id", transactionId) // Don't update the current transaction (it already has the name)
+        .select("id");
+
+      if (updatePrevError) {
+        console.error(
+          "Failed to update name on previous transactions:",
+          updatePrevError
+        );
+      } else if (updatedTxs && updatedTxs.length > 0) {
+        console.log(
+          `Updated name for ${updatedTxs.length} previous transaction(s)`
+        );
+      }
+    }
+
     // If receiver sends money back to sender, update sender_name in ALL matching previous transactions
-    // When B sends to A, find ALL transactions where A was sender and B was receiver, update A's sender_name
+    // When B sends to A with name, find ALL transactions where A was sender and B was receiver, update A's sender_name
     // This ensures the name is consistent across all previous transactions between these two users
     // Note: Future transactions will automatically use this name via the check above (nameToUseForSenderName)
     if (name && transactionId && receiver_id) {
       // Update ALL previous transactions where:
       // - current receiver was the sender (receiver_id was sender_profile_id)
       // - current sender was the receiver (sender_id was receiver_profile_id)
+      // This updates the sender_name field in previous transactions where current sender was the receiver
       const { data: updatedTxs, error: updatePrevError } = await supabase
         .from("transactions")
         .update({ sender_name: name })

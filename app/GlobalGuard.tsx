@@ -20,12 +20,12 @@ export default function GlobalGuard({
 
       const hasUser = user && Object.keys(user).length > 0;
 
-      if (!hasUser && pathname !== "/user/welcome") {
-        router.replace("/user/welcome");
+      if (!hasUser && pathname !== "/") {
+        router.replace("/");
       }
     } catch {
-      if (pathname !== "/user/welcome") {
-        router.replace("/user/welcome");
+      if (pathname !== "/") {
+        router.replace("/");
       }
     }
   }, [router, pathname]);
