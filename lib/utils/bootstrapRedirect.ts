@@ -47,6 +47,20 @@ export function getNameCapitalized(name: string) {
 
 export function getUserImage(name: string) {
   if (!name) return "N/A";
-  const nameArray = name.split(" ");
-  return nameArray.map((name) => name.charAt(0).toUpperCase()).join("");
+  const nameArray = name.split(" ").filter(word => word.trim().length > 0);
+  
+  // If only one word, show first letter
+  if (nameArray.length === 1) {
+    return nameArray[0].charAt(0).toUpperCase();
+  }
+  
+  // If multiple words, show first letter of first word and first letter of second word
+  if (nameArray.length >= 2) {
+    return (
+      nameArray[0].charAt(0).toUpperCase() +
+      nameArray[1].charAt(0).toUpperCase()
+    );
+  }
+  
+  return "UN";
 }

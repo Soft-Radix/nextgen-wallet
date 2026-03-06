@@ -89,6 +89,17 @@ const EnterAmountContent = () => {
             setError("Full Name is required.");
             return;
         }
+
+        if (nameValue.length < 3) {
+            setError("Name must be at least 3 characters long.");
+            return;
+        }
+
+        if (nameValue.length > 20) {
+            setError("Name must be less than 20 characters long.");
+            return;
+        }
+
         dispatch(
             setDraftTransfer({
                 name: nameValue,
@@ -122,7 +133,22 @@ const EnterAmountContent = () => {
                     label="Full Name"
                     placeholder="Enter your full name"
                     value={name}
-                    onChange={(e) => { setError(null); setName(e.target.value) }}
+                    // maxLength={20}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        setName(value);
+
+                        // Clear error if valid, or set error if invalid
+                        if (value.trim().length === 0) {
+                            setError(null);
+                        } else if (value.trim().length < 3) {
+                            setError("Name must be at least 3 characters long.");
+                        } else if (value.trim().length > 20) {
+                            setError("Name must be less than 20 characters long.");
+                        } else {
+                            setError(null);
+                        }
+                    }}
                     error={error ? error : ""}
                 />
                 <div className="flex  gap-2  justify-start items-center mt-[28px] w-full">
@@ -138,7 +164,7 @@ const EnterAmountContent = () => {
 
                 {/* continue button */}
                 <div className="flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
-                    <Button fullWidth={true} onClick={handleContinue} disabled={error !== null}>
+                    <Button fullWidth={true} onClick={handleContinue} disabled={error !== null || !name?.trim() || name.trim().length < 3 || name.trim().length > 20}>
                         Continue
                     </Button>
                 </div>
