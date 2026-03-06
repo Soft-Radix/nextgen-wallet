@@ -47,7 +47,7 @@ const BarcodeContent = () => {
                 toast.error(data?.error || "Unknown error");
             } else {
                 toast.success("Money added successfully");
-                router.push("/dashboard");
+                router.push("/withdraw-money/success?amount=" + formattedAmount);
             }
         } catch (error) {
             console.error("Add money network error:", error);

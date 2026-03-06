@@ -29,6 +29,7 @@ export default function DashboardPage() {
     const user = reduxUser || storedUser;
     const [transfers, setTransfers] = useState<DashboardTransaction[]>([]);
     const [withdrawals, setWithdrawals] = useState<DashboardTransaction[]>([]);
+    const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch();
     useEffect(() => {
         const fetchUserDetails = async () => {
@@ -63,11 +64,18 @@ export default function DashboardPage() {
             return;
         }
     }, [user, router]);
+    useEffect(() => {
+        dispatch(ResetTransaction());
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!user?.id || user?.status !== "active") return;
+            if (!user?.id || user?.status !== "active") {
+                setLoading(false);
+                return;
+            }
 
+            setLoading(true);
             try {
                 const [txRes, wdRes] = await Promise.all([
                     fetch("/api/transactions", {
@@ -107,6 +115,8 @@ export default function DashboardPage() {
                 }
             } catch (error) {
                 console.error("Dashboard transactions/withdrawals network error:", error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -201,6 +211,7 @@ export default function DashboardPage() {
                     list={[...transfers, ...withdrawals].sort(
                         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                     ).slice(0, 5)}
+                    loading={loading}
                     onItemClick={(item) => {
                         if (!item.id) return;
                         const kind = item.transaction_type === "withdrawal" ? "withdrawal" : "transfer";

@@ -4,7 +4,7 @@ import Topbar from "@/components/Topbar";
 import Button from "@/components/ui/Button";
 import { CopyIcon, SuccessIcon } from "@/lib/svg";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useMemo, useCallback, useState } from "react";
+import React, { Suspense, useMemo, useCallback, useState, useEffect } from "react";
 
 const SuccessContent = () => {
   const router = useRouter();
@@ -13,6 +13,35 @@ const SuccessContent = () => {
   const balanceParam = searchParams.get("balance");
   const refParam = searchParams.get("ref");
   const [isCopied, setIsCopied] = useState(false);
+
+  // Clear withdrawal_amount from localStorage when success page loads
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("withdrawal_amount");
+    }
+  }, []);
+
+  // Handle browser back button - redirect to dashboard
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Add a history entry so back button can be intercepted
+    // This creates an entry that when popped will trigger our handler
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      // When user clicks back, redirect to dashboard
+      router.replace("/withdraw-money");
+    };
+
+    // Listen for popstate event (browser back/forward)
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [router]);
+
 
   const amount = useMemo(() => {
     const value = parseFloat(amountParam);

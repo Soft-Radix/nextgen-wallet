@@ -58,7 +58,7 @@ export default function TransferSuccessPage() {
 
                 {/* continue button */}
                 <div className=' flex flex-col gap-2 items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4'>
-                    <Button fullWidth={true} onClick={() => { dispatch(ResetTransaction()); router.push("/dashboard") }}>Done</Button>
+                    <Button fullWidth={true} onClick={() => { router.push("/dashboard"); }}>Done</Button>
                     <p className="text-[16px] font-medium text-[#4CCF44] text-center" onClick={() => router.push("/recipient-otp")}>   Send Money Again</p>
                 </div>
 
