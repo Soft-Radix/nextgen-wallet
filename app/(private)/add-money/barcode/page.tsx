@@ -5,6 +5,7 @@ import { ClockIcon } from '@/lib/svg'
 import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useMemo } from 'react'
+import toast from 'react-hot-toast';
 import QRCode from "react-qr-code";
 
 const BarcodeContent = () => {
@@ -43,11 +44,14 @@ const BarcodeContent = () => {
 
             if (!response.ok) {
                 console.error("Add money error:", data?.error || "Unknown error");
+                toast.error(data?.error || "Unknown error");
+            } else {
+                toast.success("Money added successfully");
+                router.push("/dashboard");
             }
         } catch (error) {
             console.error("Add money network error:", error);
         }
-        router.push("/dashboard");
 
     };
     return (
