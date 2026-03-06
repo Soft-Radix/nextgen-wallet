@@ -44,7 +44,7 @@ export default function DashboardPage() {
         // Check if mobile_number exists but user doesn't exist in localStorage
         const savedMobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") : null;
         const savedUser = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-        
+
         if (!savedUser && savedMobileNumber) {
             // User doesn't exist but mobile_number exists, redirect to OTP verification
             router.replace("/otp-verification");
@@ -103,7 +103,7 @@ export default function DashboardPage() {
                 if (!wdRes.ok) {
                     console.error("Withdrawals fetch error:", wdData?.error || "Unknown error");
                 } else {
-                    setWithdrawals(wdData.items || []); 
+                    setWithdrawals(wdData.items || []);
                 }
             } catch (error) {
                 console.error("Dashboard transactions/withdrawals network error:", error);
@@ -124,10 +124,10 @@ export default function DashboardPage() {
     }
     return (
         <div className=" ">
-            <div className="flex items-center justify-between  gap-2 p-5">
+            <div className="flex items-center justify-between  gap-2 p-5 h-[100px]">
 
                 {/* You can render user info here */}
-                <div className="flex items-center justify-between  gap-2">
+                <div className="flex items-center justify-between  gap-2 ">
                     <div className="w-[50px] h-[50px] rounded-full bg-gray-200">
                         {user?.user_image ? <img src={user?.user_image} alt="user" /> : <p className="text-[#00DE1C] text-[16px] font-semibold capitalize text-center leading-[50px]">{getUserImage(user?.name ?? "")}</p>}
                     </div>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                 </button>
 
             </div>
-            <div className="max-h-[calc(100dvh-190px)] overflow-y-auto p-5 pb-10">
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto p-5 pb-10">
                 {/* banner */}
                 <div className="w-full  bg-[#0c3332] rounded-[14px] p-5  text-center bg-[url('/Background.png')] bg-cover bg-center">
                     <p className="text-[#FFFFFFB2]  text-[10px] font-semibold uppercase">Total Balance</p>
