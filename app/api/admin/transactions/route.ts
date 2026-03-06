@@ -33,7 +33,37 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false });
 
     if (search) {
-      query = query.ilike("id", `%${search.replace(/'/g, "''")}%`);
+      const escaped = search.replace(/'/g, "''").replace(/"/g, '""');
+      const pattern = `%${escaped}%`;
+      const isValidUUID = (s: string) =>
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s);
+
+      // Match by sender/receiver name or mobile: find user ids first
+      const { data: matchingUsers } = await supabase
+        .from("user_details")
+        .select("id")
+        .or(`name.ilike."${pattern}",mobile_number.ilike."${pattern}",full_number.ilike."${pattern}"`);
+
+      const matchingIds = (matchingUsers ?? [])
+        .map((u: { id?: string }) => u?.id)
+        .filter((id): id is string => !!id);
+
+      const orParts: string[] = [];
+      // Transaction id is UUID — only exact match supported (no ilike on uuid)
+      if (isValidUUID(search)) {
+        orParts.push(`id.eq."${search.replace(/"/g, '""')}"`);
+      }
+      if (matchingIds.length > 0) {
+        const idList = matchingIds.map((id) => `"${String(id).replace(/"/g, '""')}"`).join(",");
+        orParts.push(`sender_profile_id.in.(${idList})`, `receiver_profile_id.in.(${idList})`);
+      }
+
+      if (orParts.length > 0) {
+        query = query.or(orParts.join(","));
+      } else {
+        // Search term matched neither a UUID nor any user — return no rows
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+      }
     }
 
     if (type && !["all_type", "all type"].includes(type.toLowerCase())) {
