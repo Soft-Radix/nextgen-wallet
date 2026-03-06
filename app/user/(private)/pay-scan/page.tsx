@@ -4,14 +4,16 @@ import Topbar from '@/components/Topbar';
 import { Button } from "@/components/ui";
 import PhoneNumberInput from "@/components/ui/Phone";
 import { ImageIcon } from '@/lib/svg';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/store/store";
+import type { AppDispatch, RootState } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
 import jsQR from "jsqr";
+import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
+import { useSelector } from 'react-redux';
 
 /** Decode QR code from an image URL (object URL or data URL). Returns decoded text or null. */
 function decodeQRFromImageUrl(url: string): Promise<string | null> {
@@ -54,7 +56,11 @@ const ScanPage = () => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
+    const storedUser = getUserDetails();
+    const reduxUser = useSelector((state: RootState) => state.userDetails.user);
+    const user = reduxUser || storedUser;
     const [phoneNumber, setPhoneNumber] = useState("");
     const [country, setCountry] = useState("us");
     const [countryCode, setCountryCode] = useState(
@@ -68,6 +74,40 @@ const ScanPage = () => {
         fileInputRef.current?.click();
     };
 
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            if (!user?.id) return;
+
+            try {
+                setLoadingTransactions(true);
+                const response = await fetch("/api/transactions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        page: 1,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    console.error("Transactions fetch error:", data?.error || "Unknown error");
+                    return;
+                }
+
+                setTransactions(data.items || []);
+            } catch (error) {
+                console.error("Transactions network error:", error);
+            } finally {
+                setLoadingTransactions(false);
+            }
+        };
+
+        fetchTransactions();
+    }, [user?.id]);
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -123,57 +163,92 @@ const ScanPage = () => {
 
     const handleContinue = async () => {
         if (!phoneNumber) {
-            toast.error("Please enter a phone number.");
+            toast.error("Please enter a phone number.")
             return;
         }
 
         setLoading(true);
 
+
         let receiverId: string | null = null;
         let receiverPhone: string | null = null;
-
+        let userbyId: any | null = null;
         try {
+            // Try to find an existing user in user_details
             const allDigits = String(phoneNumber).replace(/\D/g, "");
             const dialDigits = String(countryCode).replace(/\D/g, "");
             const nationalNumber = allDigits.startsWith(dialDigits)
                 ? allDigits.slice(dialDigits.length)
                 : allDigits;
 
-            const user = await apiGetUserDetails("", nationalNumber, countryCode);
-            receiverId = user.id;
+            userbyId = await apiGetUserDetails("", nationalNumber, countryCode);
+            receiverId = userbyId.id;
             receiverPhone =
-                user.full_number || `${user.country_code}${user.mobile_number}`;
+                userbyId.full_number || `${userbyId.country_code}${userbyId.mobile_number}`;
+
+
         } catch (err: any) {
             const status = err?.response?.status;
 
             if (status === 404) {
+                // No user record -> send to raw number
                 receiverId = null;
                 receiverPhone = `${countryCode}${String(phoneNumber).replace(/\D/g, "")}`;
-                toast.error(err?.response?.data?.error);
+                toast.error(err?.response?.data?.error)
                 setLoading(false);
-                return;
+                return
             } else {
-                toast.error(
-                    err?.response?.data?.error ||
+
+                toast.error(err?.response?.data?.error ||
                     err?.message ||
-                    "Failed to search recipient"
-                );
+                    "Failed to search recipient")
                 setLoading(false);
                 return;
             }
         }
 
+        // If we found a user in user_details and we have transaction history,
+        // try to reuse the latest edited name from a previous transfer
+        // to this receiver (regardless of contact flag).
+        let isContactFromHistory = false;
+        let nameFromHistory: string | null = null;
+
+        if (receiverId) {
+            const existingTx = transactions.find(
+                (tx) =>
+                    tx.receiver_profile_id &&
+                    String(tx.receiver_profile_id) === String(receiverId) &&
+                    tx.transaction_type === "sender" &&
+                    tx.name
+            );
+
+            if (existingTx) {
+                isContactFromHistory = !!existingTx.is_contact;
+                nameFromHistory = existingTx.name ?? null;
+            }
+        }
+
+        const finalIsContact = isContactFromHistory || (userbyId?.is_contact ?? false);
+        const finalName = nameFromHistory ?? userbyId?.name ?? null;
+
+        // Seed draft transfer (amount/note will be added on Enter Amount screen)
         dispatch(
             setDraftTransfer({
                 receiver_id: receiverId,
                 receiver_phone: receiverPhone,
                 amount: 0,
                 note: null,
+                is_contact: finalIsContact,
+                name: finalName,
             })
         );
 
         setLoading(false);
-        router.push("/user/enter-amount");
+        if (!finalIsContact) {
+            router.push("/user/enter-name?id=" + receiverId);
+        } else {
+            router.push("/user/enter-amount");
+        }
     };
 
     return (
