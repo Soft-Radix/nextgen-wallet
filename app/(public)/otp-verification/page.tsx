@@ -112,15 +112,7 @@ export default function OtpVerificationPage() {
         return router.push("/");
     }
 
-    useEffect(() => {
-        if (localUser?.status === "active") {
-            router.push("/dashboard");
-        } else if (!localUser?.name) {
-            router.push("/create-profile");
-        } else {
-            router.push("/create-pin");
-        }
-    }, [localUser]);
+
 
 
     return (
