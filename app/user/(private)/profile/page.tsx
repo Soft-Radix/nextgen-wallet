@@ -112,7 +112,7 @@ const Page = () => {
                                     </span>
                                 </div>
                             </div>
-                            <span onClick={() => router.push("/user/notifications")}><ForwardIcon /></span>
+                            <span onClick={() => router.push("/user/notification-settings")}><ForwardIcon /></span>
                         </button>
                     </div>
                 </div>

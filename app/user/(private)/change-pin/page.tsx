@@ -173,7 +173,6 @@ const Page = () => {
                                         </p>
                                     )}
 
-                                   
                                 </div>
                                 <div className="fixed bottom-0 left-0 w-full  mx-auto px-5">
                                     <Button
