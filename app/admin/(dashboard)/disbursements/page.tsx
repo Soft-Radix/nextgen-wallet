@@ -32,10 +32,10 @@ export default function AdminDisbursementsPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("/api/admin/users");
+        const res = await fetch("/api/admin/users?limit=500");
         if (!res.ok) return;
-        const data = (await res.json()) as RecipientUser[];
-        setUsers(data);
+        const data = (await res.json()) as { users?: RecipientUser[] };
+        setUsers(Array.isArray(data.users) ? data.users : []);
       } catch (e) {
         console.error("Failed to load users for disbursements", e);
       }
