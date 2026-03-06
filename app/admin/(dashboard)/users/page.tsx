@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import PhoneNumberInput from "@/components/ui/Phone";
 import UsersHeader from "./UsersHeader";
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 type UserStatus = "Active" | "Suspended" | "Pending";
 
@@ -60,7 +62,7 @@ function mapRowToUserRow(row: any): UserRow {
   const rawStatus: string = row.status ?? "";
   const statusLower = rawStatus.toLowerCase();
   const status: UserStatus =
-    statusLower === "active" ? "Active" : "Pending";
+    statusLower === "active" ? "Active" : statusLower === "suspended" ? "Suspended" : "Pending";
 
   return {
     id: String(row.id),
@@ -108,73 +110,71 @@ function StatusPill({ status }: { status: UserStatus }) {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"All Status" | "Active" | "Suspended" | "Pending">(
     "All Status"
   );
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newPin, setNewPin] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("us");
   const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/admin/users");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-
-        const mapped: UserRow[] = (data as any[]).map(mapRowToUserRow);
-
-        setUsers(mapped);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
     return () => {
-      cancelled = true;
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
-  }, []);
+  }, [search]);
 
-  const filteredUsers = useMemo(() => {
-    let list = [...users];
-
-    if (statusFilter !== "All Status") {
-      list = list.filter((u) => u.status === statusFilter);
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+      if (statusFilter !== "All Status") params.set("status", statusFilter);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+      const res = await fetch(`/api/admin/users?${params.toString()}`);
+      if (!res.ok) {
+        setUsers([]);
+        setTotalCount(0);
+        return;
+      }
+      const data = await res.json();
+      const list = Array.isArray(data.users) ? data.users : [];
+      setUsers(list.map(mapRowToUserRow));
+      setTotalCount(typeof data.total === "number" ? data.total : list.length);
+    } finally {
+      setLoading(false);
     }
+  }, [debouncedSearch, statusFilter, page]);
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.phone.toLowerCase().includes(q)
-      );
-    }
-
-    return list;
-  }, [users, statusFilter, search]);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, search]);
+  }, [statusFilter]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const endIndex = Math.min(startIndex + PAGE_SIZE, filteredUsers.length);
-  const pageItems = filteredUsers.slice(startIndex, endIndex);
+  const startIndex = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + users.length, totalCount);
+  const pageItems = users;
   const pageButtons = getPageButtons(currentPage, pageCount);
 
   async function handleCreateUser(e: FormEvent<HTMLFormElement>) {
@@ -184,16 +184,10 @@ export default function AdminUsersPage() {
     setCreateError(null);
 
     const name = newName.trim();
-    const pin = newPin.trim();
-    const phone = phoneNumber.trim();
+    const email = newEmail.trim();
 
-    if (!name || !phoneNumber || !pin) {
-      setCreateError("All fields are required.");
-      return;
-    }
-
-    if (!/^\d{4}$/.test(pin)) {
-      setCreateError("PIN must be 4 digits.");
+    if (!name || !phoneNumber.trim()) {
+      setCreateError("Name and phone number are required.");
       return;
     }
 
@@ -220,7 +214,7 @@ export default function AdminUsersPage() {
           mobile_number: nationalNumber,
           country_code: countryCode,
           name,
-          pin,
+          ...(email ? { email } : {}),
         }),
       });
 
@@ -231,15 +225,10 @@ export default function AdminUsersPage() {
         return;
       }
 
-      const createdRow = mapRowToUserRow({
-        ...(data?.user ?? {}),
-        wallet_balance: data?.wallet_balance ?? 0,
-      });
-
-      setUsers((prev) => [createdRow, ...prev]);
       setShowAddModal(false);
+      fetchUsers();
       setNewName("");
-      setNewPin("");
+      setNewEmail("");
       setPhoneNumber("");
     } catch (err) {
       console.error("Error creating user from admin:", err);
@@ -381,7 +370,14 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {pageItems.map((user) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-[#6F7B8F]">
+                    Loading users…
+                  </td>
+                </tr>
+              ) : (
+                pageItems.map((user) => (
                 <tr
                   key={user.id}
                   className="border-b border-[#E4E4E7] last:border-0 hover:bg-[#F8FAFC] transition-colors"
@@ -401,7 +397,8 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-6 py-3 text-[#030200] whitespace-nowrap">{user.joined}</td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -409,26 +406,26 @@ export default function AdminUsersPage() {
         {/* Pagination footer */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[#E4E4E7]">
           <p className="text-xs text-[#6B7280]">
-            {filteredUsers.length === 0 ? (
+            {loading ? (
+              "Loading…"
+            ) : totalCount === 0 ? (
               "No users found"
             ) : (
-              <p className="text-black">
-                Showing <span className="font-semibold ">{startIndex + 1}</span>
+              <span className="text-black">
+                Showing <span className="font-semibold">{startIndex + 1}</span>
                 {" to "}
                 <span className="font-semibold text-[#1F2937]">{endIndex}</span>
                 {" of "}
-                <span className="font-semibold text-[#1F2937]">
-                  {filteredUsers.length.toLocaleString()}
-                </span>
+                <span className="font-semibold text-[#1F2937]">{totalCount.toLocaleString()}</span>
                 {" users"}
-              </p>
+              </span>
             )}
           </p>
           <div className="flex items-center gap-1 text-[#0F172A]">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
+              disabled={loading || currentPage <= 1}
               className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${currentPage <= 1 ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
                 }`}
             >
@@ -446,10 +443,11 @@ export default function AdminUsersPage() {
                     key={`page-${item}`}
                     type="button"
                     onClick={() => setPage(item)}
+                    disabled={loading}
                     className={`w-7 h-7 flex items-center justify-center rounded-md text-xs ${item === currentPage
                         ? "bg-[#0F172A] text-white"
                         : "border border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8FAFC]"
-                      }`}
+                      } ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                   >
                     {item}
                   </button>
@@ -463,7 +461,7 @@ export default function AdminUsersPage() {
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={currentPage >= pageCount}
+              disabled={loading || currentPage >= pageCount}
               className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${currentPage >= pageCount ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
                 }`}
             >
@@ -512,14 +510,13 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#030200] mb-1">
-                  PIN
+                  Email <span className="text-[#94A3B8] font-normal">(optional)</span>
                 </label>
                 <input
-                  type="password"
-                  value={newPin}
-                  onChange={(e) => setNewPin(e.target.value)}
-                  placeholder="4-digit PIN"
-                  maxLength={4}
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="Enter email address"
                   className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#030200] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
                 />
               </div>

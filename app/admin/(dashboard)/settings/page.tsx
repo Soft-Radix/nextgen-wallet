@@ -227,7 +227,6 @@ export default function AdminSettingsPage() {
                 </span>
                 <div >
                   <p className="text-sm font-medium text-[#030200]">Change Password</p>
-                  <p className="text-xs text-[#6F7B8F] mt-1">Last updated 3 months ago</p>
                 </div>
               </div>
               <svg

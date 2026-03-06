@@ -11,15 +11,36 @@ type AdminUser = {
   wallet_currency: string | null;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const search = (searchParams.get("search") ?? "").trim();
+    const status = (searchParams.get("status") ?? "").trim();
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10));
+    const offset = (page - 1) * limit;
+
     const supabase = await createClient();
 
-    const { data: userRows, error: usersError } = await supabase
+    let query = supabase
       .from("user_details")
-      .select("id, mobile_number, name, created_at, status")
-      .order("created_at", { ascending: false })
-      .limit(500);
+      .select("id, mobile_number, name, created_at, status", { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (search) {
+      const escaped = search.replace(/'/g, "''").replace(/"/g, '""');
+      const pattern = `%${escaped}%`;
+      query = query.or(`name.ilike."${pattern}",mobile_number.ilike."${pattern}"`);
+    }
+
+    if (status && status.toLowerCase() !== "all status") {
+      const statusLower = status.toLowerCase();
+      if (["active", "suspended", "pending"].includes(statusLower)) {
+        query = query.eq("status", statusLower);
+      }
+    }
+
+    const { data: userRows, error: usersError, count } = await query.range(offset, offset + limit - 1);
 
     if (usersError) {
       console.error("admin-users user_details error:", usersError);
@@ -50,7 +71,7 @@ export async function GET() {
       }
     }
 
-    const response: AdminUser[] = rows.map((u) => {
+    const users: AdminUser[] = rows.map((u) => {
       const id = String(u.id);
       const wallet = walletsByUserId[id];
       return {
@@ -64,7 +85,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json({ users, total: count ?? users.length });
   } catch (err) {
     console.error("admin-users fatal error:", err);
     return NextResponse.json(
@@ -73,4 +94,3 @@ export async function GET() {
     );
   }
 }
-

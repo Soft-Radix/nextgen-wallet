@@ -325,7 +325,7 @@ export default function AdminUserDetailPage() {
             <tbody>
               {transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-[#6F7B8F]">
+                  <td colSpan={6} className="px-6 py-8 text-left text-[#6F7B8F]">
                     No transactions yet.
                   </td>
                 </tr>

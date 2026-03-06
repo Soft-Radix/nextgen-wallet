@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AdminPageHeader from "../AdminPageHeader";
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 type TransactionType = "P2P Transfer" | "Disbursement" | "Withdrawal" | string;
 type TransactionStatus = "Completed" | "Pending" | "Failed";
@@ -16,148 +18,74 @@ type Transaction = {
   type: TransactionType;
   status: TransactionStatus;
   settlement: string;
-  // ISO timestamp used for date filtering
   ts: string;
 };
 
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: "TXN-2026-8734",
-    dateLabel: "Feb 20, 2026",
-    timeLabel: "10:45 AM",
-    from: "Sarah Johnson",
-    to: "Michael Chen",
-    amount: "$250.00",
-    type: "P2P Transfer",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-20T10:45:00",
-  },
-  {
-    id: "TXN-2026-8733",
-    dateLabel: "Feb 20, 2026",
-    timeLabel: "10:32 AM",
-    from: "Admin",
-    to: "Emily Rodriguez",
-    amount: "$2,500.00",
-    type: "Disbursement",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-20T10:32:00",
-  },
-  {
-    id: "TXN-2026-8732",
-    dateLabel: "Feb 20, 2026",
-    timeLabel: "09:18 AM",
-    from: "David Williams",
-    to: "Bank Account **321",
-    amount: "$1,500.00",
-    type: "Withdrawal",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-20T09:18:00",
-  },
-  {
-    id: "TXN-2026-8731",
-    dateLabel: "Feb 20, 2026",
-    timeLabel: "08:55 AM",
-    from: "Admin",
-    to: "Robert Taylor",
-    amount: "$75.50",
-    type: "P2P Transfer",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-20T08:55:00",
-  },
-  {
-    id: "TXN-2026-8730",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "04:22 PM",
-    from: "Admin",
-    to: "Amanda Brown",
-    amount: "$3,200.00",
-    type: "Disbursement",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T16:22:00",
-  },
-  {
-    id: "TXN-2026-8729",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "03:45 PM",
-    from: "Christopher Lee",
-    to: "Jennifer Wilson",
-    amount: "$420.00",
-    type: "P2P Transfer",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T15:45:00",
-  },
-  {
-    id: "TXN-2026-8727",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "01:33 PM",
-    from: "Admin",
-    to: "Sarah Johnson",
-    amount: "$1,850.00",
-    type: "Disbursement",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T13:33:00",
-  },
-  {
-    id: "TXN-2026-8726",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "12:15 PM",
-    from: "Emily Rodriguez",
-    to: "David Williams",
-    amount: "$180.25",
-    type: "P2P Transfer",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T12:15:00",
-  },
-  {
-    id: "TXN-2026-8725",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "11:50 AM",
-    from: "Robert Taylor",
-    to: "Bank Account **441",
-    amount: "$2,200.00",
-    type: "Withdrawal",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T11:50:00",
-  },
-  {
-    id: "TXN-2026-8724",
-    dateLabel: "Feb 19, 2026",
-    timeLabel: "10:28 AM",
-    from: "Admin",
-    to: "Christopher Lee",
-    amount: "$4,750.00",
-    type: "Disbursement",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-19T10:28:00",
-  },
-  {
-    id: "TXN-2026-8723",
-    dateLabel: "Feb 18, 2026",
-    timeLabel: "05:45 PM",
-    from: "Jennifer Wilson",
-    to: "Matthew Anderson",
-    amount: "$95.00",
-    type: "P2P Transfer",
-    status: "Completed",
-    settlement: "FedNow",
-    ts: "2026-02-18T17:45:00",
-  },
-];
+function mapApiRowToTransaction(row: any): Transaction {
+  const dt = row.created_at ? new Date(row.created_at) : null;
+  const dateLabel = dt
+    ? dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "";
+  const timeLabel = dt
+    ? dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    : "";
+  const normalizeStatus = (value: string): TransactionStatus => {
+    const v = value.toLowerCase();
+    if (v === "completed") return "Completed";
+    if (v === "pending") return "Pending";
+    if (v === "failed") return "Failed";
+    return "Completed";
+  };
+  const amountNumber = typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0);
+  const rawType = (row.type ?? "transfer") as string;
+  return {
+    id: String(row.id),
+    dateLabel,
+    timeLabel,
+    from: row.sender_name ?? "—",
+    to: row.receiver_name ?? "—",
+    amount: amountNumber.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+    }),
+    type: rawType,
+    status: normalizeStatus(String(row.status ?? "")),
+    settlement: "",
+    ts: row.created_at ?? "",
+  };
+}
+
+function getTypeDisplay(typeValue: string): string {
+  const v = (typeValue ?? "").toLowerCase();
+  if (v === "transfer") return "P2P Transfer";
+  if (v === "disburse") return "Disbursement";
+  if (v === "withdrawal") return "Withdrawal";
+  return typeValue || "—";
+}
 
 const transactionTableHeadings = ["DATE & TIME", "TRANSACTION ID", "FROM", "TO", "AMOUNT", "TYPE", "STATUS"];
 
 const PAGE_SIZE = 10;
+
+const TYPE_FILTER_OPTIONS: { label: string; value: string }[] = [
+  { label: "All Type", value: "all_type" },
+  { label: "P2P Transfer", value: "transfer" },
+  { label: "Disbursement", value: "disburse" },
+  { label: "Withdrawal", value: "withdrawal" },
+];
+
+const STATUS_FILTER_OPTIONS: { label: string; value: string }[] = [
+  { label: "All Status", value: "all_status" },
+  { label: "Completed", value: "completed" },
+  { label: "Pending", value: "pending" },
+  { label: "Failed", value: "failed" },
+];
+
+function getTypeDisplayLabel(typeValue: string): string {
+  const opt = TYPE_FILTER_OPTIONS.find((o) => o.value === typeValue);
+  return opt ? opt.label : typeValue;
+}
 
 function getPageButtons(current: number, total: number): (number | "dots")[] {
   const pages: (number | "dots")[] = [];
@@ -198,20 +126,67 @@ function StatusPill({ status }: { status: TransactionStatus }) {
 }
 
 export default function AdminTransactionsPage() {
-  const [remoteTransactions, setRemoteTransactions] = useState<Transaction[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<"All Type" | TransactionType>("All Type");
-  const [statusFilter, setStatusFilter] = useState<"All Status" | TransactionStatus>("All Status");
+  const [typeFilter, setTypeFilter] = useState<string>("all_type");
+  const [statusFilter, setStatusFilter] = useState<string>("all_status");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [page, setPage] = useState(1);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fromInputRef = useRef<HTMLInputElement | null>(null);
   const toInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    searchDebounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [search]);
+
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+      if (typeFilter && typeFilter !== "all_type") params.set("type", typeFilter);
+      if (statusFilter && statusFilter !== "all_status") params.set("status", statusFilter);
+      if (fromDate) params.set("from_date", fromDate);
+      if (toDate) params.set("to_date", toDate);
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+      const res = await fetch(`/api/admin/transactions?${params.toString()}`);
+      if (!res.ok) {
+        setTransactions([]);
+        setTotalCount(0);
+        return;
+      }
+      const data = await res.json();
+      const list = Array.isArray(data.transactions) ? data.transactions : [];
+      setTransactions(list.map(mapApiRowToTransaction));
+      setTotalCount(typeof data.total === "number" ? data.total : list.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, typeFilter, statusFilter, fromDate, toDate, page]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [typeFilter, statusFilter, fromDate, toDate]);
 
   const openDatePicker = (ref: React.RefObject<HTMLInputElement | null>) => {
     const input = ref.current;
@@ -225,133 +200,19 @@ export default function AdminTransactionsPage() {
     }
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/admin/transactions");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-
-        const mapped: Transaction[] = (data as any[]).map((row) => {
-          const dt = row.created_at ? new Date(row.created_at) : null;
-          const dateLabel = dt
-            ? dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-            : "";
-          const timeLabel = dt
-            ? dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-            : "";
-
-          const normalizeStatus = (value: string): TransactionStatus => {
-            const v = value.toLowerCase();
-            if (v === "completed") return "Completed";
-            if (v === "pending") return "Pending";
-            if (v === "failed") return "Failed";
-            return "Completed";
-          };
-
-          const amountNumber =
-            typeof row.amount === "number" ? row.amount : Number(row.amount ?? 0);
-
-          return {
-            id: String(row.id),
-            dateLabel,
-            timeLabel,
-            from: row.sender_name ?? "—",
-            to: row.receiver_name ?? "—",
-            amount: amountNumber.toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-              minimumFractionDigits: 2,
-            }),
-            type: row.type ?? "P2P Transfer",
-            status: normalizeStatus(String(row.status ?? "")),
-            settlement: "",
-            ts: row.created_at ?? "",
-          };
-        });
-
-        setRemoteTransactions(mapped);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const sourceTransactions = remoteTransactions ?? TRANSACTIONS;
-
-  const filtered = useMemo(() => {
-    let list = [...sourceTransactions];
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((tx) => {
-        return (
-          tx.id.toLowerCase().includes(q) ||
-          tx.from.toLowerCase().includes(q) ||
-          tx.to.toLowerCase().includes(q) ||
-          tx.amount.toLowerCase().includes(q)
-        );
-      });
-    }
-
-    if (typeFilter !== "All Type") {
-      list = list.filter((tx) => tx.type === typeFilter);
-    }
-
-    if (statusFilter !== "All Status") {
-      list = list.filter((tx) => tx.status === statusFilter);
-    }
-
-    const parseInputDate = (value: string) => {
-      if (!value.trim()) return null;
-      // value from native date input: yyyy-mm-dd
-      const dt = new Date(`${value}T00:00:00`);
-      return isNaN(dt.getTime()) ? null : dt;
-    };
-
-    const from = parseInputDate(fromDate);
-    const to = parseInputDate(toDate);
-
-    if (from || to) {
-      list = list.filter((tx) => {
-        const dt = new Date(tx.ts);
-        if (from && dt < from) return false;
-        if (to) {
-          const end = new Date(to);
-          end.setHours(23, 59, 59, 999);
-          if (dt > end) return false;
-        }
-        return true;
-      });
-    }
-
-    return list;
-  }, [search, typeFilter, statusFilter, fromDate, toDate, sourceTransactions]);
-
-  // Reset to first page whenever filters or source data change
-  useEffect(() => {
-    setPage(1);
-  }, [search, typeFilter, statusFilter, fromDate, toDate, sourceTransactions]);
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const endIndex = Math.min(startIndex + PAGE_SIZE, filtered.length);
-  const pageItems = filtered.slice(startIndex, endIndex);
+  const startIndex = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + transactions.length, totalCount);
+  const pageItems = transactions;
   const pageButtons = getPageButtons(currentPage, pageCount);
 
   const handleClearFilters = () => {
-    setTypeFilter("All Type");
-    setStatusFilter("All Status");
+    setTypeFilter("all_type");
+    setStatusFilter("all_status");
     setFromDate("");
     setToDate("");
+    setPage(1);
   };
 
   return (
@@ -422,12 +283,8 @@ export default function AdminTransactionsPage() {
                     }}
                     className="cursor-pointer min-w-[160px] inline-flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[white] px-3 py-2 text-sm text-[#0F172A]"
                   >
-                    <span
-                      className={
-                        "text-[#030200]"
-                      }
-                    >
-                      {typeFilter}
+                    <span className="text-[#030200]">
+                      {getTypeDisplayLabel(typeFilter)}
                     </span>
                     <svg
                       className="w-4 h-4 text-[black]"
@@ -446,24 +303,19 @@ export default function AdminTransactionsPage() {
                   </button>
                   {showTypeMenu && (
                     <div className="absolute z-10 mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white shadow-lg text-sm">
-                      {(["All Type", "P2P Transfer", "Disbursement", "Withdrawal"] as const).map(
-                        (option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => {
-                              setTypeFilter(option);
-                              setShowTypeMenu(false);
-                            }}
-                            className={`cursor-pointer w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${typeFilter === option
-                                ? "text-[#030200] font-medium"
-                                : "text-[#6F7B8F]"
-                              }`}
-                          >
-                            {option}
-                          </button>
-                        )
-                      )}
+                      {TYPE_FILTER_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setTypeFilter(option.value);
+                            setShowTypeMenu(false);
+                          }}
+                          className={`cursor-pointer w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${typeFilter === option.value ? "text-[#030200] font-medium" : "text-[#6F7B8F]"}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -479,12 +331,8 @@ export default function AdminTransactionsPage() {
                     }}
                     className="cursor-pointer min-w-[150px] inline-flex items-center justify-between rounded-lg border border-[#E2E8F0] bg-[white] px-3 py-2 text-sm text-[#0F172A]"
                   >
-                    <span
-                      className={
-                        "text-[#030200]"
-                      }
-                    >
-                      {statusFilter}
+                    <span className="text-[#030200]">
+                      {STATUS_FILTER_OPTIONS.find((o) => o.value === statusFilter)?.label ?? "All Status"}
                     </span>
                     <svg
                       className="w-4 h-4 text-[black]"
@@ -503,20 +351,17 @@ export default function AdminTransactionsPage() {
                   </button>
                   {showStatusMenu && (
                     <div className="absolute z-10 mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white shadow-lg text-sm">
-                      {(["All Status", "Completed", "Pending", "Failed"] as const).map((option) => (
+                      {STATUS_FILTER_OPTIONS.map((option) => (
                         <button
-                          key={option}
+                          key={option.value}
                           type="button"
                           onClick={() => {
-                            setStatusFilter(option);
+                            setStatusFilter(option.value);
                             setShowStatusMenu(false);
                           }}
-                          className={`cursor-pointer w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${statusFilter === option
-                              ? "text-[#030200]"
-                              : "text-[#6F7B8F]"
-                            }`}
+                          className={`cursor-pointer w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${statusFilter === option.value ? "text-[#030200] font-medium" : "text-[#6F7B8F]"}`}
                         >
-                          {option}
+                          {option.label}
                         </button>
                       ))}
                     </div>
@@ -541,6 +386,7 @@ export default function AdminTransactionsPage() {
                       ref={fromInputRef}
                       type="date"
                       value={fromDate}
+                      max={new Date().toISOString().split("T")[0]}
                       onChange={(e) => setFromDate(e.target.value)}
                       className="date-input text-[#6F7B8F] w-full bg-transparent text-sm focus:outline-none cursor-pointer"
                     />
@@ -565,6 +411,7 @@ export default function AdminTransactionsPage() {
                       ref={toInputRef}
                       type="date"
                       value={toDate}
+                      max={new Date().toISOString().split("T")[0]}
                       onChange={(e) => setToDate(e.target.value)}
                       className="date-input w-full bg-transparent text-sm text-[#6F7B8F] focus:outline-none cursor-pointer"
                     />
@@ -574,7 +421,7 @@ export default function AdminTransactionsPage() {
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="cursor-pointer ml-auto text-xs font-medium text-[#6F7B8F] hover:text-[#0F172A] whitespace-nowrap"
+                  className="cursor-pointer mt-6 ml-auto text-xs font-medium text-[#6F7B8F] hover:text-[#0F172A] whitespace-nowrap"
                 >
                   × Clear all filters
                 </button>
@@ -600,27 +447,35 @@ export default function AdminTransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((tx) => (
-                  <tr
-                    key={tx.id}
-                    className="border-b border-[#E4E4E7] last:border-0 bg-white"
-                  >
-                    <td className="px-4 py-3 text-[#030200]">
-                      <div className="flex flex-col">
-                        <span className="text-[13px] font-medium">{tx.dateLabel}</span>
-                        <span className="text-[11px] text-[#6F7B8F]">{tx.timeLabel}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-[#030200]">{tx.id}</td>
-                    <td className="px-4 py-3 text-[#030200]">{tx.from}</td>
-                    <td className="px-4 py-3 text-[#030200]">{tx.to}</td>
-                    <td className="px-4 py-3 text-right text-[#030200]">{tx.amount}</td>
-                    <td className="px-4 py-3 text-[#030200]">{tx.type}</td>
-                    <td className="px-4 py-3">
-                      <StatusPill status={tx.status} />
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-12 text-center text-[#6F7B8F]">
+                      Loading transactions…
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  pageItems.map((tx) => (
+                    <tr
+                      key={tx.id}
+                      className="border-b border-[#E4E4E7] last:border-0 bg-white"
+                    >
+                      <td className="px-4 py-3 text-[#030200]">
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-medium">{tx.dateLabel}</span>
+                          <span className="text-[11px] text-[#6F7B8F]">{tx.timeLabel}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[#030200]">{tx.id}</td>
+                      <td className="px-4 py-3 text-[#030200]">{(tx.type.toLowerCase() === "disburse" || tx.type.toLowerCase() === "withdrawal") ? "System" : tx.from}</td>
+                      <td className="px-4 py-3 text-[#030200]">{tx.to}</td>
+                      <td className="px-4 py-3 text-[#030200]">{tx.amount}</td>
+                      <td className="px-4 py-3 text-[#030200]">{getTypeDisplay(tx.type)}</td>
+                      <td className="px-4 py-3">
+                        <StatusPill status={tx.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -628,9 +483,11 @@ export default function AdminTransactionsPage() {
           {/* Pagination footer */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[#E4E4E7] text-xs text-[#6F7B8F]">
             <p>
-              {filtered.length === 0
-                ? "No transactions found"
-                : `Showing ${startIndex + 1} to ${endIndex} of ${filtered.length} transactions`}
+              {loading
+                ? "Loading…"
+                : totalCount === 0
+                  ? "No transactions found"
+                  : `Showing ${startIndex + 1} to ${endIndex} of ${totalCount} transactions`}
             </p>
             <div className="flex items-center gap-4 justify-end">
               <div className="flex items-center gap-1">

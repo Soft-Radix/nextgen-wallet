@@ -13,33 +13,64 @@ type AdminTransaction = {
   receiver_name: string | null;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const search = (searchParams.get("search") ?? "").trim();
+    const type = (searchParams.get("type") ?? "").trim();
+    const status = (searchParams.get("status") ?? "").trim();
+    const fromDate = searchParams.get("from_date") ?? "";
+    const toDate = searchParams.get("to_date") ?? "";
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10));
+    const offset = (page - 1) * limit;
+
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("transactions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (search) {
+      query = query.ilike("id", `%${search.replace(/'/g, "''")}%`);
+    }
+
+    if (type && !["all_type", "all type"].includes(type.toLowerCase())) {
+      query = query.eq("type", type);
+    }
+
+    if (status && !["all_status", "all status"].includes(status.toLowerCase())) {
+      const statusLower = status.toLowerCase();
+      if (["completed", "pending", "failed"].includes(statusLower)) {
+        query = query.eq("status", statusLower);
+      }
+    }
+
+    if (fromDate) {
+      query = query.gte("created_at", `${fromDate}T00:00:00`);
+    }
+    if (toDate) {
+      query = query.lte("created_at", `${toDate}T23:59:59.999`);
+    }
+
+    const { data: rows, error, count } = await query.range(offset, offset + limit - 1);
 
     if (error) {
       console.error("admin-transactions error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const rows = (data ?? []) as any[];
+    const dataRows = (rows ?? []) as any[];
 
     const senderIds = new Set<string>();
     const receiverIds = new Set<string>();
-
-    for (const r of rows) {
+    for (const r of dataRows) {
       if (r.sender_profile_id) senderIds.add(String(r.sender_profile_id));
       if (r.receiver_profile_id) receiverIds.add(String(r.receiver_profile_id));
     }
 
     const usersById: Record<string, string> = {};
-
     const allIds = Array.from(new Set([...Array.from(senderIds), ...Array.from(receiverIds)]));
     if (allIds.length > 0) {
       const { data: users, error: usersError } = await supabase
@@ -54,7 +85,7 @@ export async function GET() {
       }
     }
 
-    const response: AdminTransaction[] = rows.map((r) => {
+    const transactions: AdminTransaction[] = dataRows.map((r) => {
       const rawType = (r as any).type ?? null;
       const rawStatus = (r as any).status ?? "";
       const normalizeStatus = (value: string): string => {
@@ -81,7 +112,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json({ transactions, total: count ?? transactions.length });
   } catch (err) {
     console.error("admin-transactions fatal error:", err);
     return NextResponse.json(
@@ -90,4 +121,3 @@ export async function GET() {
     );
   }
 }
-
