@@ -4,12 +4,12 @@ import Topbar from "@/components/Topbar";
 import Button from "@/components/ui/Button";
 import { CheckCircleIcon, ClockIcon } from "@/lib/svg";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 
 const TOTAL_SECONDS = 10 * 60; // 10 minutes
 
-const AtmCode = () => {
+const AtmCodeContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -196,4 +196,25 @@ const AtmCode = () => {
   );
 };
 
-export default AtmCode;
+export default function AtmCode() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Topbar title="ATM Code Generated" />
+          <div className="p-4 sm:p-5 py-[77px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
+            <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
+              <div className="mt-6 sm:mt-6 flex flex-col items-center gap-3 animate-pulse">
+                <div className="w-14 h-14 rounded-full bg-[#E5E7EB]" />
+                <div className="h-6 w-48 rounded bg-[#E5E7EB]" />
+                <div className="h-4 w-32 rounded bg-[#E5E7EB]" />
+              </div>
+            </div>
+          </div>
+        </>
+      }
+    >
+      <AtmCodeContent />
+    </Suspense>
+  );
+}

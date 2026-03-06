@@ -4,9 +4,9 @@ import Topbar from "@/components/Topbar";
 import Button from "@/components/ui/Button";
 import { CopyIcon, SuccessIcon } from "@/lib/svg";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useMemo, useCallback, useState } from "react";
+import React, { Suspense, useMemo, useCallback, useState } from "react";
 
-const SuccessPage = () => {
+const SuccessContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const amountParam = searchParams.get("amount") ?? "";
@@ -128,4 +128,25 @@ const SuccessPage = () => {
   );
 };
 
-export default SuccessPage;
+export default function SuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Topbar title="Withdraw Success" />
+          <div className="p-4 sm:p-5 py-[77px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
+            <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
+              <div className="mt-4 sm:mt-6 flex flex-col items-center gap-3 animate-pulse">
+                <div className="w-[180px] h-[180px] rounded-full bg-[#E5E7EB]" />
+                <div className="h-8 w-64 rounded bg-[#E5E7EB]" />
+                <div className="h-4 w-48 rounded bg-[#E5E7EB]" />
+              </div>
+            </div>
+          </div>
+        </>
+      }
+    >
+      <SuccessContent />
+    </Suspense>
+  );
+}

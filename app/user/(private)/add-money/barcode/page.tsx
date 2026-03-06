@@ -3,10 +3,10 @@ import Topbar from '@/components/Topbar'
 import { Button } from '@/components/ui';
 import { ClockIcon } from '@/lib/svg'
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useMemo } from 'react'
+import React, { Suspense, useMemo } from 'react'
 import QRCode from "react-qr-code";
 
-const BarcodePage = () => {
+const BarcodeContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const amountParam = searchParams.get("amount") || "";
@@ -74,4 +74,25 @@ const BarcodePage = () => {
     )
 }
 
-export default BarcodePage
+export default function BarcodePage() {
+    return (
+        <Suspense
+            fallback={
+                <>
+                    <Topbar title="Your Cash-in QR Code" />
+                    <div className="p-4 sm:p-5 py-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
+                        <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
+                            <div className="mt-4 sm:mt-6 flex flex-col items-center bg-white rounded-lg border border-[#D8EBD7] p-4 animate-pulse">
+                                <div className="h-12 w-24 rounded bg-[#E5E7EB]" />
+                                <div className="h-3 w-20 rounded bg-[#E5E7EB] -mt-1" />
+                                <div className="my-3 bg-[#F8FAFC] rounded-[12px] p-4 w-[130px] h-[130px]" />
+                            </div>
+                        </div>
+                    </div>
+                </>
+            }
+        >
+            <BarcodeContent />
+        </Suspense>
+    );
+}

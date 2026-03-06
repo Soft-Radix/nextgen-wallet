@@ -2,7 +2,7 @@
 
 import Topbar from "@/components/Topbar";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowRightBlockIcon, CalenderIcon, CheckCircleIcon, ReceivedIcon, SentIcon } from "@/lib/svg";
 import { getNameCapitalized } from "@/lib/utils/bootstrapRedirect";
 
@@ -21,7 +21,7 @@ interface TransactionDetails {
   receiver_name: string | null;
 }
 
-export default function TransactionDetailsPage() {
+function TransactionDetailsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -288,6 +288,30 @@ export default function TransactionDetailsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function TransactionDetailsPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Topbar title="Transaction Details" />
+          <div className="p-4 sm:p-5 pt-[80px] pb-20 overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
+            <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
+              <div className="mt-5 flex flex-col items-center gap-3 animate-pulse">
+                <div className="w-12 h-12 rounded-full bg-[#E5E7EB]" />
+                <div className="h-3 w-24 rounded bg-[#E5E7EB]" />
+                <div className="h-6 w-32 rounded-full bg-[#E5E7EB]" />
+                <div className="h-9 w-40 rounded bg-[#E5E7EB]" />
+              </div>
+            </div>
+          </div>
+        </>
+      }
+    >
+      <TransactionDetailsContent />
+    </Suspense>
   );
 }
 

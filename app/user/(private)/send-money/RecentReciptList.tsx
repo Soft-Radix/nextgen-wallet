@@ -38,7 +38,7 @@ const RecentReciptList = ({ list }: { list: Transaction[] }) => {
                 <div key={item.id} className="flex items-center justify-between bg-[#ffffff] rounded-[14px] p-4 w-full border-[0.5px] border-buttonOutlineBorder my-3" onClick={() => {
                     router.push("/user/enter-amount"); dispatch(
                         setDraftTransfer({
-                            receiver_id: item.id,
+                            receiver_id: item.receiver_profile_id,
                             receiver_phone: item.counterparty_mobile,
                             amount: item?.amount || 0,
                             note: null,

@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { RootState } from "@/store/store";
 import { updateUserPin } from "@/store/userDetailsSlice";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const Page = () => {
     const router = useRouter();
@@ -83,6 +84,7 @@ const Page = () => {
                                 );
 
                                 if (res.meta?.requestStatus === "fulfilled") {
+                                    toast.success(res.payload.message || "PIN updated successfully");
                                     router.push("/user/profile");
                                 } else {
                                     setStatus(
@@ -171,11 +173,7 @@ const Page = () => {
                                         </p>
                                     )}
 
-                                    {error && (
-                                        <p className="text-red-500 text-xs w-full text-left">
-                                            {error}
-                                        </p>
-                                    )}
+                                   
                                 </div>
                                 <div className="fixed bottom-0 left-0 w-full  mx-auto px-5">
                                     <Button
