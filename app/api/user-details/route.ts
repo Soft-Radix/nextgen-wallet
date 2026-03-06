@@ -206,9 +206,13 @@ export async function GET(request: Request) {
     }
 
     if (!data) {
+      // If this is a login request (mobile_number + country_code without id), return 404
+      // Otherwise, return 401 for unauthorized access
+      const isLoginRequest = !id && mobile_number && country_code;
+      
       return NextResponse.json(
-        { error: "User not found for given mobile number " },
-        { status: 404 }
+        { error: isLoginRequest ? "User not found for given mobile number" : "Unauthorized" },
+        { status: isLoginRequest ? 404 : 401 }
       );
     }
 

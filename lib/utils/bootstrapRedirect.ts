@@ -21,6 +21,16 @@ export function bootstrapRedirect(router: AppRouterInstance) {
   }
 }
 
+export function logoutUser() {
+  if (typeof window === "undefined") return;
+  
+  // Clear all localStorage
+  localStorage.clear();
+  
+  // Redirect to welcome page
+  window.location.href = "/user/welcome";
+}
+
 export function getUserDetails() {
   if (typeof window === "undefined") return null;
   const userRaw = window.localStorage.getItem("user");

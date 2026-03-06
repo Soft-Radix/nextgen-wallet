@@ -2,7 +2,7 @@
 import Topbar from '@/components/Topbar'
 import { Button } from '@/components/ui';
 import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, NotificationIconOutline, SecurityPinIcon, WalletIcon } from '@/lib/svg'
-import { getNameCapitalized, getUserDetails, getUserImage } from '@/lib/utils/bootstrapRedirect';
+import { getNameCapitalized, getUserDetails, getUserImage, logoutUser } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useState } from 'react'
@@ -23,9 +23,8 @@ const Page = () => {
         }, 2000);
     }, [transactionRef]);
     const handleLogout = () => {
-        localStorage.clear();
         dispatch(ResetTransaction());
-        router.push("/user/welcome");
+        logoutUser();
     }
 
     return (
