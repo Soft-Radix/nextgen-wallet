@@ -4,9 +4,11 @@ import Topbar from "@/components/Topbar";
 import Button from "@/components/ui/Button";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { RootState } from "@/store/store";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import { loginUser } from "@/store/userDetailsSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 const PRESET_AMOUNTS = [20, 40, 60, 100];
 const MAX_DAILY_WITHDRAWAL = 500;
@@ -16,7 +18,7 @@ const WithdrawMoneyPage = () => {
   const reduxUser = useSelector((state: RootState) => state.userDetails?.user);
   const user = storedUser || reduxUser;
   const router = useRouter();
-
+const dispatch = useAppDispatch();
   const [selectedPreset, setSelectedPreset] = useState<number | null>(20);
   const [manualAmount, setManualAmount] = useState("20");
 
@@ -59,6 +61,15 @@ const WithdrawMoneyPage = () => {
     );
   };
 
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+        if (storedUser?.id) {
+            await dispatch(loginUser({ id: storedUser.id }));
+        }
+    };
+
+    fetchUserDetails();
+}, []);
   return (
     <>
       <Topbar title="Withdraw Money" />
@@ -89,10 +100,9 @@ const WithdrawMoneyPage = () => {
                     onClick={() => handlePresetClick(amount)}
                     className={`
                       cursor-pointer py-3 sm:py-4 px-4 rounded-[10px] text-base sm:text-lg font-semibold transition-colors
-                      ${
-                        isSelected
-                          ? "bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] text-white shadow-[0_2px_3px_rgba(0,166,62,0.3)]"
-                          : "bg-white border border-[var(--button-outline-border)] text-[var(--button-outline-text)] hover:border-[var(--button-primary-from)]/50"
+                      ${isSelected
+                        ? "bg-gradient-to-r from-[var(--button-primary-from)] to-[var(--button-primary-to)] text-white shadow-[0_2px_3px_rgba(0,166,62,0.3)]"
+                        : "bg-white border border-[var(--button-outline-border)] text-[var(--button-outline-text)] hover:border-[var(--button-primary-from)]/50"
                       }
                     `}
                   >
@@ -105,7 +115,7 @@ const WithdrawMoneyPage = () => {
 
           {/* Enter Amount Manually */}
           <div>
-          <p className="text-[#1E2C44] text-xs sm:text-[14px] font-bold uppercase tracking-wider mb-3">
+            <p className="text-[#1E2C44] text-xs sm:text-[14px] font-bold uppercase tracking-wider mb-3">
               ENTER AMOUNT MANUALLY
             </p>
             <div className="relative flex items-center bg-white border border-[var(--button-outline-border)] rounded-[10px] overflow-hidden focus-within:ring-2 focus-within:ring-[var(--button-primary-from)]/30 focus-within:border-[var(--button-primary-from)]">
@@ -133,9 +143,9 @@ const WithdrawMoneyPage = () => {
                 Important Withdrawal Policy
               </p>
               <p className="text-[#92400E] text-xs sm:text-sm leading-relaxed">
-                ATM withdrawals are limited to $500 per day. Cardless codes are
+                ATM withdrawals are limited to $500. Cardless codes are
                 valid for{" "}
-                <span className="text-[#92400E] font-bold">15 minutes</span>{" "}
+                <span className="text-[#92400E] font-bold">10 minutes</span>{" "}
                 once generated.
               </p>
             </div>
