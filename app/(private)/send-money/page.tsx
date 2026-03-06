@@ -281,7 +281,7 @@ const SendMoneyPage = () => {
                     <p className="text-text text-[14px] font-bold  uppercase">
                         Recent Recipients
                     </p>
-                    <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center ">
+                    <p className="text-[#030200] text-[14px] font-medium flex items-center justify-center " onClick={() => router.push("/transactions")}>
                         View All <ArrowRightBlockIcon />
                     </p>
                 </div>

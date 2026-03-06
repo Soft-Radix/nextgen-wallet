@@ -79,6 +79,7 @@ const Page = () => {
                         <button
                             type="button"
                             className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
+                            onClick={() => router.push("/change-pin")}
                         >
                             <div className="flex items-center gap-3">
                                 <SecurityPinIcon />
@@ -99,6 +100,7 @@ const Page = () => {
                         <button
                             type="button"
                             className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
+                            onClick={() => router.push("/notification-settings")}
                         >
                             <div className="flex items-center gap-3">
                                 <NotificationIconOutline />
