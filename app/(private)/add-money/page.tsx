@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 import { MoneyIcon } from "@/lib/svg";
 
 const PRESET_AMOUNTS = [20, 50, 100, 200, 500];
-const MAX_DAILY_WITHDRAWAL = 500;
+const MAX_DAILY_WITHDRAWAL = 2000;
 
 const AddMoneyPage = () => {
     const storedUser = getUserDetails();
@@ -47,12 +47,12 @@ const AddMoneyPage = () => {
         effectiveAmount > 0 &&
         effectiveAmount <= MAX_DAILY_WITHDRAWAL;
 
-   
+
 
     return (
         <>
             <Topbar title="Add Money" />
-            <div className="p-4 sm:p-5 py-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh-120px)]">
+            <div className="p-4 sm:p-5 py-[80px]  flex flex-col items-center min-h-[calc(100vh-120px)]">
                 <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
                     {/* Available Balance */}
                     <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
@@ -113,6 +113,11 @@ const AddMoneyPage = () => {
                                 className="w-full pl-8 pr-4 py-3 sm:py-4 text-base sm:text-lg font-medium text-[var(--button-outline-text)] placeholder:text-greyLight outline-none bg-transparent"
                             />
                         </div>
+                        {!canGenerate && (
+                            <p className="text-red-500 text-xs sm:text-sm mt-2">
+                                Maximum  deposit is $2000.
+                            </p>
+                        )}
                     </div>
 
                     {/* Important Withdrawal Policy */}
@@ -134,12 +139,15 @@ const AddMoneyPage = () => {
                             variant="primary"
                             size="lg"
                             fullWidth
-                            disabled={!canGenerate || !manualAmount}
-                            onClick={() => router.push(
-                                `/add-money/barcode?amount=${encodeURIComponent(
-                                    effectiveAmount.toFixed(2)
-                                )}`
-                            )}
+                            disabled={!manualAmount}
+                            onClick={() => {
+                                if (!canGenerate) { return; }
+                                router.push(
+                                    `/add-money/barcode?amount=${encodeURIComponent(
+                                        effectiveAmount.toFixed(2)
+                                    )}`
+                                )
+                            }}
                             className="rounded-[10px] h-[52px] text-base font-semibold"
                         >
                             Generate QR Code
