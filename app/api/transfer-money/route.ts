@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       name,
       is_contact,
       pin,
+      sender_name,
     } = await request.json();
 
     if (!sender_id) {
@@ -66,6 +67,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    const transactionId = data;
+
+    if (sender_name && transactionId) {
+      const { error: updateError } = await supabase
+        .from("transactions")
+        .update({ sender_name })
+        .eq("id", transactionId);
+
+      if (updateError) {
+        console.error("Failed to update sender_name on transaction:", updateError);
+      }
+    }
+
     // Fetch updated sender wallet balance so frontend can update Redux
     const { data: senderWallet, error: walletError } = await supabase
       .from("wallets")
@@ -75,12 +89,12 @@ export async function POST(request: Request) {
 
     if (walletError) {
       // Still return transaction id; wallet info is optional
-      return NextResponse.json({ transaction_id: data }, { status: 200 });
+      return NextResponse.json({ transaction_id: transactionId }, { status: 200 });
     }
 
     return NextResponse.json(
       {
-        transaction_id: data,
+        transaction_id: transactionId,
         wallet_balance: senderWallet?.balance ?? null,
         wallet_currency: senderWallet?.currency ?? null,
       },

@@ -64,6 +64,7 @@ const page = () => {
         const result = await dispatch(
             AddTransaction({
                 sender_id: user.id,
+                sender_name: user.name ?? null,
                 receiver_id: draft?.receiver_id ?? null,
                 receiver_phone: draft?.receiver_phone ?? null,
                 amount: draft?.amount ?? 0,
