@@ -1,6 +1,6 @@
 "use client"
 import Topbar from '@/components/Topbar'
-import { Button } from '@/components/ui';
+import { Button, Modal } from '@/components/ui';
 import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, NotificationIconOutline, SecurityPinIcon, WalletIcon } from '@/lib/svg'
 import { getNameCapitalized, getUserDetails, getUserImage, logoutUser } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
@@ -11,6 +11,7 @@ import { useDispatch } from 'react-redux';
 const Page = () => {
     const user = getUserDetails();
     const [isCopied, setIsCopied] = useState(false);
+    const [showLogoutPopup, setShowLogoutPopup] = useState(false);
     const dispatch = useDispatch();
     const router = useRouter();
     const transactionRef = "NXG-9823-4410"
@@ -22,9 +23,18 @@ const Page = () => {
             setIsCopied(false);
         }, 2000);
     }, [transactionRef]);
+    
     const handleLogout = () => {
         dispatch(ResetTransaction());
         logoutUser();
+    }
+    
+    const handleLogoutClick = () => {
+        setShowLogoutPopup(true);
+    }
+    
+    const handleCancelLogout = () => {
+        setShowLogoutPopup(false);
     }
 
     return (
@@ -120,8 +130,20 @@ const Page = () => {
 
                 {/* Logout button */}
                 <div className="mt-7 w-full max-w-md">
-                    <Button size="lg" fullWidth isLoading={false} disabled={false} className="w-full" endIcon={<LogoutIcon />} onClick={handleLogout}>Logout</Button>
+                    <Button size="lg" fullWidth isLoading={false} disabled={false} className="w-full" endIcon={<LogoutIcon />} onClick={handleLogoutClick}>Logout</Button>
                 </div>
+                
+                {/* Logout Confirmation Modal */}
+                <Modal
+                    isOpen={showLogoutPopup}
+                    onClose={handleCancelLogout}
+                    title="Confirm Logout"
+                    message="Are you sure you want to logout? You will need to login again to access your account."
+                    confirmText="Logout"
+                    cancelText="Cancel"
+                    onConfirm={handleLogout}
+                    variant="danger"
+                />
 
                 {/* Footer */}
                 <div className="mt-6 flex w-full max-w-md flex-col items-center text-center text-[12px] text-[#6F7B8F]">
