@@ -11,7 +11,10 @@ export default function WelcomePage() {
     const countryCode = typeof window !== "undefined" ? localStorage.getItem("country_code") || "" : "";
     const mobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") || "" : "";
 
-
+    useEffect(() => {
+        localStorage.clear()
+        
+    }, []);
     useEffect(() => {
         if (!localUser) {
             if (countryCode || mobileNumber) {

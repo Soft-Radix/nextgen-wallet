@@ -34,6 +34,14 @@ export default function SignUpPage() {
     const dispatch = useAppDispatch();
     const { loading } = useAppSelector((state: any) => state.userDetails);
 
+
+    useEffect(() => {
+        localStorage.clear()
+        setPhoneNumber("+1");
+        setEmail("");
+        setIsChecked(false);
+    }, []);
+
     const handleSignUp = async () => {
 
         setEmailError("");
@@ -88,9 +96,7 @@ export default function SignUpPage() {
             router.push("/otp-verification");
         }
     };
-    if (savedCountryCode || savedNumber) {
-        return router.push("/otp-verification");
-    }
+
 
 
     return (
