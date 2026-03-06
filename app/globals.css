@@ -50,10 +50,44 @@
   }
 }
 
+/* .no-date-icon::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+} */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), ui-sans-serif, sans-serif;
+}
+
+@keyframes tick-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tick-pop {
+  animation: tick-pop 0.35s ease-out;
+}
+
+/* Hide native date input icon when using custom styling */
+.date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+.date-input::-webkit-inner-spin-button,
+.date-input::-webkit-clear-button {
+  display: none;
 }
 .react-tel-input .form-control {
   width: 100% !important;
