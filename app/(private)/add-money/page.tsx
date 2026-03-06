@@ -20,6 +20,7 @@ const AddMoneyPage = () => {
 
     const [selectedPreset, setSelectedPreset] = useState<number | null>(20);
     const [manualAmount, setManualAmount] = useState("20");
+    const [loading, setLoading] = useState(false);
 
     const handlePresetClick = useCallback((amount: number) => {
         setSelectedPreset(amount);
@@ -139,14 +140,21 @@ const AddMoneyPage = () => {
                             variant="primary"
                             size="lg"
                             fullWidth
-                            disabled={!manualAmount}
-                            onClick={() => {
+                            isLoading={loading}
+                            disabled={loading || !canGenerate || !manualAmount || effectiveAmount <= 0 || effectiveAmount > MAX_DAILY_WITHDRAWAL}
+                            onClick={async () => {
                                 if (!canGenerate) { return; }
-                                router.push(
-                                    `/add-money/barcode?amount=${encodeURIComponent(
-                                        effectiveAmount.toFixed(2)
-                                    )}`
-                                )
+                                setLoading(true);
+                                try {
+                                    router.push(
+                                        `/add-money/barcode?amount=${encodeURIComponent(
+                                            effectiveAmount.toFixed(2)
+                                        )}`
+                                    );
+                                } catch (error) {
+                                    console.error("Error navigating to barcode page:", error);
+                                    setLoading(false);
+                                }
                             }}
                             className="rounded-[10px] h-[52px] text-base font-semibold"
                         >

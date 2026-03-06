@@ -6,6 +6,7 @@ import { CheckCircleIcon, ClockIcon } from "@/lib/svg";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
+import toast from "react-hot-toast";
 
 const TOTAL_SECONDS = 10 * 60; // 10 minutes
 
@@ -73,6 +74,7 @@ const AtmCodeContent = () => {
 
       if (!response.ok) {
         console.error("Withdraw error:", data?.error || "Unknown error");
+
         router.push(`/withdraw-money/success?amount=${encodeURIComponent(confirmedAmount)}`);
         return;
       }
@@ -90,7 +92,7 @@ const AtmCodeContent = () => {
       if (referenceId != null) {
         params.set("ref", String(referenceId));
       }
-
+      toast.success("Withdrawal successful");
       router.push(`/withdraw-money/success?${params.toString()}`);
     } catch (error) {
       console.error("Withdraw network error:", error);
@@ -112,7 +114,7 @@ const AtmCodeContent = () => {
           {/* Header */}
           <div className="mt-6 sm:mt-6 flex flex-col items-center gap-1">
             <div className="w-14 h-14 rounded-full bg-[#D1FAE5] flex items-center justify-center mb-3">
-                <CheckCircleIcon />
+              <CheckCircleIcon />
             </div>
             <h1 className="text-text text-xl text-[#030200] font-semibold text-center">
               Your Withdrawal Code is Ready
@@ -153,9 +155,9 @@ const AtmCodeContent = () => {
           {/* Next steps card */}
           <div className="bg-[#1BD4110D] border border-[#4CCF4450] rounded-[14px] p-4 flex gap-3 mb-10">
             <div className="mt-1">
-            <span className="flex-shrink-0 w-4 h-4 rounded-full text-[#030200] border-2 border-[#030200] flex items-center justify-center text-[10px] font-bold">
-              i
-            </span>
+              <span className="flex-shrink-0 w-4 h-4 rounded-full text-[#030200] border-2 border-[#030200] flex items-center justify-center text-[10px] font-bold">
+                i
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <p className="text-[#030200] text-sm sm:text-base font-semibold">
@@ -178,6 +180,8 @@ const AtmCodeContent = () => {
               size="lg"
               fullWidth
               onClick={handleDone}
+              disabled={submitting}
+              isLoading={submitting}
               className="rounded-[10px] h-[52px] text-base font-semibold"
             >
               Done
@@ -185,7 +189,8 @@ const AtmCodeContent = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="text-[#4CCF44] text-sm sm:text-base font-medium py-2 text-center hover:underline underline-offset-4"
+              disabled={submitting}
+              className={`text-[#4CCF44] text-sm sm:text-base font-medium py-2 text-center hover:underline underline-offset-4 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               Cancel
             </button>

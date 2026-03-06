@@ -3,4 +3,6 @@ export type { ButtonProps } from "./Button";
 export { default as Input } from "./Input";
 export type { InputProps } from "./Input";
 export { default as PhoneInput } from "./PhoneInput";
+export { default as Modal } from "./Modal";
+export type { ModalProps } from "./Modal";
 export type { PhoneInputProps } from "./PhoneInput";

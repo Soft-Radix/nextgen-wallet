@@ -27,7 +27,32 @@ const formatDate = (iso?: string) => {
     });
 };
 
-const TransactionsList = ({ list, onItemClick }: { list: Transaction[]; onItemClick?: (item: Transaction) => void }) => {
+const TransactionsList = ({ list, onItemClick, loading }: { list: Transaction[]; onItemClick?: (item: Transaction) => void; loading?: boolean }) => {
+
+    if (loading) {
+        return (
+            <div>
+                {Array.from({ length: 5 }).map((_, idx) => (
+                    <div
+                        key={idx}
+                        className="flex items-center justify-between bg-[#ffffff] rounded-[14px] p-4 w-full border-[0.5px] border-buttonOutlineBorder my-3 animate-pulse"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="w-[40px] h-[40px] rounded-full bg-[#E5E7EB]" />
+                            <div>
+                                <div className="h-3 w-28 rounded bg-[#E5E7EB] mb-2" />
+                                <div className="flex items-center justify-between gap-1 flex-wrap mt-2">
+                                    <div className="h-3 w-20 rounded bg-[#E5E7EB]" />
+                                    <div className="h-3 w-16 rounded bg-[#E5E7EB]" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="h-4 w-16 rounded bg-[#E5E7EB]" />
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div>
