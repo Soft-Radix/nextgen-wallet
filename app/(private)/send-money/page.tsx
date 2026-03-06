@@ -314,8 +314,13 @@ const SendMoneyPage = () => {
                 )}
             </div>
             <div className="px-5 fixed bottom-4 left-0 right-0 max-w-[968px] w-full mx-auto">
-                <Button fullWidth={true} onClick={handleContinue} disabled={loading}>
-                    {loading ? "Searching..." : "Continue"}
+                <Button 
+                    fullWidth={true} 
+                    onClick={handleContinue} 
+                    isLoading={loading}
+                    disabled={loading || !phoneNumber}
+                >
+                    Continue
                 </Button>
             </div>
         </>

@@ -22,6 +22,7 @@ const EnterAmountContent = () => {
     const [isChecked, setIsChecked] = useState(true);
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch()
     const user = getUserDetails();
     const id = searchParams.get("id");
@@ -83,7 +84,7 @@ const EnterAmountContent = () => {
         fetchName();
     }, [id, draft?.name, user?.id]);
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         const nameValue = name?.trim() || null;
         if (!nameValue) {
             setError("Full Name is required.");
@@ -100,19 +101,23 @@ const EnterAmountContent = () => {
             return;
         }
 
-        dispatch(
-            setDraftTransfer({
-                name: nameValue,
-                note: note.trim() || null,
-                receiver_id: draft?.receiver_id,
-                receiver_phone: draft?.receiver_phone,
-                is_contact: isChecked,
-            })
-        );
+        setLoading(true);
+        try {
+            dispatch(
+                setDraftTransfer({
+                    name: nameValue,
+                    note: note.trim() || null,
+                    receiver_id: draft?.receiver_id,
+                    receiver_phone: draft?.receiver_phone,
+                    is_contact: isChecked,
+                })
+            );
 
-
-
-        router.push("/enter-amount");
+            router.push("/enter-amount");
+        } catch (error) {
+            console.error("Error in handleContinue:", error);
+            setLoading(false);
+        }
     };
     return (
         <>
@@ -164,7 +169,12 @@ const EnterAmountContent = () => {
 
                 {/* continue button */}
                 <div className="flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
-                    <Button fullWidth={true} onClick={handleContinue} disabled={error !== null || !name?.trim() || name.trim().length < 3 || name.trim().length > 20}>
+                    <Button 
+                        fullWidth={true} 
+                        onClick={handleContinue} 
+                        isLoading={loading}
+                        disabled={loading || error !== null || !name?.trim() || name.trim().length < 3 || name.trim().length > 20}
+                    >
                         Continue
                     </Button>
                 </div>

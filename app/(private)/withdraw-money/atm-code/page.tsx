@@ -189,7 +189,8 @@ const AtmCodeContent = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="text-[#4CCF44] text-sm sm:text-base font-medium py-2 text-center hover:underline underline-offset-4"
+              disabled={submitting}
+              className={`text-[#4CCF44] text-sm sm:text-base font-medium py-2 text-center hover:underline underline-offset-4 ${submitting ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               Cancel
             </button>

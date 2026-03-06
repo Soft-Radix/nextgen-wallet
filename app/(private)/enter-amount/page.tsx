@@ -23,6 +23,7 @@ const EnterAmountContent = () => {
     const [amount, setAmount] = useState<string>("");
     const [note, setNote] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch()
     const user = getUserDetails();
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
@@ -100,7 +101,12 @@ const EnterAmountContent = () => {
 
                 {/* continue button */}
                 <div className="flex items-center justify-center mt-[40px] fixed bottom-0 left-0 right-0 max-w-[968px] w-full mx-auto px-5 bg-mainBackground pb-4">
-                    <Button fullWidth={true} onClick={handleContinue} disabled={error !== null}>
+                    <Button 
+                        fullWidth={true} 
+                        onClick={handleContinue} 
+                        isLoading={loading}
+                        disabled={loading || error !== null || !amount || Number(amount) <= 0}
+                    >
                         Continue
                     </Button>
                 </div>
