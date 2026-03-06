@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -28,7 +28,11 @@ export default function LoginPage() {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { loading, error } = useAppSelector((state: any) => state.userDetails);
-
+    useEffect(() => {
+        localStorage.clear()
+        setPhoneNumber("+1");
+        setCountry("us");
+    }, []);
     const handleLogin = async () => {
         if (!phoneNumber) {
             // local validation error
