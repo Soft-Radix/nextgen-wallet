@@ -10,25 +10,25 @@ export function bootstrapRedirect(router: AppRouterInstance) {
     const user = userRaw ? JSON.parse(userRaw) : null;
 
     if (user && user.status == "active") {
-      router.replace("/user/dashboard");
+      router.replace("/dashboard");
     } else if (user && user.mobile_number && user.country_code) {
-      router.replace("/user/otp-verification");
+      router.replace("/otp-verification");
     } else {
-      router.replace("/user/welcome");
+      router.replace("/");
     }
   } catch {
-    router.replace("/user/welcome");
+    router.replace("/");
   }
 }
 
 export function logoutUser() {
   if (typeof window === "undefined") return;
-  
+
   // Clear all localStorage
   localStorage.clear();
-  
+
   // Redirect to welcome page
-  window.location.href = "/user/welcome";
+  window.location.href = "/";
 }
 
 export function getUserDetails() {
