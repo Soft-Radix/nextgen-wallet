@@ -11,6 +11,43 @@ import type { AppDispatch } from "@/store/store";
 import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
+import jsQR from "jsqr";
+
+/** Decode QR code from an image URL (object URL or data URL). Returns decoded text or null. */
+function decodeQRFromImageUrl(url: string): Promise<string | null> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        if (!url.startsWith("blob:")) img.crossOrigin = "anonymous";
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                resolve(null);
+                return;
+            }
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            resolve(code ? code.data : null);
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+/** Extract phone number from QR payload (e.g. "tel:+1234567890", "+1234567890", or plain digits). */
+function parsePhoneFromQRData(data: string): string | null {
+    const trimmed = data.trim();
+    if (!trimmed) return null;
+    const telMatch = trimmed.match(/^tel:(.+)$/i);
+    const str = telMatch ? telMatch[1].trim() : trimmed;
+    const digits = str.replace(/\D/g, "");
+    if (digits.length < 7) return null;
+    if (str.startsWith("+")) return `+${digits}`;
+    return digits;
+}
 
 const ScanPage = () => {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -26,6 +63,7 @@ const ScanPage = () => {
             : "+1"
     );
     const [loading, setLoading] = useState(false);
+    const [scanning, setScanning] = useState(false);
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
@@ -39,6 +77,48 @@ const ScanPage = () => {
             if (prev) URL.revokeObjectURL(prev);
             return url;
         });
+        setScanning(true);
+        decodeQRFromImageUrl(url).then((qrData) => {
+            setScanning(false);
+            if (!qrData) {
+                toast.error("No QR code found in image. Try another image or enter phone number.");
+                return;
+            }
+            const phone = parsePhoneFromQRData(qrData);
+            if (phone) {
+                const digits = phone.replace(/\D/g, "");
+                const hasPlus = phone.startsWith("+");
+                if (hasPlus && digits.length >= 10) {
+                    let countryCode = "+1";
+                    let national = digits;
+                    if (digits.startsWith("1") && digits.length === 11) {
+                        countryCode = "+1";
+                        national = digits.slice(1);
+                    } else if (digits.startsWith("44") && digits.length >= 10) {
+                        countryCode = "+44";
+                        national = digits.slice(2);
+                    } else if (digits.startsWith("91") && digits.length >= 12) {
+                        countryCode = "+91";
+                        national = digits.slice(2);
+                    } else {
+                        const len = digits.length - 10;
+                        if (len >= 1) {
+                            countryCode = "+" + digits.slice(0, len);
+                            national = digits.slice(len);
+                        }
+                    }
+                    setCountryCode(countryCode);
+                    setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
+                    setPhoneNumber(national);
+                } else {
+                    setPhoneNumber(digits);
+                }
+                toast.success("QR code scanned. Check the number and tap Continue.");
+            } else {
+                toast.error("Invalid QR. No phone number found. Try another image or enter phone number.");
+            }
+        });
+        event.target.value = "";
     };
 
     const handleContinue = async () => {
@@ -128,11 +208,12 @@ const ScanPage = () => {
                                         </Button> */}
                                         <button
                                             type="button"
-                                            className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2"
+                                            disabled={scanning}
+                                            className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
                                             onClick={handleUploadClick}
                                         >
                                             <ImageIcon color='#6F7B8F' />
-                                            Upload from gallery
+                                            {scanning ? "Scanning…" : "Upload from gallery"}
                                         </button>
                                         <input
                                             ref={fileInputRef}
@@ -146,23 +227,37 @@ const ScanPage = () => {
                             </>
                         ) : (
                             <>
-                                <div className="w-full rounded-[18px] bg-[#F5FFF5] flex items-center justify-center">
-                                    <div className="relative w-full max-w-[320px] rounded-[24px] overflow-hidden bg-[#EBF0FF]">
-                                        {/* Uploaded image preview */}
+                                <div className="w-full rounded-[18px] bg-[#F5FFF5] flex flex-col items-center justify-center gap-4 p-4">
+                                    <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
                                         <img
                                             src={uploadedImage}
                                             alt="Uploaded QR"
-                                            className="w-full h-[220px] object-cover"
+                                            className="w-full h-full object-contain"
                                         />
-
                                         {/* Scan frame overlay (green corners) */}
-                                        <div className="pointer-events-none absolute inset-6">
-                                            <div className="absolute top-0 left-0 w-8 h-8 border-[3px] border-[#00A91B] border-b-0 border-r-0 rounded-tl-[12px]" />
-                                            <div className="absolute top-0 right-0 w-8 h-8 border-[3px] border-[#00A91B] border-b-0 border-l-0 rounded-tr-[12px]" />
-                                            <div className="absolute bottom-0 left-0 w-8 h-8 border-[3px] border-[#00A91B] border-t-0 border-r-0 rounded-bl-[12px]" />
-                                            <div className="absolute bottom-0 right-0 w-8 h-8 border-[3px] border-[#00A91B] border-t-0 border-l-0 rounded-br-[12px]" />
+                                        <div className="pointer-events-none absolute inset-4">
+                                            <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                            <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
                                         </div>
                                     </div>
+                                    <button
+                                        type="button"
+                                        disabled={scanning}
+                                        className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70 border border-[#E5E7EB]"
+                                        onClick={handleUploadClick}
+                                    >
+                                        <ImageIcon color='#6F7B8F' />
+                                        {scanning ? "Scanning…" : "Upload from gallery"}
+                                    </button>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                    />
                                 </div>
                             </>
                         )}
