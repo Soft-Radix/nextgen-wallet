@@ -133,6 +133,13 @@ const SendMoneyPage = () => {
             }
         }
 
+        // Prevent sending money to your own number/account
+        if (receiverId && user?.id && String(receiverId) === String(user.id)) {
+            toast.error("You cannot send money to your own number.");
+            setLoading(false);
+            return;
+        }
+
         // If we found a user in user_details and we have transaction history,
         // try to reuse the latest edited name from a previous transfer
         // to this receiver (regardless of contact flag).
