@@ -8,7 +8,7 @@ function sanitizeUser(user: any) {
 
 export async function POST(request: Request) {
   try {
-    const { mobile_number, country_code, email } = await request.json();
+    const { mobile_number, country_code, email, name, pin } = await request.json();
 
     if (!mobile_number) {
       return NextResponse.json(
@@ -41,14 +41,25 @@ export async function POST(request: Request) {
       );
     }
 
+    const insertPayload: any = {
+      mobile_number,
+      full_number: country_code + mobile_number,
+      country_code,
+      email,
+    };
+
+    if (name && typeof name === "string" && name.trim().length > 0) {
+      insertPayload.name = name.trim();
+    }
+
+    if (pin && typeof pin === "string" && pin.trim().length > 0) {
+      insertPayload.pin = pin.trim();
+      insertPayload.status = "active";
+    }
+
     const { data, error } = await supabase
       .from("user_details")
-      .insert({
-        mobile_number,
-        full_number: country_code + mobile_number,
-        country_code,
-        email,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
