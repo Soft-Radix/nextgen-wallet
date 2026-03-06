@@ -38,12 +38,17 @@ export default function AdminPageHeader({ title }: AdminPageHeaderProps) {
     <div className="flex flex-row items-center justify-end md:justify-between gap-3 mb-6 sm:mb-8">
       <h1 className="hidden md:block text-xl sm:text-2xl font-bold text-[#030200] truncate min-w-0">{title}</h1>
       <div className="flex items-center gap-3 shrink-0 ml-auto">
+
+        <div className="text-right min-w-0 max-w-[140px] sm:max-w-[200px]">
+          <p className="text-[#030200] font-semibold text-sm truncate">{displayName}</p>
+          <p className="text-[#6F7B8F] text-xs truncate">{email}</p>
+        </div>
         <div
           className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center font-semibold text-sm"
           style={
             avatarUrl
               ? { backgroundColor: "#E2F1E2", color: "#008236" }
-              : { backgroundColor: "#d8ebd7", color: "#13861f"}
+              : { backgroundColor: "#d8ebd7", color: "#13861f" }
           }
         >
           {avatarUrl ? (
@@ -51,10 +56,6 @@ export default function AdminPageHeader({ title }: AdminPageHeaderProps) {
           ) : (
             <span>{initials}</span>
           )}
-        </div>
-        <div className="text-right min-w-0 max-w-[140px] sm:max-w-[200px]">
-          <p className="text-[#030200] font-semibold text-sm truncate">{displayName}</p>
-          <p className="text-[#6F7B8F] text-xs truncate">{email}</p>
         </div>
       </div>
     </div>

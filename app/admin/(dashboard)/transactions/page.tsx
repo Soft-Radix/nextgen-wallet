@@ -501,9 +501,8 @@ export default function AdminTransactionsPage() {
                   type="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${
-                    currentPage <= 1 ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                  className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${currentPage <= 1 ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
+                    }`}
                 >
                   {"<"}
                 </button>
@@ -519,11 +518,10 @@ export default function AdminTransactionsPage() {
                         key={`page-${item}`}
                         type="button"
                         onClick={() => setPage(item)}
-                        className={`w-7 h-7 flex items-center justify-center rounded-md text-xs ${
-                          item === currentPage
+                        className={`w-7 h-7 flex items-center justify-center rounded-md text-xs ${item === currentPage
                             ? "bg-[#0F172A] text-white"
                             : "border border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8FAFC]"
-                        }`}
+                          }`}
                       >
                         {item}
                       </button>
@@ -538,9 +536,8 @@ export default function AdminTransactionsPage() {
                   type="button"
                   onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                   disabled={currentPage >= pageCount}
-                  className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${
-                    currentPage >= pageCount ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                  className={`w-7 h-7 flex items-center justify-center rounded-md border border-[#E2E8F0] text-xs ${currentPage >= pageCount ? "text-[#CBD5E1] cursor-not-allowed" : "cursor-pointer"
+                    }`}
                 >
                   {">"}
                 </button>
