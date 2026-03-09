@@ -970,27 +970,40 @@ const ScanPage = () => {
                                 </div>
                             )}
 
-                            {/* <div className="w-full flex items-center gap-2 mt-2">
-                            <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
-                            <div className="text-[14px] text-white whitespace-nowrap">Or pay via phone name</div>
-                            <div />
-                            <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
-                        </div> */}
+                            {cameraError && <div className="w-full flex items-center gap-2 mt-2">
+                                <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
+                                <div className="text-[14px] text-white whitespace-nowrap">Or pay via phone name</div>
+                                <div />
+                                <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
+                            </div>}
 
-                            {/* <div className="w-full">
-                            <PhoneNumberInput
-                                label=""
-                                placeholder="Enter phone number"
-                                value={phoneNumber}
-                                onChange={(value) => {
-                                    setPhoneNumber(value);
-                                }}
-                                setCountry={setCountry}
-                                country={country}
-                                onDialCodeChange={setCountryCode}
-                                shadow={false}
-                            />
-                        </div> */}
+                            {cameraError &&
+                                <>
+                                    <div className="w-full">
+                                        <PhoneNumberInput
+                                            label=""
+                                            placeholder="Enter phone number"
+                                            value={phoneNumber}
+                                            onChange={(value) => {
+                                                setPhoneNumber(value);
+                                            }}
+                                            setCountry={setCountry}
+                                            country={country}
+                                            onDialCodeChange={setCountryCode}
+                                            shadow={false}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="px-6 w-full bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[10px] flex items-center gap-2"
+                                        onClick={() => handleContinue()}
+                                        disabled={loading}
+                                    >
+                                        {loading ? "Searching..." : "Continue"}
+                                    </Button>
+                                </>
+                            }
+
                         </div>
                     </div>
                 </div>
