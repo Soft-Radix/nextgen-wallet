@@ -803,19 +803,19 @@ const ScanPage = () => {
                     {/* Overlay with focusing area */}
                     <div className="fixed inset-0 z-20 pointer-events-none">
                         {/* Top dark overlay */}
-                        {/* <div className="absolute top-0 left-0 right-0 h-[calc((100vh-280px)/2)] bg-black/60" /> */}
+                        <div className="absolute top-0 left-0 right-0 h-[calc(33.33%-140px)] bg-black/75" />
 
-                        {/* Bottom dark overlay - leaves space for button at bottom */}
-                        {/* <div className="absolute bottom-0 left-0 right-0 h-[calc((100vh-280px)/2)] bg-black/60" /> */}
+                        {/* Bottom dark overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 h-[calc(66.67%-140px)] bg-black/75" />
 
                         {/* Left dark overlay */}
-                        {/* <div className="absolute top-[calc((100vh-280px)/2)] bottom-[calc((100vh-280px)/2)] left-0 w-[calc((100vw-280px)/2)] bg-black/60" /> */}
+                        <div className="absolute top-[calc(33.33%-140px)] bottom-[calc(66.67%-140px)] left-0 w-[calc(50%-140px)] bg-black/75" />
 
                         {/* Right dark overlay */}
-                        {/* <div className="absolute top-[calc((100vh-280px)/2)] bottom-[calc((100vh-280px)/2)] right-0 w-[calc((100vw-280px)/2)] bg-black/60" /> */}
+                        <div className="absolute top-[calc(33.33%-140px)] bottom-[calc(66.67%-140px)] right-0 w-[calc(50%-140px)] bg-black/75" />
 
                         {/* Focusing area frame (square in center) */}
-                        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] pointer-events-none">
+                        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] pointer-events-none bg-transparent">
                             {/* Corner indicators */}
                             <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#00A91B] rounded-tl-lg" />
                             <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#00A91B] rounded-tr-lg" />
