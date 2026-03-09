@@ -150,46 +150,44 @@ const ScanPage = () => {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-            // Create Html5Qrcode instance with iOS-friendly config
+            // Create Html5Qrcode instance optimized for instant scanning
             const html5QrCode = new Html5Qrcode(qrCodeRegionId, {
                 verbose: false,
-                // Disable barcode detector on iOS as it can cause issues
-                useBarCodeDetectorIfSupported: false,
+                // Use native barcode detector for faster scanning (disable on iOS as it can cause issues)
+                useBarCodeDetectorIfSupported: !isIOS,
             });
             html5QrCodeRef.current = html5QrCode;
 
-            // iOS-friendly configuration optimized for faster scanning from any angle
+            // Optimized configuration for instant scanning from ANY angle like Google Pay
+            // Use a very large qrbox number (1000) to scan entire viewport - enables detection from any angle
+            // Large number ensures the entire camera view is scanned, not just a small centered box
             const config = isIOS ? {
-                fps: 30, // Higher FPS for faster scanning on iOS
-                // Use function to calculate qrbox size - scan the entire viewport for maximum angle tolerance
-                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
-                    // Use the full smaller dimension to scan entire visible area - allows scanning from any angle
-                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
-                    // Return size that covers the entire viewport for maximum scanning area
-                    return { width: minDimension, height: minDimension };
-                },
-                aspectRatio: 1.0,
+                fps: 60, // Maximum FPS for instant scanning on iOS
+                // Use very large qrbox to scan entire viewport - critical for multi-angle detection
+                qrbox: 1000, // Large number ensures full viewport scanning (works like Google Pay)
+                aspectRatio: 1.777778, // 16:9 aspect ratio for better coverage
                 disableFlip: false, // Critical: Allow scanning from any orientation/angle
-                // Simplified video constraints - let iOS optimize automatically
+                // Optimized video constraints for faster scanning
                 videoConstraints: {
-                    facingMode: "environment"
-                    // Let iOS choose optimal resolution and frame rate automatically
-                }
+                    facingMode: "environment",
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 },
+                    frameRate: { ideal: 60, min: 30 }
+                },
+                rememberLastUsedCamera: true,
             } : {
-                fps: 30, // Increased FPS for better detection
-                // Use function to calculate qrbox size - scan the entire viewport
-                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
-                    // Use the full smaller dimension to scan entire visible area
-                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
-                    return { width: minDimension, height: minDimension };
-                },
-                aspectRatio: 1.0,
+                fps: 60, // Maximum FPS for instant scanning
+                // Use very large qrbox to scan entire viewport - critical for multi-angle detection
+                qrbox: 1000, // Large number ensures full viewport scanning (works like Google Pay)
+                aspectRatio: 1.777778, // 16:9 aspect ratio for better coverage
                 disableFlip: false, // Critical: Allow scanning from any orientation/angle
                 videoConstraints: {
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    facingMode: "environment"
-                }
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 },
+                    facingMode: "environment",
+                    frameRate: { ideal: 60, min: 30 }
+                },
+                rememberLastUsedCamera: true,
             };
 
             // Try environment camera first, fallback to user camera on iOS if needed
@@ -250,14 +248,14 @@ const ScanPage = () => {
             console.log('Camera started successfully');
         } catch (err: any) {
             console.error('Camera access error:', err);
-            
+
             // Detect iOS for better error messages
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            
+
             let errorMsg: string;
             if (err.name === 'NotAllowedError' || err.message?.includes('Permission')) {
-                errorMsg = isIOS 
+                errorMsg = isIOS
                     ? 'Camera access denied. Please allow camera permissions in Settings > Safari > Camera, then tap "Start Camera" again.'
                     : 'Camera access denied. Please allow camera permissions in Settings.';
             } else if (err.name === 'NotFoundError' || err.message?.includes('camera')) {
@@ -271,7 +269,7 @@ const ScanPage = () => {
             } else {
                 errorMsg = err.message || 'Failed to access camera. Please check permissions.';
             }
-            
+
             setCameraError(errorMsg);
             setCameraActive(false);
 
@@ -288,24 +286,24 @@ const ScanPage = () => {
     };
 
     const handleQRCodeDetected = async (qrData: string) => {
-        // Prevent duplicate processing and rapid re-scans
+        // Optimized for instant scanning like Google Pay - minimal delays
         const now = Date.now();
         const timeSinceLastScan = now - lastScanTimeRef.current;
 
-        // Check if this QR code was already processed
+        // Check if this QR code was already processed (reduced delay for instant scanning)
         const processedQR = processedQRCodesRef.current.get(qrData);
         if (processedQR) {
             const timeSinceProcessed = now - processedQR.timestamp;
-            // If same code was processed within 3 seconds, ignore it (reduced from 5 for faster re-scanning)
-            if (timeSinceProcessed < 3000) {
+            // If same code was processed within 500ms, ignore it (very short delay for instant feel)
+            if (timeSinceProcessed < 500) {
                 return;
             }
-            // Remove old entries (older than 3 seconds) to allow re-scanning
+            // Remove old entries immediately to allow re-scanning
             processedQRCodesRef.current.delete(qrData);
         }
 
-        // If same code scanned within 1 second, ignore it (reduced from 2 for faster detection)
-        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 1000)) {
+        // If same code scanned within 200ms, ignore it (very short debounce for instant detection)
+        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 200)) {
             return;
         }
 
@@ -375,8 +373,8 @@ const ScanPage = () => {
             // Mark this QR code as valid and processed
             processedQRCodesRef.current.set(qrData, { type: 'valid', timestamp: now });
 
-            // Clean up old processed QR codes (older than 30 seconds) to prevent memory buildup
-            const cleanupTime = now - 30000; // 30 seconds ago
+            // Clean up old processed QR codes (older than 10 seconds) to prevent memory buildup
+            const cleanupTime = now - 10000; // 10 seconds ago
             for (const [code, data] of processedQRCodesRef.current.entries()) {
                 if (data.timestamp < cleanupTime) {
                     processedQRCodesRef.current.delete(code);
@@ -386,10 +384,8 @@ const ScanPage = () => {
             // Automatically call handleContinue with the values directly (don't update input field)
             console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
 
-            // Reset scanning flag after a shorter delay to allow for new scans faster
-            setTimeout(() => {
-                setScanning(false);
-            }, 500);
+            // Reset scanning flag immediately for instant scanning (like Google Pay)
+            setScanning(false);
 
             handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
         } else {
@@ -422,7 +418,7 @@ const ScanPage = () => {
             if (isIOS) {
                 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
                     (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('CriOS'));
-                
+
                 if (!isSafari) {
                     setCameraError('Camera access requires Safari browser on iOS. Please open this page in Safari.');
                     return;
@@ -769,10 +765,22 @@ const ScanPage = () => {
                     transform: scaleX(1) !important;
                 }
                 #${qrCodeRegionId} {
-                    position: relative !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    z-index: 1 !important;
                 }
                 #${qrCodeRegionId} > div {
                     border: none !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                /* Hide the scanning border/box overlay - we use our own focusing frame */
+                #${qrCodeRegionId} > div > div {
+                    border: none !important;
+                    box-shadow: none !important;
                 }
                 /* iOS Safari specific fixes */
                 @supports (-webkit-touch-callout: none) {
@@ -782,9 +790,87 @@ const ScanPage = () => {
                     }
                 }
             `}</style>
-            <div className="p-4 sm:p-5 pt-[40px] pb-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
-                <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
-                    {/* <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
+
+            {/* Camera container - always present but conditionally visible */}
+            <div
+                id={qrCodeRegionId}
+                className={`fixed inset-0 w-full h-full ${cameraActive ? 'z-10' : 'hidden'}`}
+            />
+
+            {cameraActive ? (
+                // Full screen camera view with Google Pay-style scanning interface
+                <>
+                    {/* Overlay with focusing area */}
+                    <div className="fixed inset-0 z-20 pointer-events-none">
+                        {/* Top dark overlay */}
+                        <div className="absolute top-0 left-0 right-0 h-[calc((100vh-280px)/2)] bg-black/60" />
+
+                        {/* Bottom dark overlay - leaves space for button at bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 h-[calc((100vh-280px)/2)] bg-black/60" />
+
+                        {/* Left dark overlay */}
+                        <div className="absolute top-[calc((100vh-280px)/2)] bottom-[calc((100vh-280px)/2)] left-0 w-[calc((100vw-280px)/2)] bg-black/60" />
+
+                        {/* Right dark overlay */}
+                        <div className="absolute top-[calc((100vh-280px)/2)] bottom-[calc((100vh-280px)/2)] right-0 w-[calc((100vw-280px)/2)] bg-black/60" />
+
+                        {/* Focusing area frame (square in center) */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] pointer-events-none">
+                            {/* Corner indicators */}
+                            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#00A91B] rounded-tl-lg" />
+                            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#00A91B] rounded-tr-lg" />
+                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#00A91B] rounded-bl-lg" />
+                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#00A91B] rounded-br-lg" />
+                        </div>
+                    </div>
+
+                    {/* Upload button positioned at bottom of screen */}
+                    <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-30 pointer-events-auto">
+                        <button
+                            type="button"
+                            disabled={scanning}
+                            className="px-6 py-3 text-sm bg-white/95 whitespace-nowrap hover:bg-white text-[#6F7B8F] font-medium rounded-full flex items-center gap-2 disabled:opacity-70 shadow-lg backdrop-blur-sm transition-all"
+                            onClick={handleUploadClick}
+                        >
+                            <ImageIcon color='#6F7B8F' />
+                            {scanning ? "Scanning…" : "Upload from gallery"}
+                        </button>
+                    </div>
+
+                    {/* Error message overlay */}
+                    {cameraError && (
+                        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white px-4 py-3 rounded-lg max-w-[90%] pointer-events-auto">
+                            <p className={`text-sm text-center ${cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
+                                ? 'text-yellow-400'
+                                : 'text-red-400'
+                                }`}>
+                                {cameraError}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Hidden file input */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                </>
+            ) : (
+                // Non-camera view (original design)
+                <div
+                    className="p-4 sm:p-5 pt-[40px] pb-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)]"
+                    style={{
+                        backgroundImage: 'url(/PayScanBgImage.svg)',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    }}
+                >
+                    <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
+                        {/* <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
                         <p className="text-[24px] text-[#030200] font-semibold mt-2">
                             Scan To Pay
                         </p>
@@ -793,165 +879,135 @@ const ScanPage = () => {
                         </p>
                     </div> */}
 
-                    <div className="bg-[#ffffff00] rounded-[18px] border-none border-[#E3F3E2] shadow-[0_23px_50px_rgba(25,33,61,0.02)] p-4 sm:p-6 flex flex-col gap-5 items-center">
-                        {/* Scanner area with original transparent design */}
-                        <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center ">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
-                                    {/* Html5Qrcode scanner container */}
-                                    <div
-                                        id={qrCodeRegionId}
-                                        className={`w-full h-full rounded-2xl overflow-hidden ${cameraActive ? 'block' : 'hidden'}`}
-                                    />
-
-                                    {/* Scan frame overlay for camera view (green corners) */}
-                                    {cameraActive && (
-                                        <div className="pointer-events-none absolute inset-4 z-20">
-                                            <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
-                                            <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
-                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
-                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
-                                        </div>
-                                    )}
-
-                                    {/* Show image when camera is not active */}
-                                    {!cameraActive && (
-                                        <>
-                                            {uploadedImage ? (
-                                                <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden flex items-center justify-center">
-                                                    <img
-                                                        src={uploadedImage}
-                                                        alt="Uploaded QR"
-                                                        className="w-full h-full object-contain"
-                                                    />
-                                                    {/* Scan frame overlay (green corners) */}
-                                                    <div className="pointer-events-none absolute inset-4">
-                                                        <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
-                                                        <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
-                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
-                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
-                                                    <img src="/qrcode.svg" alt="qr-code" className='min-w-[200px]' />
-                                                    {/* Scan frame overlay (green corners) */}
-                                                    <div className="pointer-events-none absolute inset-4">
-                                                        <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
-                                                        <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
-                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
-                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Upload button */}
-                                {cameraActive ? (
-                                    <button
-                                        type="button"
-                                        disabled={scanning}
-                                        className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
-                                        onClick={handleUploadClick}
-                                    >
-                                        <ImageIcon color='#6F7B8F' />
-                                        Upload from gallery
-                                    </button>
-                                ) : (
-                                    <>
+                        <div className="bg-[#ffffff00] rounded-[18px] border-none border-[#E3F3E2] shadow-[0_23px_50px_rgba(25,33,61,0.02)] p-4 sm:p-6 flex flex-col gap-5 items-center">
+                            {/* Scanner area with original transparent design */}
+                            <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center ">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
                                         {uploadedImage ? (
-                                            <div className="flex gap-2 mt-10">
-                                                <button
-                                                    type="button"
-                                                    className="px-6 py-2 text-sm bg-white hover:bg-gray-100 text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 border border-[#E5E7EB]"
-                                                    onClick={() => {
-                                                        if (uploadedImage) {
-                                                            URL.revokeObjectURL(uploadedImage);
-                                                        }
-                                                        setPhoneNumber("+1");
-                                                    }}
-                                                >
-                                                    Clear
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={scanning}
-                                                    className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70 border border-[#E5E7EB]"
-                                                    onClick={handleUploadClick}
-                                                >
-                                                    <ImageIcon color='#6F7B8F' />
-                                                    {scanning ? "Scanning…" : "Upload from gallery"}
-                                                </button>
+                                            <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden flex items-center justify-center">
+                                                <img
+                                                    src={uploadedImage}
+                                                    alt="Uploaded QR"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                {/* Scan frame overlay (green corners) */}
+                                                <div className="pointer-events-none absolute inset-4">
+                                                    <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                                    <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                                    <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                                    <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
+                                                </div>
                                             </div>
                                         ) : (
+                                            <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
+                                                <img src="/qrcode.svg" alt="qr-code" className='min-w-[200px]' />
+                                                {/* Scan frame overlay (green corners) */}
+                                                <div className="pointer-events-none absolute inset-4">
+                                                    <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                                    <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                                    <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                                    <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Upload button */}
+                                    {uploadedImage ? (
+                                        <div className="flex gap-2 mt-10">
+                                            <button
+                                                type="button"
+                                                className="px-6 py-2 text-sm bg-white hover:bg-gray-100 text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 border border-[#E5E7EB]"
+                                                onClick={() => {
+                                                    if (uploadedImage) {
+                                                        URL.revokeObjectURL(uploadedImage);
+                                                    }
+                                                    setPhoneNumber("+1");
+                                                }}
+                                            >
+                                                Clear
+                                            </button>
                                             <button
                                                 type="button"
                                                 disabled={scanning}
-                                                className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
+                                                className="px-6 py-2 text-sm bg-white whitespace-nowrap hover:bg-[#009116] text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70 border border-[#E5E7EB]"
                                                 onClick={handleUploadClick}
                                             >
                                                 <ImageIcon color='#6F7B8F' />
                                                 {scanning ? "Scanning…" : "Upload from gallery"}
                                             </button>
-                                        )}
-                                    </>
-                                )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            disabled={scanning}
+                                            className="px-6 py-2 text-sm bg-white whitespace-nowrap hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
+                                            onClick={handleUploadClick}
+                                        >
+                                            <ImageIcon color='#6F7B8F' />
+                                            {scanning ? "Scanning…" : "Upload from gallery"}
+                                        </button>
+                                    )}
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
                             </div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
-                        </div>
 
-                        {cameraError && (
-                            <div className="flex flex-col items-center gap-3 mt-4">
-                                <p className={`text-sm text-center ${
-                                    cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
-                                        ? 'text-yellow-500' 
+                            {cameraError && (
+                                <div className="flex flex-col items-center gap-3 mt-4">
+                                    <p className={`text-sm text-center ${cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
+                                        ? 'text-yellow-500'
                                         : 'text-red-500'
-                                }`}>
-                                    {cameraError}
-                                </p>
-                            </div>
-                        )}
+                                        }`}>
+                                        {cameraError}
+                                    </p>
+                                </div>
+                            )}
 
-                        <div className="w-full flex items-center gap-2 mt-2">
-                            <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
-                            <div className="text-[14px] text-white whitespace-nowrap">Or pay via phone name</div>
-                            <div />
-                            <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
-                        </div>
+                            {cameraError && <div className="w-full flex items-center gap-2 mt-2">
+                                <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
+                                <div className="text-[14px] text-white whitespace-nowrap">Or pay via phone name</div>
+                                <div />
+                                <div className="w-full h-px border-[0.5px] border-dashed border-[#ffffff4D]" />
+                            </div>}
 
-                        <div className="w-full">
-                            <PhoneNumberInput
-                                label=""
-                                placeholder="Enter phone number"
-                                value={phoneNumber}
-                                onChange={(value) => {
-                                    setPhoneNumber(value);
-                                }}
-                                setCountry={setCountry}
-                                country={country}
-                                onDialCodeChange={setCountryCode}
-                                shadow={false}
-                            />
+                            {cameraError &&
+                                <>
+                                    <div className="w-full">
+                                        <PhoneNumberInput
+                                            label=""
+                                            placeholder="Enter phone number"
+                                            value={phoneNumber}
+                                            onChange={(value) => {
+                                                setPhoneNumber(value);
+                                            }}
+                                            setCountry={setCountry}
+                                            country={country}
+                                            onDialCodeChange={setCountryCode}
+                                            shadow={false}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        className="px-6 w-full bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[10px] flex items-center gap-2"
+                                        onClick={() => handleContinue()}
+                                        disabled={loading}
+                                    >
+                                        {loading ? "Searching..." : "Continue"}
+                                    </Button>
+                                </>
+                            }
+
                         </div>
                     </div>
                 </div>
-                <Button
-                    type="button"
-                    className="px-6 w-full bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[10px] flex items-center gap-2"
-                    onClick={() => handleContinue()}
-                    disabled={loading}
-                >
-                    {loading ? "Searching..." : "Continue"}
-                </Button>
-            </div>
+            )}
         </div>
     )
 }
