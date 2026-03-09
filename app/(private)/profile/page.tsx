@@ -5,20 +5,22 @@ import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, Notificat
 import { getNameCapitalized, getUserDetails, getUserImage, logoutUser } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux';
 import QRCode from "react-qr-code";
 import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
 
 const Page = () => {
     const user = getUserDetails();
     const [isCopied, setIsCopied] = useState(false);
     const [showLogoutPopup, setShowLogoutPopup] = useState(false);
     const [showQRModal, setShowQRModal] = useState(false);
+    const qrCodeRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
     const router = useRouter();
     const transactionRef = "NXG-9823-4410"
-
+    
     const fullNumber = user?.full_number || "";
 
     const copyRef = useCallback(() => {
@@ -60,6 +62,150 @@ const Page = () => {
             document.body.style.overflow = "unset";
         };
     }, [showQRModal]);
+
+    // Convert QR code to image blob - use displayed QR code and scale up
+    const getQRCodeAsImage = useCallback(async (): Promise<Blob | null> => {
+        if (!qrCodeRef.current || !fullNumber) {
+            console.error('Missing qrCodeRef or fullNumber');
+            return null;
+        }
+
+        try {
+            // Wait a moment to ensure QR code is rendered
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            const svgElement = qrCodeRef.current.querySelector('svg');
+            if (!svgElement) {
+                console.error('SVG element not found');
+                return null;
+            }
+
+            // Get the current SVG size from viewBox
+            const viewBox = svgElement.getAttribute('viewBox');
+            const currentSize = viewBox ? parseInt(viewBox.split(' ')[3] || '280') : 280;
+            
+            // Scale up for high resolution (2400px)
+            const qrSize = 2400;
+            const scaleFactor = qrSize / currentSize;
+            
+            // Minimal padding - only 10px as requested
+            const padding = 10;
+            const canvasSize = qrSize + (padding * 2); // Total: 2420x2420px
+            
+            // Clone and scale the SVG
+            const clonedSvg = svgElement.cloneNode(true) as SVGElement;
+            clonedSvg.setAttribute('width', qrSize.toString());
+            clonedSvg.setAttribute('height', qrSize.toString());
+            clonedSvg.setAttribute('viewBox', `0 0 ${currentSize} ${currentSize}`);
+            
+            // Serialize SVG
+            const svgData = new XMLSerializer().serializeToString(clonedSvg);
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return null;
+            }
+
+            // Fill white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Create blob URL from SVG
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+
+            return new Promise((resolve) => {
+                img.onload = () => {
+                    try {
+                        // Disable smoothing for crisp QR codes
+                        ctx.imageSmoothingEnabled = false;
+                        
+                        // Draw QR code scaled up
+                        ctx.drawImage(img, padding, padding, qrSize, qrSize);
+                        
+                        // Convert to blob
+                        canvas.toBlob((blob) => {
+                            URL.revokeObjectURL(url);
+                            if (blob) {
+                                console.log('QR code image created:', blob.size, 'bytes');
+                            }
+                            resolve(blob);
+                        }, 'image/png', 1.0);
+                    } catch (error) {
+                        URL.revokeObjectURL(url);
+                        console.error('Error drawing QR code:', error);
+                        resolve(null);
+                    }
+                };
+                
+                img.onerror = (error) => {
+                    URL.revokeObjectURL(url);
+                    console.error('Error loading SVG:', error);
+                    resolve(null);
+                };
+                
+                img.src = url;
+            });
+        } catch (error) {
+            console.error('Error converting QR to image:', error);
+            return null;
+        }
+    }, [fullNumber]);
+
+    // Share QR code image only (no text)
+    const handleWebShare = useCallback(async () => {
+        if (!fullNumber) return;
+
+        const qrImageBlob = await getQRCodeAsImage();
+        
+        if (!qrImageBlob) {
+            toast.error('Failed to generate QR code image');
+            return;
+        }
+
+        if (navigator.share) {
+            try {
+                const file = new File([qrImageBlob], 'qr-code.png', { type: 'image/png' });
+                
+                // Check if file sharing is supported
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                    });
+                    toast.success('QR code shared successfully!');
+                } else {
+                    // Fallback: try sharing without canShare check
+                    await navigator.share({
+                        files: [file],
+                    });
+                    toast.success('QR code shared successfully!');
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    toast.error('Failed to share QR code');
+                }
+            }
+        } else {
+            // Fallback: download the image
+            const url = URL.createObjectURL(qrImageBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'qr-code.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success('QR code downloaded!');
+        }
+    }, [fullNumber, getQRCodeAsImage]);
 
     return (
         <>
@@ -203,17 +349,39 @@ const Page = () => {
                             </h3>
                             {fullNumber ? (
                                 <>
-                                    <div className='my-3 bg-[#F8FAFC] rounded-[12px] p-4 flex items-center justify-center'>
+                                    <div ref={qrCodeRef} className='my-3 bg-[#F8FAFC] rounded-[12px] p-4 flex items-center justify-center'>
                                         <QRCode
                                             value={fullNumber}
-                                            size={200}
+                                            size={280}
                                             fgColor="#030200"
                                             bgColor="transparent"
                                         />
                                     </div>
-                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-4 text-center">
+                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-2 text-center">
                                         Scan this QR code to receive payments
                                     </p>
+                                    <p className="text-xs text-[#6F7B8F] mb-4 text-center font-mono">
+                                        {fullNumber}
+                                    </p>
+
+                                    {/* Share Option */}
+                                    <div className="w-full mb-4">
+                                        <Button
+                                            variant="primary"
+                                            size="lg"
+                                            onClick={handleWebShare}
+                                            className="w-full rounded-[10px] h-[52px] text-base font-semibold flex items-center justify-center gap-2"
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="18" cy="5" r="3"></circle>
+                                                <circle cx="6" cy="12" r="3"></circle>
+                                                <circle cx="18" cy="19" r="3"></circle>
+                                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                            </svg>
+                                            Share
+                                        </Button>
+                                    </div>
 
                                     <Button
                                         variant="primary"
