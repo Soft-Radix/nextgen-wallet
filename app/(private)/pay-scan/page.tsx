@@ -12,6 +12,7 @@ import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
 import jsQR from "jsqr";
+import { Html5Qrcode } from "html5-qrcode";
 import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useSelector } from 'react-redux';
 
@@ -70,9 +71,243 @@ const ScanPage = () => {
     );
     const [loading, setLoading] = useState(false);
     const [scanning, setScanning] = useState(false);
+    const [cameraActive, setCameraActive] = useState(false);
+    const [cameraError, setCameraError] = useState<string | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+    const qrCodeRegionId = "qr-reader";
+
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
+
+    const stopCamera = async () => {
+        try {
+            // Stop Html5Qrcode scanner
+            if (html5QrCodeRef.current) {
+                await html5QrCodeRef.current.stop();
+                await html5QrCodeRef.current.clear();
+                html5QrCodeRef.current = null;
+            }
+        } catch (err) {
+            console.error('Error stopping Html5Qrcode:', err);
+        }
+        
+        // Clean up old interval-based scanning
+        if (scanIntervalRef.current) {
+            clearInterval(scanIntervalRef.current);
+            scanIntervalRef.current = null;
+        }
+        
+        // Clean up stream
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        
+        setCameraActive(false);
+        setCameraError(null);
+    };
+
+    const startCamera = async () => {
+        // Prevent multiple simultaneous calls
+        if (html5QrCodeRef.current) {
+            console.log('Camera already started');
+            return;
+        }
+
+        try {
+            console.log('Starting camera with Html5Qrcode...');
+            setCameraError(null);
+
+            // Wait for the container element to be available
+            const checkContainer = () => {
+                const element = document.getElementById(qrCodeRegionId);
+                if (element) {
+                    return element;
+                }
+                return null;
+            };
+
+            let container = checkContainer();
+            if (!container) {
+                // Wait a bit for DOM to be ready
+                await new Promise(resolve => setTimeout(resolve, 300));
+                container = checkContainer();
+            }
+
+            if (!container) {
+                throw new Error('QR code scanner container not found');
+            }
+
+            // Create Html5Qrcode instance
+            const html5QrCode = new Html5Qrcode(qrCodeRegionId);
+            html5QrCodeRef.current = html5QrCode;
+
+            // Start scanning with best configuration
+            await html5QrCode.start(
+                {
+                    facingMode: "environment" // Use back camera
+                },
+                {
+                    fps: 10, // Frames per second
+                    qrbox: { width: 250, height: 250 }, // Scanning area
+                    aspectRatio: 1.0,
+                    disableFlip: false, // Allow rotation
+                    videoConstraints: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: "environment"
+                    }
+                },
+                (decodedText, decodedResult) => {
+                    // Success callback - QR code detected
+                    console.log('QR Code detected:', decodedText);
+                    handleQRCodeDetected(decodedText);
+                },
+                (errorMessage) => {
+                    // Error callback - ignore scanning errors, they're normal
+                    // Only log if it's not a common "not found" error
+                    if (!errorMessage.includes('No QR code found')) {
+                        // Silent - don't spam console
+                    }
+                }
+            );
+
+            setCameraActive(true);
+            console.log('Camera started successfully');
+        } catch (err: any) {
+            console.error('Camera access error:', err);
+            const errorMsg = err.name === 'NotAllowedError' || err.message?.includes('Permission')
+                ? 'Camera access denied. Please allow camera permissions.'
+                : err.name === 'NotFoundError' || err.message?.includes('camera')
+                ? 'No camera found on this device.'
+                : err.message || 'Failed to access camera. Please check permissions.';
+            setCameraError(errorMsg);
+            setCameraActive(false);
+            
+            // Clean up on error
+            if (html5QrCodeRef.current) {
+                try {
+                    await html5QrCodeRef.current.stop();
+                    html5QrCodeRef.current = null;
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+    };
+
+    const handleQRCodeDetected = (qrData: string) => {
+        // Prevent duplicate processing
+        if (scanning) return;
+        
+        setScanning(true);
+        
+        const phone = parsePhoneFromQRData(qrData);
+        if (phone) {
+            // Stop camera after successful scan
+            stopCamera();
+            
+            const digits = phone.replace(/\D/g, "");
+            const hasPlus = phone.startsWith("+");
+            if (hasPlus && digits.length >= 10) {
+                let countryCode = "+1";
+                let national = digits;
+                if (digits.startsWith("1") && digits.length === 11) {
+                    countryCode = "+1";
+                    national = digits.slice(1);
+                } else if (digits.startsWith("44") && digits.length >= 10) {
+                    countryCode = "+44";
+                    national = digits.slice(2);
+                } else if (digits.startsWith("91") && digits.length >= 12) {
+                    countryCode = "+91";
+                    national = digits.slice(2);
+                } else {
+                    const len = digits.length - 10;
+                    if (len >= 1) {
+                        countryCode = "+" + digits.slice(0, len);
+                        national = digits.slice(len);
+                    }
+                }
+                setCountryCode(countryCode);
+                setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
+                setPhoneNumber(national);
+                toast.success("QR code scanned successfully!");
+            } else {
+                setPhoneNumber(digits);
+                toast.success("QR code scanned successfully!");
+            }
+        } else {
+            toast.error("Invalid QR code. No phone number found.");
+        }
+        
+        setScanning(false);
+    };
+
+
+    useEffect(() => {
+        // Automatically start camera when component mounts
+        let mounted = true;
+        let retryCount = 0;
+        const maxRetries = 20; // 2 seconds max
+        
+        const initCamera = async () => {
+            if (typeof window === 'undefined') return;
+            
+            // Check if camera API is available
+            if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
+                console.log('Camera API not available');
+                setCameraError('Camera API not supported in this browser');
+                return;
+            }
+            
+            // Try to request camera permission proactively (if Permissions API is available)
+            try {
+                if ('permissions' in navigator) {
+                    const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
+                    console.log('Camera permission status:', permissionStatus.state);
+                }
+            } catch (e) {
+                // Permissions API might not be supported, that's okay
+                console.log('Permissions API not available');
+            }
+            
+            // Wait for html5-qrcode container to be rendered and start camera immediately
+            const checkAndStart = () => {
+                if (!mounted) return;
+                
+                retryCount++;
+                
+                const container = document.getElementById(qrCodeRegionId);
+                if (container) {
+                    console.log('QR scanner container ready, starting camera immediately...');
+                    startCamera();
+                } else if (retryCount < maxRetries) {
+                    // Retry quickly
+                    setTimeout(checkAndStart, 50);
+                } else {
+                    console.error('QR scanner container not found after max retries');
+                    setCameraError('Scanner container not ready');
+                }
+            };
+            
+            // Start checking immediately, don't wait
+            checkAndStart();
+        };
+        
+        // Start immediately when component mounts
+        initCamera();
+        
+        return () => {
+            mounted = false;
+            stopCamera();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -112,20 +347,34 @@ const ScanPage = () => {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        // Keep camera open - don't stop it when uploading
+
         const url = URL.createObjectURL(file);
-        setUploadedImage((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
-            return url;
-        });
         setScanning(true);
+
+        // Don't set uploadedImage yet - wait for validation
         decodeQRFromImageUrl(url).then((qrData) => {
             setScanning(false);
+
+            // Clean up the URL if QR is invalid
             if (!qrData) {
-                toast.error("No QR code found in image. Try another image or enter phone number.");
+                URL.revokeObjectURL(url);
+                toast.error("This QR is invalid. No QR code found in image.");
+                // Reset input to allow selecting the same file again
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
                 return;
             }
+
             const phone = parsePhoneFromQRData(qrData);
             if (phone) {
+                // Only set uploadedImage if QR is valid
+                setUploadedImage((prev) => {
+                    if (prev) URL.revokeObjectURL(prev);
+                    return url;
+                });
+
                 const digits = phone.replace(/\D/g, "");
                 const hasPlus = phone.startsWith("+");
                 if (hasPlus && digits.length >= 10) {
@@ -150,14 +399,23 @@ const ScanPage = () => {
                     setCountryCode(countryCode);
                     setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
                     setPhoneNumber(national);
+                    toast.success("QR code scanned. Check the number and tap Continue.");
                 } else {
                     setPhoneNumber(digits);
+                    toast.success("QR code scanned. Check the number and tap Continue.");
                 }
-                toast.success("QR code scanned. Check the number and tap Continue.");
             } else {
-                toast.error("Invalid QR. No phone number found. Try another image or enter phone number.");
+                // Invalid QR - don't show image, just show toast
+                URL.revokeObjectURL(url);
+                toast.error("This QR is invalid. No phone number found in QR code.");
+                // Reset input to allow selecting the same file again
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
             }
         });
+
+        // Reset input after processing
         event.target.value = "";
     };
 
@@ -261,6 +519,19 @@ const ScanPage = () => {
     return (
         <div className='bg-black'>
             {/* <Topbar title="Pay/Scan" /> */}
+            <style jsx global>{`
+                #${qrCodeRegionId} video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+                #${qrCodeRegionId} {
+                    position: relative !important;
+                }
+                #${qrCodeRegionId} > div {
+                    border: none !important;
+                }
+            `}</style>
             <div className="p-4 sm:p-5 py-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
                 <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
                     {/* <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
@@ -273,75 +544,122 @@ const ScanPage = () => {
                     </div> */}
 
                     <div className="bg-[#ffffff00] rounded-[18px] border-none border-[#E3F3E2] shadow-[0_23px_50px_rgba(25,33,61,0.02)] p-4 sm:p-6 flex flex-col gap-5 items-center">
-                        {!uploadedImage ? (
-                            <>
-                                <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center pt-10">
-                                    <div className="flex flex-col items-center gap-4">
-                                        <div className="w-[140px] h-[140px] flex items-center justify-center">
-                                            <img src="/qrcode.svg" alt="qr-code" className='min-w-[200px]' />
-                                        </div>
-                                        {/* <Button
-                                            type="button"
-                                            className="px-6 bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[10px] flex items-center gap-2"
-                                            onClick={handleUploadClick}
-                                        >
-                                            <ImageIcon />
-                                            Upload from Computer
-                                        </Button> */}
-                                        <button
-                                            type="button"
-                                            disabled={scanning}
-                                            className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
-                                            onClick={handleUploadClick}
-                                        >
-                                            <ImageIcon color='#6F7B8F' />
-                                            {scanning ? "Scanning…" : "Upload from gallery"}
-                                        </button>
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="w-full rounded-[18px] bg-[#F5FFF5] flex flex-col items-center justify-center gap-4 p-4">
-                                    <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
-                                        <img
-                                            src={uploadedImage}
-                                            alt="Uploaded QR"
-                                            className="w-full h-full object-contain"
-                                        />
-                                        {/* Scan frame overlay (green corners) */}
-                                        <div className="pointer-events-none absolute inset-4">
+                        {/* Scanner area with original transparent design */}
+                        <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center pt-10">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
+                                    {/* Html5Qrcode scanner container */}
+                                    <div 
+                                        id={qrCodeRegionId}
+                                        className={`w-full h-full rounded-2xl overflow-hidden ${cameraActive ? 'block' : 'hidden'}`}
+                                    />
+                                    
+                                    {/* Scan frame overlay for camera view (green corners) */}
+                                    {cameraActive && (
+                                        <div className="pointer-events-none absolute inset-4 z-20">
                                             <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
                                             <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
                                             <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
                                             <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
                                         </div>
-                                    </div>
+                                    )}
+                                    
+                                    {/* Show image when camera is not active */}
+                                    {!cameraActive && (
+                                        <>
+                                            {uploadedImage ? (
+                                                <div className="relative w-full max-w-[280px] aspect-square rounded-2xl overflow-hidden flex items-center justify-center">
+                                                    <img
+                                                        src={uploadedImage}
+                                                        alt="Uploaded QR"
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                    {/* Scan frame overlay (green corners) */}
+                                                    <div className="pointer-events-none absolute inset-4">
+                                                        <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                                        <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
+                                                    <img src="/qrcode.svg" alt="qr-code" className='min-w-[200px]' />
+                                                    {/* Scan frame overlay (green corners) */}
+                                                    <div className="pointer-events-none absolute inset-4">
+                                                        <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                                        <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Upload button */}
+                                {cameraActive ? (
                                     <button
                                         type="button"
                                         disabled={scanning}
-                                        className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70 border border-[#E5E7EB]"
+                                        className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
                                         onClick={handleUploadClick}
                                     >
                                         <ImageIcon color='#6F7B8F' />
-                                        {scanning ? "Scanning…" : "Upload from gallery"}
+                                        Upload from gallery
                                     </button>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
-                                </div>
-                            </>
+                                ) : (
+                                    <>
+                                        {uploadedImage ? (
+                                            <div className="flex gap-2 mt-10">
+                                                <button
+                                                    type="button"
+                                                    className="px-6 py-2 text-sm bg-white hover:bg-gray-100 text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 border border-[#E5E7EB]"
+                                                    onClick={() => {
+                                                        if (uploadedImage) {
+                                                            URL.revokeObjectURL(uploadedImage);
+                                                        }
+                                                        setUploadedImage(null);
+                                                    }}
+                                                >
+                                                    Clear
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={scanning}
+                                                    className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70 border border-[#E5E7EB]"
+                                                    onClick={handleUploadClick}
+                                                >
+                                                    <ImageIcon color='#6F7B8F' />
+                                                    {scanning ? "Scanning…" : "Upload from gallery"}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                disabled={scanning}
+                                                className="px-6 py-2 text-sm bg-white hover:bg-[#009116] text-[#6F7B8F] mt-10 font-normal rounded-[40px] flex items-center gap-2 disabled:opacity-70"
+                                                onClick={handleUploadClick}
+                                            >
+                                                <ImageIcon color='#6F7B8F' />
+                                                {scanning ? "Scanning…" : "Upload from gallery"}
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                        </div>
+
+                        {cameraError && (
+                            <p className="text-red-500 text-sm text-center">{cameraError}</p>
                         )}
 
                         <div className="w-full flex items-center gap-2 mt-2">
