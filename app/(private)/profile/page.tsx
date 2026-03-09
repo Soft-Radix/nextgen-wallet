@@ -5,16 +5,23 @@ import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, Notificat
 import { getNameCapitalized, getUserDetails, getUserImage, logoutUser } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux';
+import QRCode from "react-qr-code";
+import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
 
 const Page = () => {
     const user = getUserDetails();
     const [isCopied, setIsCopied] = useState(false);
     const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+    const [showQRModal, setShowQRModal] = useState(false);
+    const qrCodeRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
     const router = useRouter();
     const transactionRef = "NXG-9823-4410"
+
+    const fullNumber = user?.full_number || "";
 
     const copyRef = useCallback(() => {
         navigator.clipboard?.writeText(transactionRef);
@@ -23,19 +30,182 @@ const Page = () => {
             setIsCopied(false);
         }, 2000);
     }, [transactionRef]);
-    
+
     const handleLogout = () => {
         dispatch(ResetTransaction());
         logoutUser();
     }
-    
+
     const handleLogoutClick = () => {
         setShowLogoutPopup(true);
     }
-    
+
     const handleCancelLogout = () => {
         setShowLogoutPopup(false);
     }
+
+    // Handle Escape key and body scroll for QR modal
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && showQRModal) {
+                setShowQRModal(false);
+            }
+        };
+
+        if (showQRModal) {
+            document.addEventListener("keydown", handleEscape);
+            document.body.style.overflow = "hidden";
+        }
+
+        return () => {
+            document.removeEventListener("keydown", handleEscape);
+            document.body.style.overflow = "unset";
+        };
+    }, [showQRModal]);
+
+    // Convert QR code to image blob - use displayed QR code and scale up
+    const getQRCodeAsImage = useCallback(async (): Promise<Blob | null> => {
+        if (!qrCodeRef.current || !fullNumber) {
+            console.error('Missing qrCodeRef or fullNumber');
+            return null;
+        }
+
+        try {
+            // Wait a moment to ensure QR code is rendered
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            const svgElement = qrCodeRef.current.querySelector('svg');
+            if (!svgElement) {
+                console.error('SVG element not found');
+                return null;
+            }
+
+            // Get the current SVG size from viewBox
+            const viewBox = svgElement.getAttribute('viewBox');
+            const currentSize = viewBox ? parseInt(viewBox.split(' ')[3] || '280') : 280;
+
+            // Scale up for high resolution (2400px)
+            const qrSize = 2400;
+            const scaleFactor = qrSize / currentSize;
+
+            // Minimal padding - only 10px as requested
+            const padding = 10;
+            const canvasSize = qrSize + (padding * 2); // Total: 2420x2420px
+
+            // Clone and scale the SVG
+            const clonedSvg = svgElement.cloneNode(true) as SVGElement;
+            clonedSvg.setAttribute('width', qrSize.toString());
+            clonedSvg.setAttribute('height', qrSize.toString());
+            clonedSvg.setAttribute('viewBox', `0 0 ${currentSize} ${currentSize}`);
+
+            // Serialize SVG
+            const svgData = new XMLSerializer().serializeToString(clonedSvg);
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return null;
+            }
+
+            // Fill white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Create blob URL from SVG
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+
+            return new Promise((resolve) => {
+                img.onload = () => {
+                    try {
+                        // Disable smoothing for crisp QR codes
+                        ctx.imageSmoothingEnabled = false;
+
+                        // Draw QR code scaled up
+                        ctx.drawImage(img, padding, padding, qrSize, qrSize);
+
+                        // Convert to blob
+                        canvas.toBlob((blob) => {
+                            URL.revokeObjectURL(url);
+                            if (blob) {
+                                console.log('QR code image created:', blob.size, 'bytes');
+                            }
+                            resolve(blob);
+                        }, 'image/png', 1.0);
+                    } catch (error) {
+                        URL.revokeObjectURL(url);
+                        console.error('Error drawing QR code:', error);
+                        resolve(null);
+                    }
+                };
+
+                img.onerror = (error) => {
+                    URL.revokeObjectURL(url);
+                    console.error('Error loading SVG:', error);
+                    resolve(null);
+                };
+
+                img.src = url;
+            });
+        } catch (error) {
+            console.error('Error converting QR to image:', error);
+            return null;
+        }
+    }, [fullNumber]);
+
+    // Share QR code image only (no text)
+    const handleWebShare = useCallback(async () => {
+        if (!fullNumber) return;
+
+        const qrImageBlob = await getQRCodeAsImage();
+
+        if (!qrImageBlob) {
+            toast.error('Failed to generate QR code image');
+            return;
+        }
+
+        if (navigator.share) {
+            try {
+                const file = new File([qrImageBlob], 'qr-code.png', { type: 'image/png' });
+
+                // Check if file sharing is supported
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                    });
+                    toast.success('QR code shared successfully!');
+                } else {
+                    // Fallback: try sharing without canShare check
+                    await navigator.share({
+                        files: [file],
+                    });
+                    toast.success('QR code shared successfully!');
+                }
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    toast.error('Failed to share QR code');
+                }
+            }
+        } else {
+            // Fallback: download the image
+            const url = URL.createObjectURL(qrImageBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'qr-code.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success('QR code downloaded!');
+        }
+    }, [fullNumber, getQRCodeAsImage]);
 
     return (
         <>
@@ -89,6 +259,25 @@ const Page = () => {
                         <button
                             type="button"
                             className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
+                            onClick={() => setShowQRModal(true)}
+                        >
+                            <div className="flex items-center gap-3">
+                                <SecurityPinIcon />
+                                <div className="flex flex-col items-start gap-2">
+                                    <span className="text-sm font-semibold text-[#1E293B]">
+                                        View QR Code
+                                    </span>
+                                    <span className="text-xs text-[#6F7B8F]">
+                                        Use a QR code to accept payments
+                                    </span>
+                                </div>
+                            </div>
+                            <span><ForwardIcon /></span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
                             onClick={() => router.push("/change-pin")}
                         >
                             <div className="flex items-center gap-3">
@@ -132,7 +321,7 @@ const Page = () => {
                 <div className="mt-7 w-full max-w-md">
                     <Button size="lg" fullWidth isLoading={false} disabled={false} className="w-full" endIcon={<LogoutIcon />} onClick={handleLogoutClick}>Logout</Button>
                 </div>
-                
+
                 {/* Logout Confirmation Modal */}
                 <Modal
                     isOpen={showLogoutPopup}
@@ -144,6 +333,85 @@ const Page = () => {
                     onConfirm={handleLogout}
                     variant="danger"
                 />
+
+                {/* QR Code Modal */}
+                {showQRModal && typeof document !== "undefined" && createPortal(
+                    <div
+                        className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/50 overflow-y-auto"
+                        onClick={() => setShowQRModal(false)}
+                    >
+                        <div
+                            className="bg-white rounded-[14px] p-4 sm:p-6 max-w-[400px] w-full max-h-[85vh] overflow-y-auto shadow-lg flex flex-col items-center justify-center my-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-lg sm:text-[20px] font-semibold text-[#030200] mb-4">
+                                Your Payment QR Code
+                            </h3>
+                            {fullNumber ? (
+                                <>
+                                    <div ref={qrCodeRef} className='my-3 bg-[#F8FAFC] rounded-[12px] p-4 flex items-center justify-center'>
+                                        <QRCode
+                                            value={fullNumber}
+                                            size={280}
+                                            fgColor="#030200"
+                                            bgColor="transparent"
+                                        />
+                                    </div>
+                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-2 text-center">
+                                        Scan this QR code to receive payments
+
+                                    </p>
+
+
+                                    {/* Share Option */}
+
+
+
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={() => setShowQRModal(false)}
+                                        className="rounded-[10px] h-[52px] text-base font-semibold"
+                                    >
+                                        Close
+                                    </Button>
+                                    <span
+                                        className='cursor-pointer flex items-center text-[#00a63e] justify-center gap-2 mt-2 '
+                                        onClick={handleWebShare}
+
+
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a63e" strokeWidth="2">
+                                            <circle cx="18" cy="5" r="3"></circle>
+                                            <circle cx="6" cy="12" r="3"></circle>
+                                            <circle cx="18" cy="19" r="3"></circle>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                        </svg> Share
+                                    </span>
+
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-4 text-center">
+                                        Unable to generate QR code. Phone number not found.
+                                    </p>
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={() => setShowQRModal(false)}
+                                        className="rounded-[10px] h-[52px] text-base font-semibold"
+                                    >
+                                        Close
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>,
+                    document.body
+                )}
 
                 {/* Footer */}
                 <div className="mt-6 flex w-full max-w-md flex-col items-center text-center text-[12px] text-[#6F7B8F]">
