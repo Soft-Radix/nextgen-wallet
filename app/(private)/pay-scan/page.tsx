@@ -79,6 +79,9 @@ const ScanPage = () => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
     const qrCodeRegionId = "qr-reader";
+    const lastScannedCodeRef = useRef<string>("");
+    const lastScanTimeRef = useRef<number>(0);
+    const processedQRCodesRef = useRef<Map<string, { type: 'valid' | 'invalid', timestamp: number }>>(new Map());
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -202,15 +205,36 @@ const ScanPage = () => {
     };
 
     const handleQRCodeDetected = async (qrData: string) => {
-        // Prevent duplicate processing
-        if (scanning) return;
+        // Prevent duplicate processing and rapid re-scans
+        const now = Date.now();
+        const timeSinceLastScan = now - lastScanTimeRef.current;
+        
+        // Check if this QR code was already processed
+        const processedQR = processedQRCodesRef.current.get(qrData);
+        if (processedQR) {
+            const timeSinceProcessed = now - processedQR.timestamp;
+            // If same code was processed within 5 seconds, ignore it
+            if (timeSinceProcessed < 5000) {
+                return;
+            }
+            // Remove old entries (older than 5 seconds) to allow re-scanning
+            processedQRCodesRef.current.delete(qrData);
+        }
+        
+        // If same code scanned within 2 seconds, ignore it
+        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 2000)) {
+            return;
+        }
+
+        // Update last scanned code and time
+        lastScannedCodeRef.current = qrData;
+        lastScanTimeRef.current = now;
 
         setScanning(true);
 
         const phone = parsePhoneFromQRData(qrData);
         if (phone) {
-            // Stop camera after successful scan
-            stopCamera();
+            // Keep camera running - don't stop it after scan
 
             const digits = phone.replace(/\D/g, "");
             const hasPlus = phone.startsWith("+");
@@ -245,25 +269,54 @@ const ScanPage = () => {
                 // Handle phone numbers without country code
                 finalPhoneNumber = digits;
             } else {
-                toast.error("Invalid phone number format.");
+                // Check if we've already shown error for this invalid format
+                if (!processedQRCodesRef.current.has(qrData)) {
+                    processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: Date.now() });
+                    toast.error("Invalid phone number format.");
+                }
                 setScanning(false);
                 return;
             }
 
             // Validate we have a phone number before continuing
             if (!finalPhoneNumber || finalPhoneNumber.length < 7) {
-                toast.error("Invalid phone number. Please try again.");
+                // Check if we've already shown error for this invalid number
+                if (!processedQRCodesRef.current.has(qrData)) {
+                    processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: Date.now() });
+                    toast.error("Invalid phone number. Please try again.");
+                }
                 setScanning(false);
                 return;
             }
 
-            setScanning(false);
-
+            // Mark this QR code as valid and processed
+            processedQRCodesRef.current.set(qrData, { type: 'valid', timestamp: now });
+            
+            // Clean up old processed QR codes (older than 30 seconds) to prevent memory buildup
+            const cleanupTime = now - 30000; // 30 seconds ago
+            for (const [code, data] of processedQRCodesRef.current.entries()) {
+                if (data.timestamp < cleanupTime) {
+                    processedQRCodesRef.current.delete(code);
+                }
+            }
+            
             // Automatically call handleContinue with the values directly (don't update input field)
             console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
+            
+            // Reset scanning flag after a delay to allow for new scans
+            setTimeout(() => {
+                setScanning(false);
+            }, 1000);
+            
             handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
         } else {
-            toast.error("Invalid QR code. No phone number found.");
+            // Check if we've already shown error for this invalid QR code
+            if (!processedQRCodesRef.current.has(qrData)) {
+                // Mark as invalid and show error only once
+                processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: now });
+                toast.error("Invalid QR code. No phone number found.");
+            }
+            // Reset scanning flag to allow scanning other QR codes
             setScanning(false);
         }
     };
@@ -527,12 +580,9 @@ const ScanPage = () => {
                 toast.error(err?.response?.data?.error)
                 setLoading(false);
 
-                // Restart camera on error
-                setTimeout(() => {
-                    if (!cameraActive) {
-                        startCamera();
-                    }
-                }, 500);
+                // Camera stays running - no need to restart
+                // Reset scanning flag to allow new scans
+                setScanning(false);
                 return
             } else {
                 toast.error(err?.response?.data?.error ||
@@ -540,12 +590,9 @@ const ScanPage = () => {
                     "Failed to search recipient")
                 setLoading(false);
 
-                // Restart camera on error
-                setTimeout(() => {
-                    if (!cameraActive) {
-                        startCamera();
-                    }
-                }, 500);
+                // Camera stays running - no need to restart
+                // Reset scanning flag to allow new scans
+                setScanning(false);
                 return;
             }
         }
@@ -555,11 +602,8 @@ const ScanPage = () => {
             toast.error("You cannot send money to your own number.");
             setLoading(false);
 
-            setTimeout(() => {
-                if (!cameraActive) {
-                    startCamera();
-                }
-            }, 500);
+            // Camera stays running - reset scanning flag to allow new scans
+            setScanning(false);
             return;
         }
 
