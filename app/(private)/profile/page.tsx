@@ -20,7 +20,7 @@ const Page = () => {
     const dispatch = useDispatch();
     const router = useRouter();
     const transactionRef = "NXG-9823-4410"
-    
+
     const fullNumber = user?.full_number || "";
 
     const copyRef = useCallback(() => {
@@ -73,7 +73,7 @@ const Page = () => {
         try {
             // Wait a moment to ensure QR code is rendered
             await new Promise(resolve => setTimeout(resolve, 200));
-            
+
             const svgElement = qrCodeRef.current.querySelector('svg');
             if (!svgElement) {
                 console.error('SVG element not found');
@@ -83,29 +83,29 @@ const Page = () => {
             // Get the current SVG size from viewBox
             const viewBox = svgElement.getAttribute('viewBox');
             const currentSize = viewBox ? parseInt(viewBox.split(' ')[3] || '280') : 280;
-            
+
             // Scale up for high resolution (2400px)
             const qrSize = 2400;
             const scaleFactor = qrSize / currentSize;
-            
+
             // Minimal padding - only 10px as requested
             const padding = 10;
             const canvasSize = qrSize + (padding * 2); // Total: 2420x2420px
-            
+
             // Clone and scale the SVG
             const clonedSvg = svgElement.cloneNode(true) as SVGElement;
             clonedSvg.setAttribute('width', qrSize.toString());
             clonedSvg.setAttribute('height', qrSize.toString());
             clonedSvg.setAttribute('viewBox', `0 0 ${currentSize} ${currentSize}`);
-            
+
             // Serialize SVG
             const svgData = new XMLSerializer().serializeToString(clonedSvg);
-            
+
             // Create canvas
             const canvas = document.createElement('canvas');
             canvas.width = canvasSize;
             canvas.height = canvasSize;
-            
+
             const ctx = canvas.getContext('2d');
             if (!ctx) {
                 return null;
@@ -126,10 +126,10 @@ const Page = () => {
                     try {
                         // Disable smoothing for crisp QR codes
                         ctx.imageSmoothingEnabled = false;
-                        
+
                         // Draw QR code scaled up
                         ctx.drawImage(img, padding, padding, qrSize, qrSize);
-                        
+
                         // Convert to blob
                         canvas.toBlob((blob) => {
                             URL.revokeObjectURL(url);
@@ -144,13 +144,13 @@ const Page = () => {
                         resolve(null);
                     }
                 };
-                
+
                 img.onerror = (error) => {
                     URL.revokeObjectURL(url);
                     console.error('Error loading SVG:', error);
                     resolve(null);
                 };
-                
+
                 img.src = url;
             });
         } catch (error) {
@@ -164,7 +164,7 @@ const Page = () => {
         if (!fullNumber) return;
 
         const qrImageBlob = await getQRCodeAsImage();
-        
+
         if (!qrImageBlob) {
             toast.error('Failed to generate QR code image');
             return;
@@ -173,7 +173,7 @@ const Page = () => {
         if (navigator.share) {
             try {
                 const file = new File([qrImageBlob], 'qr-code.png', { type: 'image/png' });
-                
+
                 // Check if file sharing is supported
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
@@ -359,29 +359,13 @@ const Page = () => {
                                     </div>
                                     <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-2 text-center">
                                         Scan this QR code to receive payments
-                                    </p>
-                                    <p className="text-xs text-[#6F7B8F] mb-4 text-center font-mono">
-                                        {fullNumber}
+
                                     </p>
 
+
                                     {/* Share Option */}
-                                    <div className="w-full mb-4">
-                                        <Button
-                                            variant="primary"
-                                            size="lg"
-                                            onClick={handleWebShare}
-                                            className="w-full rounded-[10px] h-[52px] text-base font-semibold flex items-center justify-center gap-2"
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <circle cx="18" cy="5" r="3"></circle>
-                                                <circle cx="6" cy="12" r="3"></circle>
-                                                <circle cx="18" cy="19" r="3"></circle>
-                                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                                            </svg>
-                                            Share
-                                        </Button>
-                                    </div>
+
+
 
                                     <Button
                                         variant="primary"
@@ -392,6 +376,21 @@ const Page = () => {
                                     >
                                         Close
                                     </Button>
+                                    <span
+                                        className='cursor-pointer flex items-center text-[#00a63e] justify-center gap-2 mt-2 '
+                                        onClick={handleWebShare}
+
+
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00a63e" strokeWidth="2">
+                                            <circle cx="18" cy="5" r="3"></circle>
+                                            <circle cx="6" cy="12" r="3"></circle>
+                                            <circle cx="18" cy="19" r="3"></circle>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                        </svg> Share
+                                    </span>
+
                                 </>
                             ) : (
                                 <>
