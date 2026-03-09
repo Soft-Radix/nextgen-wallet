@@ -158,22 +158,33 @@ const ScanPage = () => {
             });
             html5QrCodeRef.current = html5QrCode;
 
-            // iOS-friendly configuration optimized for faster scanning
+            // iOS-friendly configuration optimized for faster scanning from any angle
             const config = isIOS ? {
                 fps: 30, // Higher FPS for faster scanning on iOS
-                qrbox: { width: 280, height: 280 }, // Larger scanning area = easier to capture QR code
+                // Use function to calculate qrbox size - scan the entire viewport for maximum angle tolerance
+                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+                    // Use the full smaller dimension to scan entire visible area - allows scanning from any angle
+                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+                    // Return size that covers the entire viewport for maximum scanning area
+                    return { width: minDimension, height: minDimension };
+                },
                 aspectRatio: 1.0,
-                disableFlip: false,
+                disableFlip: false, // Critical: Allow scanning from any orientation/angle
                 // Simplified video constraints - let iOS optimize automatically
                 videoConstraints: {
                     facingMode: "environment"
                     // Let iOS choose optimal resolution and frame rate automatically
                 }
             } : {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
+                fps: 30, // Increased FPS for better detection
+                // Use function to calculate qrbox size - scan the entire viewport
+                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+                    // Use the full smaller dimension to scan entire visible area
+                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+                    return { width: minDimension, height: minDimension };
+                },
                 aspectRatio: 1.0,
-                disableFlip: false,
+                disableFlip: false, // Critical: Allow scanning from any orientation/angle
                 videoConstraints: {
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
