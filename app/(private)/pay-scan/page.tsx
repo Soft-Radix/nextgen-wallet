@@ -89,7 +89,7 @@ const ScanPage = () => {
 
     const stopCamera = async () => {
         try {
-            // Stop Html5Qrcode scanner
+            // Stop Html5Qrcode scanner (for non-iOS)
             if (html5QrCodeRef.current) {
                 await html5QrCodeRef.current.stop();
                 await html5QrCodeRef.current.clear();
@@ -99,10 +99,20 @@ const ScanPage = () => {
             console.error('Error stopping Html5Qrcode:', err);
         }
 
-        // Clean up old interval-based scanning
+        // Clean up native iOS scanning interval
         if (scanIntervalRef.current) {
             clearInterval(scanIntervalRef.current);
             scanIntervalRef.current = null;
+        }
+
+        // Clean up video element (for iOS native scanner)
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+            videoRef.current.pause();
+            if (videoRef.current.parentNode) {
+                videoRef.current.parentNode.removeChild(videoRef.current);
+            }
+            videoRef.current = null;
         }
 
         // Clean up stream
@@ -115,7 +125,158 @@ const ScanPage = () => {
         setCameraError(null);
     };
 
+    // Native iOS QR Scanner using getUserMedia + jsQR (like AVCaptureSession approach)
+    const startNativeIOSScanner = async () => {
+        try {
+            setCameraError(null);
+
+            // Get container element
+            const container = document.getElementById(qrCodeRegionId);
+            if (!container) {
+                throw new Error('QR code scanner container not found');
+            }
+
+            // Get video element
+            if (!videoRef.current) {
+                const video = document.createElement('video');
+                video.setAttribute('playsinline', 'true');
+                video.setAttribute('autoplay', 'true');
+                video.setAttribute('muted', 'true');
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                video.style.position = 'absolute';
+                video.style.top = '0';
+                video.style.left = '0';
+                video.style.zIndex = '1';
+                container.appendChild(video);
+                videoRef.current = video;
+            }
+
+            // Get canvas for frame capture
+            if (!canvasRef.current) {
+                const canvas = document.createElement('canvas');
+                canvasRef.current = canvas;
+            }
+
+            // Request camera access (iOS Safari supports getUserMedia)
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
+                    // Let iOS choose optimal resolution
+                }
+            });
+
+            streamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                
+                // Wait for video to be ready and start playing
+                await new Promise((resolve, reject) => {
+                    if (!videoRef.current) {
+                        reject(new Error('Video element not available'));
+                        return;
+                    }
+                    
+                    const video = videoRef.current;
+                    
+                    const handleLoadedMetadata = () => {
+                        video.play()
+                            .then(() => {
+                                resolve(true);
+                            })
+                            .catch((err) => {
+                                console.error('Error playing video:', err);
+                                reject(err);
+                            });
+                    };
+                    
+                    video.onloadedmetadata = handleLoadedMetadata;
+                    
+                    // If metadata is already loaded
+                    if (video.readyState >= 2) {
+                        handleLoadedMetadata();
+                    }
+                });
+            }
+
+            setCameraActive(true);
+            console.log('iOS native scanner started');
+
+            // Start scanning loop - optimized for iOS performance
+            const scanQRCode = () => {
+                if (!videoRef.current || !canvasRef.current || scanning) {
+                    return;
+                }
+
+                try {
+                    const video = videoRef.current;
+                    const canvas = canvasRef.current;
+                    const ctx = canvas.getContext('2d');
+
+                    if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                        return;
+                    }
+
+                    // Set canvas size to match video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+
+                    // Draw video frame to canvas
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Get image data and scan for QR code
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if (code && code.data) {
+                        console.log('iOS native QR Code detected:', code.data);
+                        handleQRCodeDetected(code.data);
+                    }
+                } catch (err) {
+                    // Ignore scanning errors
+                }
+            };
+
+            // Scan at optimized rate for iOS (15-20 FPS)
+            scanIntervalRef.current = setInterval(scanQRCode, 50); // ~20 FPS
+
+        } catch (err: any) {
+            console.error('iOS native scanner error:', err);
+            
+            let errorMsg: string;
+            if (err.name === 'NotAllowedError' || err.message?.includes('Permission')) {
+                errorMsg = 'Camera access denied. Please allow camera permissions in Settings > Safari > Camera.';
+            } else if (err.name === 'NotFoundError') {
+                errorMsg = 'No camera found on this device.';
+            } else if (err.name === 'NotReadableError') {
+                errorMsg = 'Camera is already in use by another app.';
+            } else {
+                errorMsg = err.message || 'Failed to access camera.';
+            }
+
+            setCameraError(errorMsg);
+            setCameraActive(false);
+        }
+    };
+
     const startCamera = async () => {
+        // Detect iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        // Use native iOS scanner for iOS devices (like AVCaptureSession approach)
+        if (isIOS) {
+            // Prevent multiple simultaneous calls
+            if (streamRef.current || scanIntervalRef.current) {
+                console.log('iOS camera already started');
+                return;
+            }
+            await startNativeIOSScanner();
+            return;
+        }
+
+        // Use Html5Qrcode for non-iOS devices
         // Prevent multiple simultaneous calls
         if (html5QrCodeRef.current) {
             console.log('Camera already started');
@@ -146,10 +307,6 @@ const ScanPage = () => {
                 throw new Error('QR code scanner container not found');
             }
 
-            // Detect iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
             // Create Html5Qrcode instance optimized for instant scanning
             const html5QrCode = new Html5Qrcode(qrCodeRegionId, {
                 verbose: false,
@@ -158,24 +315,9 @@ const ScanPage = () => {
             });
             html5QrCodeRef.current = html5QrCode;
 
-            // Optimized configuration for instant scanning from ANY angle like Google Pay
-            // Use a very large qrbox number (1000) to scan entire viewport - enables detection from any angle
-            // Large number ensures the entire camera view is scanned, not just a small centered box
-            const config = isIOS ? {
-                fps: 60, // Maximum FPS for instant scanning on iOS
-                // Use very large qrbox to scan entire viewport - critical for multi-angle detection
-                qrbox: 1000, // Large number ensures full viewport scanning (works like Google Pay)
-                aspectRatio: 1.777778, // 16:9 aspect ratio for better coverage
-                disableFlip: false, // Critical: Allow scanning from any orientation/angle
-                // Optimized video constraints for faster scanning
-                videoConstraints: {
-                    facingMode: "environment",
-                    width: { ideal: 1920, min: 1280 },
-                    height: { ideal: 1080, min: 720 },
-                    frameRate: { ideal: 60, min: 30 }
-                },
-                rememberLastUsedCamera: true,
-            } : {
+            // Optimized configuration for Android and other non-iOS devices
+            // iOS uses native scanner (startNativeIOSScanner) instead
+            const config = {
                 fps: 60, // Maximum FPS for instant scanning
                 // Use very large qrbox to scan entire viewport - critical for multi-angle detection
                 qrbox: 1000, // Large number ensures full viewport scanning (works like Google Pay)
@@ -195,21 +337,33 @@ const ScanPage = () => {
 
             try {
                 // Start scanning with best configuration
+                if (isIOS) {
+                    console.log('Starting iOS scanner with optimized config:', {
+                        fps: config.fps,
+                        qrbox: config.qrbox,
+                        disableFlip: config.disableFlip
+                    });
+                }
                 await html5QrCode.start(
                     cameraIdOrConfig,
                     config,
                     (decodedText, decodedResult) => {
-                        // Success callback - QR code detected
-                        console.log('QR Code detected:', decodedText);
+                        // Success callback - QR code detected - call immediately for iOS
+                        if (isIOS) {
+                            console.log('iOS QR Code detected:', decodedText);
+                        } else {
+                            console.log('QR Code detected:', decodedText);
+                        }
+                        // Call handler immediately - no delays
                         handleQRCodeDetected(decodedText);
                     },
                     (errorMessage) => {
                         // Error callback - ignore scanning errors, they're normal
-                        // Only log if it's not a common "not found" error
-                        if (!errorMessage.includes('No QR code found') &&
+                        // Only log iOS errors for debugging
+                        if (isIOS && !errorMessage.includes('No QR code found') &&
                             !errorMessage.includes('NotFoundException') &&
                             !errorMessage.includes('NotReadableError')) {
-                            // Silent - don't spam console
+                            console.warn('iOS scanner error (non-critical):', errorMessage);
                         }
                     }
                 );
@@ -224,14 +378,16 @@ const ScanPage = () => {
                             cameraIdOrConfig,
                             config,
                             (decodedText, decodedResult) => {
-                                console.log('QR Code detected:', decodedText);
+                                // Success callback for iOS fallback camera
+                                console.log('iOS QR Code detected (user camera):', decodedText);
                                 handleQRCodeDetected(decodedText);
                             },
                             (errorMessage) => {
+                                // Error callback - log iOS errors for debugging
                                 if (!errorMessage.includes('No QR code found') &&
                                     !errorMessage.includes('NotFoundException') &&
                                     !errorMessage.includes('NotReadableError')) {
-                                    // Silent
+                                    console.warn('iOS scanner error (user camera):', errorMessage);
                                 }
                             }
                         );
@@ -289,21 +445,34 @@ const ScanPage = () => {
         // Optimized for instant scanning like Google Pay - minimal delays
         const now = Date.now();
         const timeSinceLastScan = now - lastScanTimeRef.current;
+        
+        // Detect iOS for iOS-specific optimizations
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        // Check if this QR code was already processed (reduced delay for instant scanning)
+        // Check if this QR code was already processed
         const processedQR = processedQRCodesRef.current.get(qrData);
         if (processedQR) {
             const timeSinceProcessed = now - processedQR.timestamp;
-            // If same code was processed within 500ms, ignore it (very short delay for instant feel)
-            if (timeSinceProcessed < 500) {
+            // iOS needs much shorter delay - reduce to 200ms for iOS, 500ms for others
+            // This allows iOS to scan more frequently since it's slower
+            const debounceTime = isIOS ? 200 : 500;
+            if (timeSinceProcessed < debounceTime) {
                 return;
             }
             // Remove old entries immediately to allow re-scanning
             processedQRCodesRef.current.delete(qrData);
         }
 
-        // If same code scanned within 200ms, ignore it (very short debounce for instant detection)
-        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 200)) {
+        // If same code scanned recently, ignore it (very short debounce for iOS)
+        // iOS scans slower, so we need to allow more frequent attempts
+        const scanDebounce = isIOS ? 50 : 200; // iOS needs very fast response - 50ms debounce
+        if (scanning && !isIOS) {
+            // Only block if already scanning on non-iOS devices
+            // iOS should allow scanning even if previous scan is processing
+            return;
+        }
+        if (qrData === lastScannedCodeRef.current && timeSinceLastScan < scanDebounce) {
             return;
         }
 
@@ -787,7 +956,15 @@ const ScanPage = () => {
                     #${qrCodeRegionId} video {
                         -webkit-transform: translateZ(0) !important;
                         transform: translateZ(0) !important;
+                        -webkit-backface-visibility: hidden !important;
+                        backface-visibility: hidden !important;
                     }
+                }
+                /* Native iOS video element styling */
+                #${qrCodeRegionId} video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
                 }
             `}</style>
 
