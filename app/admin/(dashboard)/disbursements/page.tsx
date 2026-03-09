@@ -229,7 +229,7 @@ export default function AdminDisbursementsPage() {
                 </svg>
               </button>
               {showTypeMenu && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg border border-[#E2E8F0] bg-white shadow-lg text-sm text-[#030200]">
+                <div className="absolute z-10 mt-1 rounded-lg border border-[#E2E8F0] bg-white shadow-lg text-sm text-[#030200]">
                   {(["Payroll", "Insurance", "Government", "Loan"] as DisbursementType[]).map(
                     (t) => (
                       <button
