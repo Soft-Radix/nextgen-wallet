@@ -79,6 +79,9 @@ const ScanPage = () => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
     const qrCodeRegionId = "qr-reader";
+    const lastScannedCodeRef = useRef<string>("");
+    const lastScanTimeRef = useRef<number>(0);
+    const processedQRCodesRef = useRef<Map<string, { type: 'valid' | 'invalid', timestamp: number }>>(new Map());
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -95,19 +98,19 @@ const ScanPage = () => {
         } catch (err) {
             console.error('Error stopping Html5Qrcode:', err);
         }
-        
+
         // Clean up old interval-based scanning
         if (scanIntervalRef.current) {
             clearInterval(scanIntervalRef.current);
             scanIntervalRef.current = null;
         }
-        
+
         // Clean up stream
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
         }
-        
+
         setCameraActive(false);
         setCameraError(null);
     };
@@ -184,11 +187,11 @@ const ScanPage = () => {
             const errorMsg = err.name === 'NotAllowedError' || err.message?.includes('Permission')
                 ? 'Camera access denied. Please allow camera permissions.'
                 : err.name === 'NotFoundError' || err.message?.includes('camera')
-                ? 'No camera found on this device.'
-                : err.message || 'Failed to access camera. Please check permissions.';
+                    ? 'No camera found on this device.'
+                    : err.message || 'Failed to access camera. Please check permissions.';
             setCameraError(errorMsg);
             setCameraActive(false);
-            
+
             // Clean up on error
             if (html5QrCodeRef.current) {
                 try {
@@ -201,19 +204,45 @@ const ScanPage = () => {
         }
     };
 
-    const handleQRCodeDetected = (qrData: string) => {
-        // Prevent duplicate processing
-        if (scanning) return;
+    const handleQRCodeDetected = async (qrData: string) => {
+        // Prevent duplicate processing and rapid re-scans
+        const now = Date.now();
+        const timeSinceLastScan = now - lastScanTimeRef.current;
         
+        // Check if this QR code was already processed
+        const processedQR = processedQRCodesRef.current.get(qrData);
+        if (processedQR) {
+            const timeSinceProcessed = now - processedQR.timestamp;
+            // If same code was processed within 5 seconds, ignore it
+            if (timeSinceProcessed < 5000) {
+                return;
+            }
+            // Remove old entries (older than 5 seconds) to allow re-scanning
+            processedQRCodesRef.current.delete(qrData);
+        }
+        
+        // If same code scanned within 2 seconds, ignore it
+        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 2000)) {
+            return;
+        }
+
+        // Update last scanned code and time
+        lastScannedCodeRef.current = qrData;
+        lastScanTimeRef.current = now;
+
         setScanning(true);
-        
+
         const phone = parsePhoneFromQRData(qrData);
         if (phone) {
-            // Stop camera after successful scan
-            stopCamera();
-            
+            // Keep camera running - don't stop it after scan
+
             const digits = phone.replace(/\D/g, "");
             const hasPlus = phone.startsWith("+");
+            let finalCountryCode = "+1";
+            let finalPhoneNumber = "";
+
+            console.log('Parsed phone:', { phone, digits, hasPlus, digitsLength: digits.length });
+
             if (hasPlus && digits.length >= 10) {
                 let countryCode = "+1";
                 let national = digits;
@@ -233,19 +262,63 @@ const ScanPage = () => {
                         national = digits.slice(len);
                     }
                 }
-                setCountryCode(countryCode);
-                setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
-                setPhoneNumber(national);
-                toast.success("QR code scanned successfully!");
+                finalCountryCode = countryCode;
+                finalPhoneNumber = national;
+                // Don't set phone number in input field - only use for API call
+            } else if (digits.length >= 7) {
+                // Handle phone numbers without country code
+                finalPhoneNumber = digits;
             } else {
-                setPhoneNumber(digits);
-                toast.success("QR code scanned successfully!");
+                // Check if we've already shown error for this invalid format
+                if (!processedQRCodesRef.current.has(qrData)) {
+                    processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: Date.now() });
+                    toast.error("Invalid phone number format.");
+                }
+                setScanning(false);
+                return;
             }
+
+            // Validate we have a phone number before continuing
+            if (!finalPhoneNumber || finalPhoneNumber.length < 7) {
+                // Check if we've already shown error for this invalid number
+                if (!processedQRCodesRef.current.has(qrData)) {
+                    processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: Date.now() });
+                    toast.error("Invalid phone number. Please try again.");
+                }
+                setScanning(false);
+                return;
+            }
+
+            // Mark this QR code as valid and processed
+            processedQRCodesRef.current.set(qrData, { type: 'valid', timestamp: now });
+            
+            // Clean up old processed QR codes (older than 30 seconds) to prevent memory buildup
+            const cleanupTime = now - 30000; // 30 seconds ago
+            for (const [code, data] of processedQRCodesRef.current.entries()) {
+                if (data.timestamp < cleanupTime) {
+                    processedQRCodesRef.current.delete(code);
+                }
+            }
+            
+            // Automatically call handleContinue with the values directly (don't update input field)
+            console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
+            
+            // Reset scanning flag after a delay to allow for new scans
+            setTimeout(() => {
+                setScanning(false);
+            }, 1000);
+            
+            handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
         } else {
-            toast.error("Invalid QR code. No phone number found.");
+            // Check if we've already shown error for this invalid QR code
+            if (!processedQRCodesRef.current.has(qrData)) {
+                // Mark as invalid and show error only once
+                processedQRCodesRef.current.set(qrData, { type: 'invalid', timestamp: now });
+                toast.error("Invalid QR code. No phone number found.");
+            }
+            // Reset scanning flag to allow scanning other QR codes
+            setScanning(false);
         }
-        
-        setScanning(false);
     };
 
 
@@ -254,17 +327,17 @@ const ScanPage = () => {
         let mounted = true;
         let retryCount = 0;
         const maxRetries = 20; // 2 seconds max
-        
+
         const initCamera = async () => {
             if (typeof window === 'undefined') return;
-            
+
             // Check if camera API is available
             if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
                 console.log('Camera API not available');
                 setCameraError('Camera API not supported in this browser');
                 return;
             }
-            
+
             // Try to request camera permission proactively (if Permissions API is available)
             try {
                 if ('permissions' in navigator) {
@@ -275,13 +348,13 @@ const ScanPage = () => {
                 // Permissions API might not be supported, that's okay
                 console.log('Permissions API not available');
             }
-            
+
             // Wait for html5-qrcode container to be rendered and start camera immediately
             const checkAndStart = () => {
                 if (!mounted) return;
-                
+
                 retryCount++;
-                
+
                 const container = document.getElementById(qrCodeRegionId);
                 if (container) {
                     console.log('QR scanner container ready, starting camera immediately...');
@@ -294,14 +367,14 @@ const ScanPage = () => {
                     setCameraError('Scanner container not ready');
                 }
             };
-            
+
             // Start checking immediately, don't wait
             checkAndStart();
         };
-        
+
         // Start immediately when component mounts
         initCamera();
-        
+
         return () => {
             mounted = false;
             stopCamera();
@@ -377,6 +450,11 @@ const ScanPage = () => {
 
                 const digits = phone.replace(/\D/g, "");
                 const hasPlus = phone.startsWith("+");
+                let finalCountryCode = "+1";
+                let finalPhoneNumber = "";
+
+                console.log('Parsed phone from upload:', { phone, digits, hasPlus, digitsLength: digits.length });
+
                 if (hasPlus && digits.length >= 10) {
                     let countryCode = "+1";
                     let national = digits;
@@ -396,14 +474,27 @@ const ScanPage = () => {
                             national = digits.slice(len);
                         }
                     }
-                    setCountryCode(countryCode);
-                    setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
-                    setPhoneNumber(national);
-                    toast.success("QR code scanned. Check the number and tap Continue.");
+                    finalCountryCode = countryCode;
+                    finalPhoneNumber = national;
+                    // Don't set phone number in input field - only use for API call
+                } else if (digits.length >= 7) {
+                    // Handle phone numbers without country code
+                    finalPhoneNumber = digits;
                 } else {
-                    setPhoneNumber(digits);
-                    toast.success("QR code scanned. Check the number and tap Continue.");
+                    toast.error("Invalid phone number format.");
+                    return;
                 }
+
+                // Validate we have a phone number before continuing
+                if (!finalPhoneNumber || finalPhoneNumber.length < 7) {
+                    toast.error("Invalid phone number. Please try again.");
+                    return;
+                }
+
+
+                // Automatically call handleContinue with the values directly (don't update input field)
+                console.log('Calling handleContinue from upload with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
+                handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
             } else {
                 // Invalid QR - don't show image, just show toast
                 URL.revokeObjectURL(url);
@@ -419,8 +510,32 @@ const ScanPage = () => {
         event.target.value = "";
     };
 
-    const handleContinue = async () => {
-        if (!phoneNumber) {
+    const handleContinue = async (phoneNumberOverride?: string, countryCodeOverride?: string, skipStateUpdate: boolean = false) => {
+        // Use override values if provided, otherwise use state, default to +1 if no country code
+        const phoneToUse = phoneNumberOverride || phoneNumber;
+        const countryCodeToUse = countryCodeOverride || countryCode || "+1";
+
+        console.log('handleContinue called with:', {
+            phoneNumberOverride,
+            countryCodeOverride,
+            phoneToUse,
+            countryCodeToUse,
+            statePhoneNumber: phoneNumber,
+            stateCountryCode: countryCode,
+            skipStateUpdate
+        });
+
+        // Only update state if not skipping (i.e., when manually clicking Continue button)
+        if (!skipStateUpdate) {
+            if (phoneNumberOverride) {
+                setPhoneNumber(phoneNumberOverride);
+            }
+            if (countryCodeOverride) {
+                setCountryCode(countryCodeOverride);
+            }
+        }
+
+        if (!phoneToUse || phoneToUse.trim() === '') {
             toast.error("Please enter a phone number.")
             return;
         }
@@ -433,13 +548,13 @@ const ScanPage = () => {
         let userbyId: any | null = null;
         try {
             // Try to find an existing user in user_details
-            const allDigits = String(phoneNumber).replace(/\D/g, "");
-            const dialDigits = String(countryCode).replace(/\D/g, "");
+            const allDigits = String(phoneToUse).replace(/\D/g, "");
+            const dialDigits = String(countryCodeToUse).replace(/\D/g, "");
             const nationalNumber = allDigits.startsWith(dialDigits)
                 ? allDigits.slice(dialDigits.length)
                 : allDigits;
 
-            userbyId = await apiGetUserDetails("", nationalNumber, countryCode);
+            userbyId = await apiGetUserDetails("", nationalNumber, countryCodeToUse);
             receiverId = userbyId.id;
             receiverPhone =
                 userbyId.full_number || `${userbyId.country_code}${userbyId.mobile_number}`;
@@ -448,19 +563,36 @@ const ScanPage = () => {
         } catch (err: any) {
             const status = err?.response?.status;
 
+            // Only update state on error if not skipping (for manual Continue button clicks)
+            if (!skipStateUpdate) {
+                if (phoneNumberOverride) {
+                    setPhoneNumber(phoneNumberOverride);
+                }
+                if (countryCodeOverride) {
+                    setCountryCode(countryCodeOverride);
+                }
+            }
+
             if (status === 404) {
                 // No user record -> send to raw number
                 receiverId = null;
-                receiverPhone = `${countryCode}${String(phoneNumber).replace(/\D/g, "")}`;
+                receiverPhone = `${countryCodeToUse}${String(phoneToUse).replace(/\D/g, "")}`;
                 toast.error(err?.response?.data?.error)
                 setLoading(false);
+
+                // Camera stays running - no need to restart
+                // Reset scanning flag to allow new scans
+                setScanning(false);
                 return
             } else {
-
                 toast.error(err?.response?.data?.error ||
                     err?.message ||
                     "Failed to search recipient")
                 setLoading(false);
+
+                // Camera stays running - no need to restart
+                // Reset scanning flag to allow new scans
+                setScanning(false);
                 return;
             }
         }
@@ -469,6 +601,9 @@ const ScanPage = () => {
         if (receiverId && user?.id && String(receiverId) === String(user.id)) {
             toast.error("You cannot send money to your own number.");
             setLoading(false);
+
+            // Camera stays running - reset scanning flag to allow new scans
+            setScanning(false);
             return;
         }
 
@@ -549,11 +684,11 @@ const ScanPage = () => {
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
                                     {/* Html5Qrcode scanner container */}
-                                    <div 
+                                    <div
                                         id={qrCodeRegionId}
                                         className={`w-full h-full rounded-2xl overflow-hidden ${cameraActive ? 'block' : 'hidden'}`}
                                     />
-                                    
+
                                     {/* Scan frame overlay for camera view (green corners) */}
                                     {cameraActive && (
                                         <div className="pointer-events-none absolute inset-4 z-20">
@@ -563,7 +698,7 @@ const ScanPage = () => {
                                             <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
                                         </div>
                                     )}
-                                    
+
                                     {/* Show image when camera is not active */}
                                     {!cameraActive && (
                                         <>
@@ -620,7 +755,7 @@ const ScanPage = () => {
                                                         if (uploadedImage) {
                                                             URL.revokeObjectURL(uploadedImage);
                                                         }
-                                                        setUploadedImage(null);
+                                                        setPhoneNumber("+1");
                                                     }}
                                                 >
                                                     Clear
@@ -688,7 +823,7 @@ const ScanPage = () => {
                 <Button
                     type="button"
                     className="px-6 w-full bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[10px] flex items-center gap-2"
-                    onClick={handleContinue}
+                    onClick={() => handleContinue()}
                     disabled={loading}
                 >
                     {loading ? "Searching..." : "Continue"}
