@@ -142,7 +142,7 @@ export function PasswordLockIcon(props: SvgIconProps) {
       <defs>
         <linearGradient id="paint0_linear_499_83" x1="17.1554" y1="13.0755" x2="4.11475" y2="13.1418" gradientUnits="userSpaceOnUse">
           <stop stopColor="#00DE1C" />
-          <stop offset="1" stop-color="#169D25" />
+          <stop offset="1" stopColor="#169D25" />
         </linearGradient>
       </defs>
     </svg>
@@ -812,8 +812,8 @@ export function EmailIconAdmin({ color = "#94A3B8", ...props }: SvgIconProps) {
     <path d="M18.3333 6.63483L11.0659 13.1432L3.66659 6.61467V17.4167H11.9166V19.25H2.74992C2.5068 19.25 2.27365 19.1534 2.10174 18.9815C1.92983 18.8096 1.83325 18.5764 1.83325 18.3333V3.66667C1.83325 3.42355 1.92983 3.19039 2.10174 3.01849C2.27365 2.84658 2.5068 2.75 2.74992 2.75H19.2499C19.493 2.75 19.7262 2.84658 19.8981 3.01849C20.07 3.19039 20.1666 3.42355 20.1666 3.66667V11H18.3333V6.63483ZM17.8758 4.58333H4.135L11.0558 10.6902L17.8768 4.58333H17.8758ZM18.3333 16.5H21.0833L17.4166 20.1667L13.7499 16.5H16.4999V12.8333H18.3333V16.5Z" fill="url(#paint0_linear_657_69)"/>
     <defs>
     <linearGradient id="paint0_linear_657_69" x1="21.8479" y1="14.5802" x2="6.63406" y2="14.68" gradientUnits="userSpaceOnUse">
-    <stop stop-color="#00DE1C"/>
-    <stop offset="1" stop-color="#169D25"/>
+    <stop stopColor="#00DE1C"/>
+    <stop offset="1" stopColor="#169D25"/>
     </linearGradient>
     </defs>
     </svg>

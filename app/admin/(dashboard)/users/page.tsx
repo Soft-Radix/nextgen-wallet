@@ -322,7 +322,7 @@ export default function AdminUsersPage() {
                       setStatusFilter(option);
                       setShowStatusMenu(false);
                     }}
-                    className={`w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${statusFilter === option ? "bg-[#F0FDF4] font-medium" : ""
+                    className={`w-full text-left px-3 py-2 hover:bg-[#F8FAFC] ${statusFilter === option ? "text-black" : "text-[#6F7B8F]"
                       }`}
                   >
                     {option}
@@ -491,6 +491,7 @@ export default function AdminUsersPage() {
                 <input
                   type="text"
                   value={newName}
+                  maxLength={50}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Enter full name"
                   className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#030200] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
@@ -516,6 +517,7 @@ export default function AdminUsersPage() {
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  maxLength={50}
                   placeholder="Enter email address"
                   className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#030200] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
                 />
