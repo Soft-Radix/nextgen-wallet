@@ -12,6 +12,7 @@ import { setDraftTransfer } from "@/store/transactionSlice";
 import { apiGetUserDetails } from "@/lib/api/userDetails";
 import toast from "react-hot-toast";
 import jsQR from "jsqr";
+import { Html5Qrcode } from "html5-qrcode";
 import { getUserDetails } from '@/lib/utils/bootstrapRedirect';
 import { useSelector } from 'react-redux';
 
@@ -76,184 +77,194 @@ const ScanPage = () => {
     const streamRef = useRef<MediaStream | null>(null);
     const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+    const qrCodeRegionId = "qr-reader";
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
 
-    const stopCamera = () => {
+    const stopCamera = async () => {
+        try {
+            // Stop Html5Qrcode scanner
+            if (html5QrCodeRef.current) {
+                await html5QrCodeRef.current.stop();
+                await html5QrCodeRef.current.clear();
+                html5QrCodeRef.current = null;
+            }
+        } catch (err) {
+            console.error('Error stopping Html5Qrcode:', err);
+        }
+        
+        // Clean up old interval-based scanning
         if (scanIntervalRef.current) {
             clearInterval(scanIntervalRef.current);
             scanIntervalRef.current = null;
         }
+        
+        // Clean up stream
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
         }
+        
         setCameraActive(false);
         setCameraError(null);
     };
 
     const startCamera = async () => {
         // Prevent multiple simultaneous calls
-        if (streamRef.current) {
+        if (html5QrCodeRef.current) {
             console.log('Camera already started');
             return;
         }
 
         try {
-            console.log('Starting camera...', { videoRef: !!videoRef.current });
+            console.log('Starting camera with Html5Qrcode...');
             setCameraError(null);
 
-            // Request camera access immediately
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'environment', // Use back camera on mobile
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+            // Wait for the container element to be available
+            const checkContainer = () => {
+                const element = document.getElementById(qrCodeRegionId);
+                if (element) {
+                    return element;
                 }
-            });
+                return null;
+            };
 
-            console.log('Camera stream obtained:', stream);
-            streamRef.current = stream;
-
-            // Set stream to video element immediately
-            if (videoRef.current) {
-                console.log('Setting stream to video element...');
-                videoRef.current.srcObject = stream;
-
-                // Try to play immediately
-                try {
-                    await videoRef.current.play();
-                    console.log('Video playback started successfully');
-                    setCameraActive(true);
-                    startQRScanning();
-                } catch (playError) {
-                    // If play fails, wait for metadata
-                    console.log('Initial play failed, waiting for metadata...');
-                    videoRef.current.onloadedmetadata = async () => {
-                        console.log('Video metadata loaded');
-                        try {
-                            await videoRef.current?.play();
-                            console.log('Video playback started after metadata');
-                            setCameraActive(true);
-                            startQRScanning();
-                        } catch (err) {
-                            console.error('Video play error:', err);
-                            setCameraError('Failed to start video playback: ' + (err as Error).message);
-                            setCameraActive(false);
-                        }
-                    };
-                }
-            } else {
-                console.error('Video element not available, will retry...');
-                // Retry setting stream when video element becomes available
-                const retrySetStream = () => {
-                    if (videoRef.current && streamRef.current) {
-                        videoRef.current.srcObject = streamRef.current;
-                        videoRef.current.play().then(() => {
-                            setCameraActive(true);
-                            startQRScanning();
-                        }).catch((err) => {
-                            console.error('Retry play error:', err);
-                        });
-                    } else {
-                        setTimeout(retrySetStream, 100);
-                    }
-                };
-                setTimeout(retrySetStream, 100);
+            let container = checkContainer();
+            if (!container) {
+                // Wait a bit for DOM to be ready
+                await new Promise(resolve => setTimeout(resolve, 300));
+                container = checkContainer();
             }
+
+            if (!container) {
+                throw new Error('QR code scanner container not found');
+            }
+
+            // Create Html5Qrcode instance
+            const html5QrCode = new Html5Qrcode(qrCodeRegionId);
+            html5QrCodeRef.current = html5QrCode;
+
+            // Start scanning with best configuration
+            await html5QrCode.start(
+                {
+                    facingMode: "environment" // Use back camera
+                },
+                {
+                    fps: 10, // Frames per second
+                    qrbox: { width: 250, height: 250 }, // Scanning area
+                    aspectRatio: 1.0,
+                    disableFlip: false, // Allow rotation
+                    videoConstraints: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: "environment"
+                    }
+                },
+                (decodedText, decodedResult) => {
+                    // Success callback - QR code detected
+                    console.log('QR Code detected:', decodedText);
+                    handleQRCodeDetected(decodedText);
+                },
+                (errorMessage) => {
+                    // Error callback - ignore scanning errors, they're normal
+                    // Only log if it's not a common "not found" error
+                    if (!errorMessage.includes('No QR code found')) {
+                        // Silent - don't spam console
+                    }
+                }
+            );
+
+            setCameraActive(true);
+            console.log('Camera started successfully');
         } catch (err: any) {
             console.error('Camera access error:', err);
-            const errorMsg = err.name === 'NotAllowedError'
+            const errorMsg = err.name === 'NotAllowedError' || err.message?.includes('Permission')
                 ? 'Camera access denied. Please allow camera permissions.'
-                : err.name === 'NotFoundError'
-                    ? 'No camera found on this device.'
-                    : err.message || 'Failed to access camera. Please check permissions.';
+                : err.name === 'NotFoundError' || err.message?.includes('camera')
+                ? 'No camera found on this device.'
+                : err.message || 'Failed to access camera. Please check permissions.';
             setCameraError(errorMsg);
             setCameraActive(false);
-            // Clear the stream ref on error
-            streamRef.current = null;
-        }
-    };
-
-    const startQRScanning = () => {
-        if (scanIntervalRef.current) {
-            clearInterval(scanIntervalRef.current);
-        }
-
-        scanIntervalRef.current = setInterval(() => {
-            if (!videoRef.current || !canvasRef.current) return;
-
-            const video = videoRef.current;
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-
-            if (!ctx || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-            if (code) {
-                const phone = parsePhoneFromQRData(code.data);
-                if (phone) {
-                    stopCamera();
-                    const digits = phone.replace(/\D/g, "");
-                    const hasPlus = phone.startsWith("+");
-                    if (hasPlus && digits.length >= 10) {
-                        let countryCode = "+1";
-                        let national = digits;
-                        if (digits.startsWith("1") && digits.length === 11) {
-                            countryCode = "+1";
-                            national = digits.slice(1);
-                        } else if (digits.startsWith("44") && digits.length >= 10) {
-                            countryCode = "+44";
-                            national = digits.slice(2);
-                        } else if (digits.startsWith("91") && digits.length >= 12) {
-                            countryCode = "+91";
-                            national = digits.slice(2);
-                        } else {
-                            const len = digits.length - 10;
-                            if (len >= 1) {
-                                countryCode = "+" + digits.slice(0, len);
-                                national = digits.slice(len);
-                            }
-                        }
-                        setCountryCode(countryCode);
-                        setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
-                        setPhoneNumber(national);
-                        toast.success("QR code scanned successfully!");
-                    } else {
-                        setPhoneNumber(digits);
-                        toast.success("QR code scanned successfully!");
-                    }
-                } else {
-                    toast.error("Invalid QR code. No phone number found.");
+            
+            // Clean up on error
+            if (html5QrCodeRef.current) {
+                try {
+                    await html5QrCodeRef.current.stop();
+                    html5QrCodeRef.current = null;
+                } catch (e) {
+                    // Ignore cleanup errors
                 }
             }
-        }, 100); // Scan every 100ms
+        }
     };
+
+    const handleQRCodeDetected = (qrData: string) => {
+        // Prevent duplicate processing
+        if (scanning) return;
+        
+        setScanning(true);
+        
+        const phone = parsePhoneFromQRData(qrData);
+        if (phone) {
+            // Stop camera after successful scan
+            stopCamera();
+            
+            const digits = phone.replace(/\D/g, "");
+            const hasPlus = phone.startsWith("+");
+            if (hasPlus && digits.length >= 10) {
+                let countryCode = "+1";
+                let national = digits;
+                if (digits.startsWith("1") && digits.length === 11) {
+                    countryCode = "+1";
+                    national = digits.slice(1);
+                } else if (digits.startsWith("44") && digits.length >= 10) {
+                    countryCode = "+44";
+                    national = digits.slice(2);
+                } else if (digits.startsWith("91") && digits.length >= 12) {
+                    countryCode = "+91";
+                    national = digits.slice(2);
+                } else {
+                    const len = digits.length - 10;
+                    if (len >= 1) {
+                        countryCode = "+" + digits.slice(0, len);
+                        national = digits.slice(len);
+                    }
+                }
+                setCountryCode(countryCode);
+                setCountry(countryCode === "+44" ? "gb" : countryCode === "+91" ? "in" : "us");
+                setPhoneNumber(national);
+                toast.success("QR code scanned successfully!");
+            } else {
+                setPhoneNumber(digits);
+                toast.success("QR code scanned successfully!");
+            }
+        } else {
+            toast.error("Invalid QR code. No phone number found.");
+        }
+        
+        setScanning(false);
+    };
+
 
     useEffect(() => {
         // Automatically start camera when component mounts
         let mounted = true;
         let retryCount = 0;
         const maxRetries = 20; // 2 seconds max
-
+        
         const initCamera = async () => {
             if (typeof window === 'undefined') return;
-
+            
             // Check if camera API is available
             if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
                 console.log('Camera API not available');
                 setCameraError('Camera API not supported in this browser');
                 return;
             }
-
+            
             // Try to request camera permission proactively (if Permissions API is available)
             try {
                 if ('permissions' in navigator) {
@@ -264,32 +275,33 @@ const ScanPage = () => {
                 // Permissions API might not be supported, that's okay
                 console.log('Permissions API not available');
             }
-
-            // Wait for video element to be rendered and start camera immediately
+            
+            // Wait for html5-qrcode container to be rendered and start camera immediately
             const checkAndStart = () => {
                 if (!mounted) return;
-
+                
                 retryCount++;
-
-                if (videoRef.current) {
-                    console.log('Video element ready, starting camera immediately...');
+                
+                const container = document.getElementById(qrCodeRegionId);
+                if (container) {
+                    console.log('QR scanner container ready, starting camera immediately...');
                     startCamera();
                 } else if (retryCount < maxRetries) {
                     // Retry quickly
                     setTimeout(checkAndStart, 50);
                 } else {
-                    console.error('Video element not found after max retries');
-                    setCameraError('Video element not ready');
+                    console.error('QR scanner container not found after max retries');
+                    setCameraError('Scanner container not ready');
                 }
             };
-
+            
             // Start checking immediately, don't wait
             checkAndStart();
         };
-
+        
         // Start immediately when component mounts
         initCamera();
-
+        
         return () => {
             mounted = false;
             stopCamera();
@@ -507,6 +519,19 @@ const ScanPage = () => {
     return (
         <div className='bg-black'>
             {/* <Topbar title="Pay/Scan" /> */}
+            <style jsx global>{`
+                #${qrCodeRegionId} video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                }
+                #${qrCodeRegionId} {
+                    position: relative !important;
+                }
+                #${qrCodeRegionId} > div {
+                    border: none !important;
+                }
+            `}</style>
             <div className="p-4 sm:p-5 py-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
                 <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
                     {/* <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
@@ -523,16 +548,22 @@ const ScanPage = () => {
                         <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center pt-10">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
-                                    {/* Always render video element */}
-                                    <video
-                                        ref={videoRef}
-                                        autoPlay
-                                        playsInline
-                                        muted
-                                        className={`w-full h-full object-cover rounded-2xl ${cameraActive ? 'block z-10' : 'hidden'}`}
+                                    {/* Html5Qrcode scanner container */}
+                                    <div 
+                                        id={qrCodeRegionId}
+                                        className={`w-full h-full rounded-2xl overflow-hidden ${cameraActive ? 'block' : 'hidden'}`}
                                     />
-                                    <canvas ref={canvasRef} className="hidden" />
-
+                                    
+                                    {/* Scan frame overlay for camera view (green corners) */}
+                                    {cameraActive && (
+                                        <div className="pointer-events-none absolute inset-4 z-20">
+                                            <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
+                                            <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
+                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
+                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
+                                        </div>
+                                    )}
+                                    
                                     {/* Show image when camera is not active */}
                                     {!cameraActive && (
                                         <>
@@ -564,16 +595,6 @@ const ScanPage = () => {
                                                 </div>
                                             )}
                                         </>
-                                    )}
-
-                                    {/* Scan frame overlay for camera view (green corners) */}
-                                    {cameraActive && (
-                                        <div className="pointer-events-none absolute inset-4 z-20">
-                                            <div className="absolute top-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-r-0 rounded-tl-lg" />
-                                            <div className="absolute top-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-b-0 border-l-0 rounded-tr-lg" />
-                                            <div className="absolute bottom-0 left-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-r-0 rounded-bl-lg" />
-                                            <div className="absolute bottom-0 right-0 w-6 h-6 border-2 border-[#00A91B] border-t-0 border-l-0 rounded-br-lg" />
-                                        </div>
                                     )}
                                 </div>
 
