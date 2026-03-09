@@ -146,49 +146,99 @@ const ScanPage = () => {
                 throw new Error('QR code scanner container not found');
             }
 
-            // Create Html5Qrcode instance
-            const html5QrCode = new Html5Qrcode(qrCodeRegionId);
+            // Detect iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            // Create Html5Qrcode instance with iOS-friendly config
+            const html5QrCode = new Html5Qrcode(qrCodeRegionId, {
+                verbose: false,
+                useBarCodeDetectorIfSupported: !isIOS, // Disable on iOS as it can cause issues
+            });
             html5QrCodeRef.current = html5QrCode;
 
-            // Start scanning with best configuration
-            await html5QrCode.start(
-                {
-                    facingMode: "environment" // Use back camera
-                },
-                {
-                    fps: 10, // Frames per second
-                    qrbox: { width: 250, height: 250 }, // Scanning area
-                    aspectRatio: 1.0,
-                    disableFlip: false, // Allow rotation
-                    videoConstraints: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: "environment"
-                    }
-                },
-                (decodedText, decodedResult) => {
-                    // Success callback - QR code detected
-                    console.log('QR Code detected:', decodedText);
-                    handleQRCodeDetected(decodedText);
-                },
-                (errorMessage) => {
-                    // Error callback - ignore scanning errors, they're normal
-                    // Only log if it's not a common "not found" error
-                    if (!errorMessage.includes('No QR code found')) {
-                        // Silent - don't spam console
-                    }
+            // iOS-friendly configuration
+            const config = isIOS ? {
+                fps: 5, // Lower FPS for iOS
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                disableFlip: false,
+                // Simplified constraints for iOS - don't specify exact dimensions
+                videoConstraints: {
+                    facingMode: "environment"
                 }
-            );
+            } : {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                disableFlip: false,
+                videoConstraints: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: "environment"
+                }
+            };
+
+            // Try environment camera first, fallback to user camera on iOS if needed
+            let cameraIdOrConfig: string | { facingMode: string } = { facingMode: "environment" };
+            
+            try {
+                // Start scanning with best configuration
+                await html5QrCode.start(
+                    cameraIdOrConfig,
+                    config,
+                    (decodedText, decodedResult) => {
+                        // Success callback - QR code detected
+                        console.log('QR Code detected:', decodedText);
+                        handleQRCodeDetected(decodedText);
+                    },
+                    (errorMessage) => {
+                        // Error callback - ignore scanning errors, they're normal
+                        // Only log if it's not a common "not found" error
+                        if (!errorMessage.includes('No QR code found') && 
+                            !errorMessage.includes('NotFoundException') &&
+                            !errorMessage.includes('NotReadableError')) {
+                            // Silent - don't spam console
+                        }
+                    }
+                );
+            } catch (startError: any) {
+                // On iOS, if environment camera fails, try user camera
+                if (isIOS && cameraIdOrConfig && typeof cameraIdOrConfig === 'object' && 
+                    cameraIdOrConfig.facingMode === 'environment') {
+                    console.log('Environment camera failed on iOS, trying user camera...');
+                    cameraIdOrConfig = { facingMode: "user" };
+                    await html5QrCode.start(
+                        cameraIdOrConfig,
+                        config,
+                        (decodedText, decodedResult) => {
+                            console.log('QR Code detected:', decodedText);
+                            handleQRCodeDetected(decodedText);
+                        },
+                        (errorMessage) => {
+                            if (!errorMessage.includes('No QR code found') && 
+                                !errorMessage.includes('NotFoundException') &&
+                                !errorMessage.includes('NotReadableError')) {
+                                // Silent
+                            }
+                        }
+                    );
+                } else {
+                    throw startError;
+                }
+            }
 
             setCameraActive(true);
             console.log('Camera started successfully');
         } catch (err: any) {
             console.error('Camera access error:', err);
             const errorMsg = err.name === 'NotAllowedError' || err.message?.includes('Permission')
-                ? 'Camera access denied. Please allow camera permissions.'
+                ? 'Camera access denied. Please allow camera permissions in Settings.'
                 : err.name === 'NotFoundError' || err.message?.includes('camera')
                     ? 'No camera found on this device.'
-                    : err.message || 'Failed to access camera. Please check permissions.';
+                    : err.name === 'NotReadableError' || err.message?.includes('NotReadable')
+                        ? 'Camera is already in use by another app. Please close other apps using the camera.'
+                        : err.message || 'Failed to access camera. Please check permissions.';
             setCameraError(errorMsg);
             setCameraActive(false);
 
@@ -338,11 +388,22 @@ const ScanPage = () => {
                 return;
             }
 
+            // Detect iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            // On iOS, camera permissions require user interaction, so we'll try but show a button if it fails
             // Try to request camera permission proactively (if Permissions API is available)
             try {
                 if ('permissions' in navigator) {
                     const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
                     console.log('Camera permission status:', permissionStatus.state);
+                    
+                    // On iOS, if permission is denied, show helpful message
+                    if (isIOS && permissionStatus.state === 'denied') {
+                        setCameraError('Camera access denied. Please enable camera permissions in Settings > Safari > Camera.');
+                        return;
+                    }
                 }
             } catch (e) {
                 // Permissions API might not be supported, that's okay
@@ -659,12 +720,21 @@ const ScanPage = () => {
                     width: 100% !important;
                     height: 100% !important;
                     object-fit: cover !important;
+                    -webkit-transform: scaleX(1) !important;
+                    transform: scaleX(1) !important;
                 }
                 #${qrCodeRegionId} {
                     position: relative !important;
                 }
                 #${qrCodeRegionId} > div {
                     border: none !important;
+                }
+                /* iOS Safari specific fixes */
+                @supports (-webkit-touch-callout: none) {
+                    #${qrCodeRegionId} video {
+                        -webkit-transform: translateZ(0) !important;
+                        transform: translateZ(0) !important;
+                    }
                 }
             `}</style>
             <div className="p-4 sm:p-5 pt-[40px] pb-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
@@ -794,7 +864,18 @@ const ScanPage = () => {
                         </div>
 
                         {cameraError && (
-                            <p className="text-red-500 text-sm text-center">{cameraError}</p>
+                            <div className="flex flex-col items-center gap-3 mt-4">
+                                <p className="text-red-500 text-sm text-center">{cameraError}</p>
+                                {!cameraActive && (
+                                    <button
+                                        type="button"
+                                        onClick={startCamera}
+                                        className="px-6 py-2 text-sm bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[40px] flex items-center gap-2"
+                                    >
+                                        Start Camera
+                                    </button>
+                                )}
+                            </div>
                         )}
 
                         <div className="w-full flex items-center gap-2 mt-2">
