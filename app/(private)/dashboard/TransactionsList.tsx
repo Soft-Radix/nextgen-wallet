@@ -8,7 +8,7 @@ interface Transaction {
     amount?: number;
     type?: "incoming" | "outgoing";
     created_at?: string;
-    transaction_type?: "sender" | "receiver" | "withdrawal";
+    transaction_type?: "sender" | "receiver" | "withdrawal" | "add-money";
     sender_mobile?: string | null;
     receiver_mobile?: string | null;
     counterparty_mobile?: string | null;
@@ -63,13 +63,13 @@ const TransactionsList = ({ list, onItemClick, loading }: { list: Transaction[];
                     onClick={onItemClick ? () => onItemClick(item) : undefined}
                 >
                     <div className="flex items-center justify-between gap-3">
-                        <div className={`w-[40px] h-[40px] rounded-full flex items-center justify-center  ${item.type === "incoming" ? "bg-[#DCFCE7]" : "bg-[#FFE2E2]"}`}>
-                            {item.type === "incoming" ? <IncomingIcon /> : <OutgoingIcon />}
+                        <div className={`w-[40px] h-[40px] rounded-full flex items-center justify-center  ${item.transaction_type === "add-money" || item.type === "incoming" ? "bg-[#DCFCE7]" : "bg-[#FFE2E2]"}`}>
+                            {item.transaction_type === "add-money" || item.type === "incoming" ? <IncomingIcon /> : <OutgoingIcon />}
                         </div>
                         <div>
                             <p className="text-text  text-[13px] font-semibold">
                                 {(item.type === "incoming"
-                                    ? (getNameCapitalized(item.sender_name ?? "") || item.sender_mobile)
+                                    ? item.transaction_type === "add-money" ? "Added Cash" : (getNameCapitalized(item.sender_name ?? "") || item.sender_mobile || "")
                                     : (getNameCapitalized(item.name ?? "") || item.receiver_mobile)) ||
                                     item.counterparty_mobile?.replace("ATM Withdrawal", "Withdrawals") ||
                                     "Unknown"}
@@ -83,8 +83,8 @@ const TransactionsList = ({ list, onItemClick, loading }: { list: Transaction[];
                             </div>
                         </div>
                     </div>
-                    <p className={`text-[16px] font-bold ${item.type === "incoming" ? "text-[#00A63E]" : "text-[#E7000B]"}`}>
-                        {item.type === "incoming" ? "+" : "-"}${item.amount?.toFixed(2) ?? 0}
+                    <p className={`text-[16px] font-bold ${item.transaction_type === "add-money" || item.type === "incoming" ? "text-[#00A63E]" : "text-[#E7000B]"}`}>
+                        {item.transaction_type === "add-money" || item.type === "incoming" ? "+" : "-"}${item.amount?.toFixed(2) ?? 0}
                     </p>
                 </div>
             ))}
