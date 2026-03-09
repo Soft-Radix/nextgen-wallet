@@ -158,24 +158,33 @@ const ScanPage = () => {
             });
             html5QrCodeRef.current = html5QrCode;
 
-            // iOS-friendly configuration optimized for faster scanning
+            // iOS-friendly configuration optimized for faster scanning from any angle
             const config = isIOS ? {
-                fps: 10, // Higher FPS for faster scanning on iOS
-                qrbox: { width: 200, height: 200 }, // Smaller scanning area = faster processing
+                fps: 30, // Higher FPS for faster scanning on iOS
+                // Use function to calculate qrbox size - scan the entire viewport for maximum angle tolerance
+                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+                    // Use the full smaller dimension to scan entire visible area - allows scanning from any angle
+                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+                    // Return size that covers the entire viewport for maximum scanning area
+                    return { width: minDimension, height: minDimension };
+                },
                 aspectRatio: 1.0,
-                disableFlip: false,
-                // Optimized video constraints for iOS performance
+                disableFlip: false, // Critical: Allow scanning from any orientation/angle
+                // Simplified video constraints - let iOS optimize automatically
                 videoConstraints: {
-                    facingMode: "environment",
-                    width: { ideal: 640, max: 1280 }, // Lower resolution = faster processing
-                    height: { ideal: 480, max: 720 },
-                    frameRate: { ideal: 15, max: 30 } // Reasonable frame rate
+                    facingMode: "environment"
+                    // Let iOS choose optimal resolution and frame rate automatically
                 }
             } : {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
+                fps: 30, // Increased FPS for better detection
+                // Use function to calculate qrbox size - scan the entire viewport
+                qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+                    // Use the full smaller dimension to scan entire visible area
+                    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+                    return { width: minDimension, height: minDimension };
+                },
                 aspectRatio: 1.0,
-                disableFlip: false,
+                disableFlip: false, // Critical: Allow scanning from any orientation/angle
                 videoConstraints: {
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
@@ -287,16 +296,16 @@ const ScanPage = () => {
         const processedQR = processedQRCodesRef.current.get(qrData);
         if (processedQR) {
             const timeSinceProcessed = now - processedQR.timestamp;
-            // If same code was processed within 5 seconds, ignore it
-            if (timeSinceProcessed < 5000) {
+            // If same code was processed within 3 seconds, ignore it (reduced from 5 for faster re-scanning)
+            if (timeSinceProcessed < 3000) {
                 return;
             }
-            // Remove old entries (older than 5 seconds) to allow re-scanning
+            // Remove old entries (older than 3 seconds) to allow re-scanning
             processedQRCodesRef.current.delete(qrData);
         }
 
-        // If same code scanned within 2 seconds, ignore it
-        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 2000)) {
+        // If same code scanned within 1 second, ignore it (reduced from 2 for faster detection)
+        if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 1000)) {
             return;
         }
 
@@ -377,10 +386,10 @@ const ScanPage = () => {
             // Automatically call handleContinue with the values directly (don't update input field)
             console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
 
-            // Reset scanning flag after a delay to allow for new scans
+            // Reset scanning flag after a shorter delay to allow for new scans faster
             setTimeout(() => {
                 setScanning(false);
-            }, 1000);
+            }, 500);
 
             handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
         } else {
