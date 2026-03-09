@@ -5,16 +5,21 @@ import { CopyIcon, CopyIconOutline, EditIcon, ForwardIcon, LogoutIcon, Notificat
 import { getNameCapitalized, getUserDetails, getUserImage, logoutUser } from '@/lib/utils/bootstrapRedirect';
 import { ResetTransaction } from '@/store/transactionSlice';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux';
+import QRCode from "react-qr-code";
+import { createPortal } from "react-dom";
 
 const Page = () => {
     const user = getUserDetails();
     const [isCopied, setIsCopied] = useState(false);
     const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+    const [showQRModal, setShowQRModal] = useState(false);
     const dispatch = useDispatch();
     const router = useRouter();
     const transactionRef = "NXG-9823-4410"
+
+    const fullNumber = user?.full_number || "";
 
     const copyRef = useCallback(() => {
         navigator.clipboard?.writeText(transactionRef);
@@ -23,19 +28,38 @@ const Page = () => {
             setIsCopied(false);
         }, 2000);
     }, [transactionRef]);
-    
+
     const handleLogout = () => {
         dispatch(ResetTransaction());
         logoutUser();
     }
-    
+
     const handleLogoutClick = () => {
         setShowLogoutPopup(true);
     }
-    
+
     const handleCancelLogout = () => {
         setShowLogoutPopup(false);
     }
+
+    // Handle Escape key and body scroll for QR modal
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && showQRModal) {
+                setShowQRModal(false);
+            }
+        };
+
+        if (showQRModal) {
+            document.addEventListener("keydown", handleEscape);
+            document.body.style.overflow = "hidden";
+        }
+
+        return () => {
+            document.removeEventListener("keydown", handleEscape);
+            document.body.style.overflow = "unset";
+        };
+    }, [showQRModal]);
 
     return (
         <>
@@ -89,6 +113,25 @@ const Page = () => {
                         <button
                             type="button"
                             className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
+                            onClick={() => setShowQRModal(true)}
+                        >
+                            <div className="flex items-center gap-3">
+                                <SecurityPinIcon />
+                                <div className="flex flex-col items-start gap-2">
+                                    <span className="text-sm font-semibold text-[#1E293B]">
+                                        View QR Code
+                                    </span>
+                                    <span className="text-xs text-[#6F7B8F]">
+                                        Use a QR code to accept payments
+                                    </span>
+                                </div>
+                            </div>
+                            <span><ForwardIcon /></span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-xl px-2 py-3 hover:bg-slate-50"
                             onClick={() => router.push("/change-pin")}
                         >
                             <div className="flex items-center gap-3">
@@ -132,7 +175,7 @@ const Page = () => {
                 <div className="mt-7 w-full max-w-md">
                     <Button size="lg" fullWidth isLoading={false} disabled={false} className="w-full" endIcon={<LogoutIcon />} onClick={handleLogoutClick}>Logout</Button>
                 </div>
-                
+
                 {/* Logout Confirmation Modal */}
                 <Modal
                     isOpen={showLogoutPopup}
@@ -144,6 +187,64 @@ const Page = () => {
                     onConfirm={handleLogout}
                     variant="danger"
                 />
+
+                {/* QR Code Modal */}
+                {showQRModal && typeof document !== "undefined" && createPortal(
+                    <div
+                        className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/50 overflow-y-auto"
+                        onClick={() => setShowQRModal(false)}
+                    >
+                        <div
+                            className="bg-white rounded-[14px] p-4 sm:p-6 max-w-[400px] w-full max-h-[85vh] overflow-y-auto shadow-lg flex flex-col items-center justify-center my-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-lg sm:text-[20px] font-semibold text-[#030200] mb-4">
+                                Your Payment QR Code
+                            </h3>
+                            {fullNumber ? (
+                                <>
+                                    <div className='my-3 bg-[#F8FAFC] rounded-[12px] p-4 flex items-center justify-center'>
+                                        <QRCode
+                                            value={fullNumber}
+                                            size={200}
+                                            fgColor="#030200"
+                                            bgColor="transparent"
+                                        />
+                                    </div>
+                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-4 text-center">
+                                        Scan this QR code to receive payments
+                                    </p>
+
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={() => setShowQRModal(false)}
+                                        className="rounded-[10px] h-[52px] text-base font-semibold"
+                                    >
+                                        Close
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-4 text-center">
+                                        Unable to generate QR code. Phone number not found.
+                                    </p>
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={() => setShowQRModal(false)}
+                                        className="rounded-[10px] h-[52px] text-base font-semibold"
+                                    >
+                                        Close
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>,
+                    document.body
+                )}
 
                 {/* Footer */}
                 <div className="mt-6 flex w-full max-w-md flex-col items-center text-center text-[12px] text-[#6F7B8F]">

@@ -208,7 +208,7 @@ const ScanPage = () => {
         // Prevent duplicate processing and rapid re-scans
         const now = Date.now();
         const timeSinceLastScan = now - lastScanTimeRef.current;
-        
+
         // Check if this QR code was already processed
         const processedQR = processedQRCodesRef.current.get(qrData);
         if (processedQR) {
@@ -220,7 +220,7 @@ const ScanPage = () => {
             // Remove old entries (older than 5 seconds) to allow re-scanning
             processedQRCodesRef.current.delete(qrData);
         }
-        
+
         // If same code scanned within 2 seconds, ignore it
         if (scanning || (qrData === lastScannedCodeRef.current && timeSinceLastScan < 2000)) {
             return;
@@ -291,7 +291,7 @@ const ScanPage = () => {
 
             // Mark this QR code as valid and processed
             processedQRCodesRef.current.set(qrData, { type: 'valid', timestamp: now });
-            
+
             // Clean up old processed QR codes (older than 30 seconds) to prevent memory buildup
             const cleanupTime = now - 30000; // 30 seconds ago
             for (const [code, data] of processedQRCodesRef.current.entries()) {
@@ -299,15 +299,15 @@ const ScanPage = () => {
                     processedQRCodesRef.current.delete(code);
                 }
             }
-            
+
             // Automatically call handleContinue with the values directly (don't update input field)
             console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
-            
+
             // Reset scanning flag after a delay to allow for new scans
             setTimeout(() => {
                 setScanning(false);
             }, 1000);
-            
+
             handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
         } else {
             // Check if we've already shown error for this invalid QR code
@@ -667,7 +667,7 @@ const ScanPage = () => {
                     border: none !important;
                 }
             `}</style>
-            <div className="p-4 sm:p-5 py-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
+            <div className="p-4 sm:p-5 pt-[40px] pb-[80px] overflow-y-auto flex flex-col items-center min-h-[calc(100vh)] bg-[url('/PayScanBgImage.svg')] bg-no-repeat bg-cover">
                 <div className="w-full max-w-[420px] flex flex-col gap-6 sm:gap-8">
                     {/* <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
                         <p className="text-[24px] text-[#030200] font-semibold mt-2">
@@ -680,7 +680,7 @@ const ScanPage = () => {
 
                     <div className="bg-[#ffffff00] rounded-[18px] border-none border-[#E3F3E2] shadow-[0_23px_50px_rgba(25,33,61,0.02)] p-4 sm:p-6 flex flex-col gap-5 items-center">
                         {/* Scanner area with original transparent design */}
-                        <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center pt-10">
+                        <div className="w-full rounded-[18px] border-2 border-dashed border-[#68D39100] bg-[#F5FFF500] flex items-center justify-center ">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative w-full max-w-[280px] aspect-square flex items-center justify-center">
                                     {/* Html5Qrcode scanner container */}
