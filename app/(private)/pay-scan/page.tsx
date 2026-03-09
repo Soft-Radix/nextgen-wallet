@@ -153,19 +153,23 @@ const ScanPage = () => {
             // Create Html5Qrcode instance with iOS-friendly config
             const html5QrCode = new Html5Qrcode(qrCodeRegionId, {
                 verbose: false,
-                useBarCodeDetectorIfSupported: !isIOS, // Disable on iOS as it can cause issues
+                // Disable barcode detector on iOS as it can cause issues
+                useBarCodeDetectorIfSupported: false,
             });
             html5QrCodeRef.current = html5QrCode;
 
-            // iOS-friendly configuration
+            // iOS-friendly configuration optimized for faster scanning
             const config = isIOS ? {
-                fps: 5, // Lower FPS for iOS
-                qrbox: { width: 250, height: 250 },
+                fps: 10, // Higher FPS for faster scanning on iOS
+                qrbox: { width: 200, height: 200 }, // Smaller scanning area = faster processing
                 aspectRatio: 1.0,
                 disableFlip: false,
-                // Simplified constraints for iOS - don't specify exact dimensions
+                // Optimized video constraints for iOS performance
                 videoConstraints: {
-                    facingMode: "environment"
+                    facingMode: "environment",
+                    width: { ideal: 640, max: 1280 }, // Lower resolution = faster processing
+                    height: { ideal: 480, max: 720 },
+                    frameRate: { ideal: 15, max: 30 } // Reasonable frame rate
                 }
             } : {
                 fps: 10,
@@ -207,22 +211,27 @@ const ScanPage = () => {
                 if (isIOS && cameraIdOrConfig && typeof cameraIdOrConfig === 'object' &&
                     cameraIdOrConfig.facingMode === 'environment') {
                     console.log('Environment camera failed on iOS, trying user camera...');
-                    cameraIdOrConfig = { facingMode: "user" };
-                    await html5QrCode.start(
-                        cameraIdOrConfig,
-                        config,
-                        (decodedText, decodedResult) => {
-                            console.log('QR Code detected:', decodedText);
-                            handleQRCodeDetected(decodedText);
-                        },
-                        (errorMessage) => {
-                            if (!errorMessage.includes('No QR code found') &&
-                                !errorMessage.includes('NotFoundException') &&
-                                !errorMessage.includes('NotReadableError')) {
-                                // Silent
+                    try {
+                        cameraIdOrConfig = { facingMode: "user" };
+                        await html5QrCode.start(
+                            cameraIdOrConfig,
+                            config,
+                            (decodedText, decodedResult) => {
+                                console.log('QR Code detected:', decodedText);
+                                handleQRCodeDetected(decodedText);
+                            },
+                            (errorMessage) => {
+                                if (!errorMessage.includes('No QR code found') &&
+                                    !errorMessage.includes('NotFoundException') &&
+                                    !errorMessage.includes('NotReadableError')) {
+                                    // Silent
+                                }
                             }
-                        }
-                    );
+                        );
+                    } catch (userCameraError: any) {
+                        // If user camera also fails, throw the original error
+                        throw startError;
+                    }
                 } else {
                     throw startError;
                 }
@@ -232,13 +241,28 @@ const ScanPage = () => {
             console.log('Camera started successfully');
         } catch (err: any) {
             console.error('Camera access error:', err);
-            const errorMsg = err.name === 'NotAllowedError' || err.message?.includes('Permission')
-                ? 'Camera access denied. Please allow camera permissions in Settings.'
-                : err.name === 'NotFoundError' || err.message?.includes('camera')
-                    ? 'No camera found on this device.'
-                    : err.name === 'NotReadableError' || err.message?.includes('NotReadable')
-                        ? 'Camera is already in use by another app. Please close other apps using the camera.'
-                        : err.message || 'Failed to access camera. Please check permissions.';
+            
+            // Detect iOS for better error messages
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
+            let errorMsg: string;
+            if (err.name === 'NotAllowedError' || err.message?.includes('Permission')) {
+                errorMsg = isIOS 
+                    ? 'Camera access denied. Please allow camera permissions in Settings > Safari > Camera, then tap "Start Camera" again.'
+                    : 'Camera access denied. Please allow camera permissions in Settings.';
+            } else if (err.name === 'NotFoundError' || err.message?.includes('camera')) {
+                errorMsg = 'No camera found on this device.';
+            } else if (err.name === 'NotReadableError' || err.message?.includes('NotReadable')) {
+                errorMsg = 'Camera is already in use by another app. Please close other apps using the camera.';
+            } else if (err.message?.includes('NotSupportedError') || err.message?.includes('not supported')) {
+                errorMsg = isIOS
+                    ? 'Camera not supported. Please use Safari browser on iOS.'
+                    : 'Camera not supported in this browser.';
+            } else {
+                errorMsg = err.message || 'Failed to access camera. Please check permissions.';
+            }
+            
             setCameraError(errorMsg);
             setCameraActive(false);
 
@@ -373,13 +397,28 @@ const ScanPage = () => {
 
 
     useEffect(() => {
-        // Automatically start camera when component mounts
+        // Automatically start camera when component mounts (works on all platforms including iOS)
         let mounted = true;
         let retryCount = 0;
         const maxRetries = 20; // 2 seconds max
 
         const initCamera = async () => {
             if (typeof window === 'undefined') return;
+
+            // Detect iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            // On iOS, check if using Safari (only Safari supports camera on iOS)
+            if (isIOS) {
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
+                    (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('CriOS'));
+                
+                if (!isSafari) {
+                    setCameraError('Camera access requires Safari browser on iOS. Please open this page in Safari.');
+                    return;
+                }
+            }
 
             // Check if camera API is available
             if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
@@ -388,20 +427,17 @@ const ScanPage = () => {
                 return;
             }
 
-            // Detect iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-            // On iOS, camera permissions require user interaction, so we'll try but show a button if it fails
             // Try to request camera permission proactively (if Permissions API is available)
             try {
                 if ('permissions' in navigator) {
                     const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
                     console.log('Camera permission status:', permissionStatus.state);
 
-                    // On iOS, if permission is denied, show helpful message
-                    if (isIOS && permissionStatus.state === 'denied') {
-                        setCameraError('Camera access denied. Please enable camera permissions in Settings > Safari > Camera.');
+                    if (permissionStatus.state === 'denied') {
+                        const errorMsg = isIOS
+                            ? 'Camera access denied. Please enable camera permissions in Settings > Safari > Camera.'
+                            : 'Camera access denied. Please enable camera permissions in Settings.';
+                        setCameraError(errorMsg);
                         return;
                     }
                 }
@@ -865,16 +901,13 @@ const ScanPage = () => {
 
                         {cameraError && (
                             <div className="flex flex-col items-center gap-3 mt-4">
-                                <p className="text-red-500 text-sm text-center">{cameraError}</p>
-                                {!cameraActive && (
-                                    <button
-                                        type="button"
-                                        onClick={startCamera}
-                                        className="px-6 py-2 text-sm bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[40px] flex items-center gap-2"
-                                    >
-                                        Start Camera
-                                    </button>
-                                )}
+                                <p className={`text-sm text-center ${
+                                    cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
+                                        ? 'text-yellow-500' 
+                                        : 'text-red-500'
+                                }`}>
+                                    {cameraError}
+                                </p>
                             </div>
                         )}
 
