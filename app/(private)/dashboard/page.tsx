@@ -15,7 +15,7 @@ interface DashboardTransaction {
     amount: number;
     status: string;
     created_at: string;
-    transaction_type: "sender" | "receiver" | "withdrawal";
+    transaction_type: "sender" | "receiver" | "withdrawal" | "add-money";
     type: "incoming" | "outgoing";
     sender_mobile?: string | null;
     receiver_mobile?: string | null;
@@ -214,7 +214,11 @@ export default function DashboardPage() {
                     loading={loading}
                     onItemClick={(item) => {
                         if (!item.id) return;
-                        const kind = item.transaction_type === "withdrawal" ? "withdrawal" : "transfer";
+                        const kind = item.transaction_type === "withdrawal"
+                            ? "withdrawal"
+                            : item.transaction_type === "add-money"
+                                ? "add-money" // Add-money transactions use transfer details page
+                                : "transfer";
                         const params = new URLSearchParams({
                             id: String(item.id),
                             kind,

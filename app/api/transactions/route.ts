@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from("transactions")
       .select(
-        "id, sender_profile_id, receiver_profile_id, amount, status, created_at, name, is_contact, sender_name"
+        "id, sender_profile_id, receiver_profile_id, amount, status, created_at, name, is_contact, sender_name, type"
       )
       .or(`sender_profile_id.eq.${user_id},receiver_profile_id.eq.${user_id}`)
       .order("created_at", { ascending: false })
@@ -106,7 +106,13 @@ export async function POST(request: Request) {
 
     let items = txList.map((tx) => {
       const isSender = String(tx.sender_profile_id) === String(user_id);
-      const transactionType = isSender ? "sender" : "receiver";
+      const isSelfTransaction = String(tx.sender_profile_id) === String(tx.receiver_profile_id);
+      // Identify add-money transactions: self-transactions (sender === receiver) or legacy type === "self"
+      const transactionType = isSelfTransaction || (tx as any).type === "self" 
+        ? "add-money" 
+        : isSender 
+          ? "sender" 
+          : "receiver";
 
       const senderPhone = phoneMap[String(tx.sender_profile_id)] ?? null;
       const receiverPhone = phoneMap[String(tx.receiver_profile_id)] ?? null;
@@ -126,7 +132,8 @@ export async function POST(request: Request) {
         status: tx.status ?? "Completed",
         created_at: tx.created_at,
         transaction_type: transactionType,
-        type: isSender ? "outgoing" : "incoming",
+        // Add-money transactions are always "incoming" (money added to wallet)
+        type: transactionType === "add-money" ? "incoming" : (isSender ? "outgoing" : "incoming"),
         sender_profile_id: tx.sender_profile_id,
         receiver_profile_id: tx.receiver_profile_id,
         sender_name: displaySenderName,
