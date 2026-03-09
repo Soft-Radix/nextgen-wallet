@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import Button from "./Button";
 import { LogoutIcon } from "@/lib/svg";
 
@@ -49,28 +50,28 @@ const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/50 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-[14px] p-6 max-w-[400px] w-full shadow-lg text-center flex flex-col items-center justify-center"
+        className="bg-white rounded-[14px] p-4 sm:p-6 max-w-[400px] w-full max-h-[85vh] overflow-y-auto shadow-lg text-center flex flex-col items-center justify-center my-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <LogoutIcon color="#E7000B" className="w-100 h-100" />
-        <h3 className="text-[20px] font-semibold text-[#030200] my-2">
+        <LogoutIcon color="#E7000B" className="w-10 h-10 sm:w-12 sm:h-12 shrink-0" />
+        <h3 className="text-lg sm:text-[20px] font-semibold text-[#030200] mt-2 mb-1 sm:my-2">
           {title}
         </h3>
-        <p className="text-[14px] text-[#6F7B8F] mb-6">{message}</p>
-        <div className="flex gap-3">
+        <p className="text-[13px] sm:text-[14px] text-[#6F7B8F] mb-4 sm:mb-6">{message}</p>
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full">
           {showCancel && (
             <Button
               variant="outline"
               size="lg"
               fullWidth
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 w-full sm:w-auto"
             >
               {cancelText}
             </Button>
@@ -80,7 +81,7 @@ const Modal: React.FC<ModalProps> = ({
             size="lg"
             fullWidth
             onClick={onConfirm}
-            className="flex-1"
+            className="flex-1 w-full sm:w-auto"
           >
             {confirmText}
           </Button>
@@ -88,6 +89,10 @@ const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modalContent, document.body)
+    : null;
 };
 
 export default Modal;

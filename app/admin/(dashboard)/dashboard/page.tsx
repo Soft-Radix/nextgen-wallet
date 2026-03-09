@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
       {/* Transaction Volume Chart */}
       <section className="mb-10">
         <div className="bg-white rounded-xl border border-[#e4e4e7] shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-lg font-semibold text-[#030200]">Transaction Volume Over Time</h2>
               <p className="text-sm text-[#6F7B8F]">
@@ -345,10 +345,6 @@ export default function AdminDashboardPage() {
                           <div className="bg-[#030200] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
                             {formatChartAmount(d.value)}
                           </div>
-                        <div
-                          className="w-3 h-3 mt-[-12px] border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent bg-black border-b-[#030200]"
-                          aria-hidden
-                        />
                         </div>
                       )}
                     </div>
