@@ -899,26 +899,15 @@ const ScanPage = () => {
                             />
                         </div>
 
-                        {(cameraError || !cameraActive) && (
+                        {cameraError && (
                             <div className="flex flex-col items-center gap-3 mt-4">
-                                {cameraError && (
-                                    <p className={`text-sm text-center ${
-                                        cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
-                                            ? 'text-yellow-500' 
-                                            : 'text-red-500'
-                                    }`}>
-                                        {cameraError}
-                                    </p>
-                                )}
-                                {!cameraActive && (
-                                    <button
-                                        type="button"
-                                        onClick={startCamera}
-                                        className="px-6 py-2 text-sm bg-[#00A91B] hover:bg-[#009116] text-white font-normal rounded-[40px] flex items-center gap-2"
-                                    >
-                                        Start Camera
-                                    </button>
-                                )}
+                                <p className={`text-sm text-center ${
+                                    cameraError.includes('Tap') || cameraError.includes('denied') || cameraError.includes('not supported')
+                                        ? 'text-yellow-500' 
+                                        : 'text-red-500'
+                                }`}>
+                                    {cameraError}
+                                </p>
                             </div>
                         )}
 
