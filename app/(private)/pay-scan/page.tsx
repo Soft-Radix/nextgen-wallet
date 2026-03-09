@@ -147,8 +147,8 @@ const ScanPage = () => {
             }
 
             // Detect iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
             // Create Html5Qrcode instance with iOS-friendly config
             const html5QrCode = new Html5Qrcode(qrCodeRegionId, {
@@ -181,7 +181,7 @@ const ScanPage = () => {
 
             // Try environment camera first, fallback to user camera on iOS if needed
             let cameraIdOrConfig: string | { facingMode: string } = { facingMode: "environment" };
-            
+
             try {
                 // Start scanning with best configuration
                 await html5QrCode.start(
@@ -195,7 +195,7 @@ const ScanPage = () => {
                     (errorMessage) => {
                         // Error callback - ignore scanning errors, they're normal
                         // Only log if it's not a common "not found" error
-                        if (!errorMessage.includes('No QR code found') && 
+                        if (!errorMessage.includes('No QR code found') &&
                             !errorMessage.includes('NotFoundException') &&
                             !errorMessage.includes('NotReadableError')) {
                             // Silent - don't spam console
@@ -204,7 +204,7 @@ const ScanPage = () => {
                 );
             } catch (startError: any) {
                 // On iOS, if environment camera fails, try user camera
-                if (isIOS && cameraIdOrConfig && typeof cameraIdOrConfig === 'object' && 
+                if (isIOS && cameraIdOrConfig && typeof cameraIdOrConfig === 'object' &&
                     cameraIdOrConfig.facingMode === 'environment') {
                     console.log('Environment camera failed on iOS, trying user camera...');
                     cameraIdOrConfig = { facingMode: "user" };
@@ -216,7 +216,7 @@ const ScanPage = () => {
                             handleQRCodeDetected(decodedText);
                         },
                         (errorMessage) => {
-                            if (!errorMessage.includes('No QR code found') && 
+                            if (!errorMessage.includes('No QR code found') &&
                                 !errorMessage.includes('NotFoundException') &&
                                 !errorMessage.includes('NotReadableError')) {
                                 // Silent
@@ -389,8 +389,8 @@ const ScanPage = () => {
             }
 
             // Detect iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
             // On iOS, camera permissions require user interaction, so we'll try but show a button if it fails
             // Try to request camera permission proactively (if Permissions API is available)
@@ -398,7 +398,7 @@ const ScanPage = () => {
                 if ('permissions' in navigator) {
                     const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
                     console.log('Camera permission status:', permissionStatus.state);
-                    
+
                     // On iOS, if permission is denied, show helpful message
                     if (isIOS && permissionStatus.state === 'denied') {
                         setCameraError('Camera access denied. Please enable camera permissions in Settings > Safari > Camera.');
@@ -571,7 +571,7 @@ const ScanPage = () => {
         event.target.value = "";
     };
 
-    const handleContinue = async (phoneNumberOverride?: string, countryCodeOverride?: string, skipStateUpdate: boolean = false) => {
+    const handleContinue = async (phoneNumberOverride?: string, countryCodeOverride?: string, skipStateUpdate: boolean = false, fromQRScan: boolean = false) => {
         // Use override values if provided, otherwise use state, default to +1 if no country code
         const phoneToUse = phoneNumberOverride || phoneNumber;
         const countryCodeToUse = countryCodeOverride || countryCode || "+1";
