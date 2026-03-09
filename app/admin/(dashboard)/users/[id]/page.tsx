@@ -259,7 +259,7 @@ export default function AdminUserDetailPage() {
             setDisburseAmount("");
             setDisburseError(null);
           }}
-          className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-[#00DE1C] hover:bg-[#00c818] text-white text-sm font-semibold px-5 py-2.5 shadow-[0_8px_18px_rgba(0,166,62,0.35)]"
+          className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] hover:bg-[#00c818] text-white text-sm font-semibold px-5 py-2.5 shadow-[0_8px_18px_rgba(0,166,62,0.35)]"
         >
           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M4.167 10H15.833M10 4.167V15.833" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -310,9 +310,9 @@ export default function AdminUserDetailPage() {
           <h2 className="text-base font-semibold text-[#030200]">Transaction History</h2>
           <p className="text-xs text-[#6F7B8F]">Complete transaction log for this wallet.</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0">
               <tr className="bg-[#F8FAFC] border-b border-[#E4E4E7]">
                 <th className="px-6 py-3 text-left text-xs font-semibold text-[#6F7B8F]">TRANSACTION ID</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-[#6F7B8F]">TYPE</th>
@@ -382,7 +382,7 @@ export default function AdminUserDetailPage() {
                   type="text"
                   inputMode="decimal"
                   placeholder="0.00"
-                  value={disburseAmount}
+                  value={disburseAmount}  
                   onChange={(e) => setDisburseAmount(e.target.value)}
                   className="w-full rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#030200] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
                   disabled={disburseSubmitting}
@@ -404,7 +404,7 @@ export default function AdminUserDetailPage() {
                   type="button"
                   onClick={handleDisburseConfirm}
                   disabled={disburseSubmitting}
-                  className="cursor-pointer px-4 py-2 rounded-lg bg-[#00DE1C] hover:bg-[#00c818] text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,166,62,0.35)] disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] hover:bg-[#00c818] text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,166,62,0.35)] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {disburseSubmitting ? "Adding…" : "Confirm"}
                 </button>

@@ -21,6 +21,31 @@ export default function AdminSettingsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  function getInitials(displayName: string | undefined, email: string | undefined): string {
+    if (displayName && displayName.trim()) {
+      const parts = displayName.trim().split(/\s+/);
+      const first = parts[0]?.[0] ?? "";
+      const second = parts[1]?.[0] ?? "";
+      if (first || second) return (first + second).toUpperCase().slice(0, 2);
+    }
+    if (email && email.trim()) {
+      const local = email.split("@")[0]?.trim() ?? "";
+      if (local.length >= 2) return local.slice(0, 2).toUpperCase();
+      if (local.length === 1) return local.toUpperCase();
+    }
+    return "A";
+  }
+
+  const avatarUrl =
+    user?.user?.user_metadata?.avatar_url ||
+    user?.user?.user_metadata?.picture ||
+    (user?.user as { avatar_url?: string } | undefined)?.avatar_url;
+  const initials = getInitials(
+    user?.user?.user_metadata?.display_name,
+    user?.user?.email
+  );
+
+
   useEffect(() => {
     if (user?.user) {
       setDisplayName(user?.user?.user_metadata?.display_name);
@@ -46,9 +71,20 @@ export default function AdminSettingsPage() {
           {/* Profile section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-3 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                <img src="/user.png" alt="Alex Thompson" className="w-full h-full object-cover" />
-              </div>
+            <div
+          className="w-17 h-17 rounded-full overflow-hidden shrink-0 flex items-center justify-center font-semibold text-xl"
+          style={
+            avatarUrl
+              ? { backgroundColor: "#E2F1E2", color: "#008236" }
+              : { backgroundColor: "#d8ebd7", color: "#13861f" }
+          }
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
               <div>
                 {isEditingProfile ? (
                   <div className="space-y-3">
@@ -123,7 +159,7 @@ export default function AdminSettingsPage() {
                             window.location.reload();
                           }
                         }}
-                        className="inline-flex items-center justify-center rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(0,166,62,0.35)] disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="cursor-pointer inline-flex items-center justify-center rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_8px_18px_rgba(0,166,62,0.35)] disabled:opacity-70 disabled:cursor-not-allowed"
                         disabled={isSavingProfile}
                       >
                         {isSavingProfile ? "Saving..." : "Save"}
@@ -136,7 +172,7 @@ export default function AdminSettingsPage() {
                           setDisplayName(user?.user?.name || "Admin");
                           setPhoneNumber("");
                         }}
-                        className="inline-flex items-center justify-center rounded-lg border border-[#E2E8F0] px-4 py-1.5 text-xs font-medium text-[#0F172A] hover:bg-[#F8FAFC]"
+                        className="cursor-pointer inline-flex items-center justify-center rounded-lg border border-[#E2E8F0] px-4 py-1.5 text-xs font-medium text-[#0F172A] hover:bg-[#F8FAFC]"
                         disabled={isSavingProfile}
                       >
                         Cancel
@@ -181,7 +217,7 @@ export default function AdminSettingsPage() {
                 setIsEditingProfile(true);
                 setDisplayName(user?.user?.name || displayName || "Admin");
               }}
-              className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] hover:bg-[#15803D] text-white text-sm font-semibold px-5 py-2.5 shadow-[0_10px_25px_rgba(22,163,74,0.35)]"
+              className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-[#169D25] to-[#00DE1C] hover:bg-[#15803D] text-white text-sm font-semibold px-5 py-2.5 shadow-[0_10px_25px_rgba(22,163,74,0.35)]"
             >
               <svg
                 width="16"
@@ -342,7 +378,7 @@ function SettingToggleRow({ title, description, checked, onChange, icon }: Setti
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-[#16A34A]" : "bg-[#CBD5E1]"
+        className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-[#16A34A]" : "bg-[#CBD5E1]"
           }`}
       >
         <span

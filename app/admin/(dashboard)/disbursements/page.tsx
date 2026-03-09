@@ -259,6 +259,7 @@ export default function AdminDisbursementsPage() {
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
+                maxLength={350}
                 placeholder="Add a transaction memo or internal reference..."
                 className="w-full bg-transparent text-sm text-[#030200] placeholder:text-[#94A3B8] focus:outline-none resize-none h-20"
               />

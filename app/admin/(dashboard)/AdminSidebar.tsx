@@ -84,7 +84,7 @@ export default function AdminSidebar({ usePngLogo = false }: { usePngLogo?: bool
         <button
           type="button"
           onClick={handleLogoutClick}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#00DE1C] hover:bg-white/5 transition-colors w-full text-left"
+          className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#00DE1C] hover:bg-white/5 transition-colors w-full text-left"
         >
           <AdminLogOutIcon />
           <span className="text-[14px] font-medium">Log Out</span>

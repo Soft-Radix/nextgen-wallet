@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
   //  const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
-      console.log(data, "-------------------")
+     
       if (data.session?.user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         router.push("/admin/dashboard");
       }
