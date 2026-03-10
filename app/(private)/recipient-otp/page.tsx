@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState, type KeyboardEvent, type ChangeEvent } from 'react'
 import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const page = () => {
     const router = useRouter();
@@ -19,6 +20,7 @@ const page = () => {
     const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
     const user = getUserDetails();
+    const { showNotification } = useNotification();
     const handleChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
         setError(null);
         const value = e.target.value;
@@ -79,6 +81,17 @@ const page = () => {
         if (AddTransaction.fulfilled.match(result)) {
             const updatedUser = { ...user, wallet_balance: Number(user?.wallet_balance) - (draft?.amount ?? 0) };
             dispatch(setUserBalanceUpdate(updatedUser));
+            
+            // Show notification popup for successful send
+            if (draft?.amount && draft?.name) {
+                showNotification({
+                    type: "send",
+                    amount: `$${draft.amount.toFixed(2)}`,
+                    counterparty: getNameCapitalized(draft.name) || "Unknown",
+                    transactionId: result.payload?.transaction_id?.toString(),
+                });
+            }
+            toast.success("Transfer successful");
             router.push("/transfer-success");
         } else {
 

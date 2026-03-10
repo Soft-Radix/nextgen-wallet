@@ -6,6 +6,7 @@ import PhoneNumberInput from "@/components/ui/Phone";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { EmptyError, loginUser } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function LoginPage() {
     const savedNumber =
@@ -22,17 +23,37 @@ export default function LoginPage() {
     const initialPhoneValue =
         initialNationalNumber ? `${initialDialCode}${initialNationalNumber}` : "";
 
-    const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
-    const [country, setCountry] = useState("us"); // ISO code for UI
-    const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { loading, error } = useAppSelector((state: any) => state.userDetails);
+    const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
+    const [country, setCountry] = useState("us"); // ISO code for UI
+    const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
+    const [isChecking, setIsChecking] = useState(true);
+    
     useEffect(() => {
+        // Check authentication first
+        if (typeof window !== "undefined") {
+            const userRaw = localStorage.getItem("user");
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            
+            if (user && user.status === "active") {
+                router.replace("/dashboard");
+                return;
+            }
+        }
+        
+        // Only clear and set state if user is not logged in
         localStorage.clear()
         setPhoneNumber("+1");
         setCountry("us");
-    }, []);
+        setIsChecking(false);
+    }, [router]);
+    
+    // Show loading screen while checking authentication
+    if (isChecking) {
+        return <LoadingScreen />;
+    }
     const handleLogin = async () => {
         if (!phoneNumber) {
             // local validation error

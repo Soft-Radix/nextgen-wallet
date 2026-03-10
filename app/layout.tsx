@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AppProviders from "./Providers";
 import { Toaster } from "react-hot-toast";
+import NotificationSetup from "@/components/NotificationSetup";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    viewportFit: "cover",
   },
 };
 
@@ -29,7 +31,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${inter.className}`}>
         <Toaster position="top-center" />
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <NotificationSetup />
+          {children}
+        </AppProviders>
       </body>
     </html>
   );
