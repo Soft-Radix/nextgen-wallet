@@ -47,13 +47,13 @@ export function getNameCapitalized(name: string) {
 
 export function getUserImage(name: string) {
   if (!name) return "N/A";
-  const nameArray = name.split(" ").filter(word => word.trim().length > 0);
-  
+  const nameArray = name.split(" ").filter((word) => word.trim().length > 0);
+
   // If only one word, show first letter
   if (nameArray.length === 1) {
     return nameArray[0].charAt(0).toUpperCase();
   }
-  
+
   // If multiple words, show first letter of first word and first letter of second word
   if (nameArray.length >= 2) {
     return (
@@ -61,6 +61,30 @@ export function getUserImage(name: string) {
       nameArray[1].charAt(0).toUpperCase()
     );
   }
-  
+
   return "UN";
 }
+
+export const toastNotification = ({
+  title,
+  description,
+  status,
+}: {
+  title: string;
+  description: string;
+  status: string;
+}) => {
+  // Implement your toast notification logic
+  console.log(`Toast Notification: ${title} - ${description} - ${status}`);
+};
+
+export const sendNativeNotification = ({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) => {
+  // Implement your native notification logic
+  console.log(`Native Notification: ${title} - ${body}`);
+};

@@ -9,6 +9,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { loginUser } from "@/store/userDetailsSlice";
 import { getNameCapitalized, getUserDetails, getUserImage } from "@/lib/utils/bootstrapRedirect";
 import { ResetTransaction } from "@/store/transactionSlice";
+import NotificationPopup from "@/components/NotificationPopup";
 
 interface DashboardTransaction {
     id: string;
@@ -134,6 +135,8 @@ export default function DashboardPage() {
     }
     return (
         <div className=" ">
+
+
             <div className="flex items-center justify-between  gap-2 p-5 h-[100px]">
 
                 {/* You can render user info here */}
