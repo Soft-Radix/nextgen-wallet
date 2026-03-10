@@ -91,7 +91,7 @@ const page = () => {
                     transactionId: result.payload?.transaction_id?.toString(),
                 });
             }
-            
+            toast.success("Transfer successful");
             router.push("/transfer-success");
         } else {
 
