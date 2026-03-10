@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoaderBlock } from "../../../components/Loader";
+import { NoDataFoundRow } from "../../../components/NoDataFound";
 import UsersHeader from "../UsersHeader";
 
 type AdminUserDetailTransaction = {
@@ -207,7 +209,7 @@ export default function AdminUserDetailPage() {
         <Link href="/admin/users" className="inline-flex items-center text-sm text-[#64748B] hover:text-[#030200] mb-4">
           <span className="mr-1 text-lg">←</span> Go back
         </Link>
-        <div className="flex items-center justify-center py-16 text-[#6F7B8F]">Loading user...</div>
+        <LoaderBlock size="lg" />
       </div>
     );
   }
@@ -324,11 +326,11 @@ export default function AdminUserDetailPage() {
             </thead>
             <tbody>
               {transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-left text-[#6F7B8F]">
-                    No transactions yet.
-                  </td>
-                </tr>
+                <NoDataFoundRow
+                  colSpan={6}
+                  message="No transactions yet"
+                  subMessage="Transaction history for this user will appear here."
+                />
               ) : (
                 transactions.map((tx) => (
                   <tr

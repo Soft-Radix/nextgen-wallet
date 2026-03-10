@@ -121,13 +121,29 @@ export default function AdminChangePasswordPage() {
               onChange={setConfirmPassword}
             />
 
-            <label className="flex items-center gap-2 text-sm text-[#030200] mt-2">
-              <input
-                type="checkbox"
-                checked={showPassword}
-                onChange={(e) => setShowPassword(e.target.checked)}
-                className="h-4 w-4 rounded border-[#CBD5E1] text-[#16A34A] focus:ring-[#16A34A]"
-              />
+            <label className="flex items-center gap-2 text-sm text-[#6F7B8F] mt-2 cursor-pointer select-none">
+              <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center  border-2 border-[#6F7B8F] bg-white">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword(e.target.checked)}
+                  className="sr-only"
+                />
+                {showPassword && (
+                  <svg
+                    className="w-2.5 h-2.5 text-[#6F7B8F] pointer-events-none"
+                    viewBox="0 0 12 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M1 5.5L4.5 9L11 1" />
+                  </svg>
+                )}
+              </span>
               <span>Show password</span>
             </label>
 

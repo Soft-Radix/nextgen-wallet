@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminPageHeader from "../AdminPageHeader";
+import { Loader } from "../../components/Loader";
+import { LoadingRow, NoDataFoundBlock, NoDataFoundRow } from "../../components/NoDataFound";
 
 type ChartDataPoint = { label: string; value: number };
 
@@ -113,15 +115,7 @@ type RecentTransactionRow = {
   sender_name: string | null;
 };
 
-const fallbackRecentTransactions: RecentTransactionRow[] = [
-  { id: "TXN-2024-001882", sender_name: "Sarah Johansen", amount: 2450, status: "Completed", created_at: "2026-02-10T14:22:11Z" },
-  { id: "TXN-2024-001881", sender_name: "Michael Chen", amount: 1200, status: "Pending", created_at: "2026-02-10T13:45:00Z" },
-  { id: "TXN-2024-001880", sender_name: "Emma Wilson", amount: 3780.5, status: "Completed", created_at: "2026-02-10T12:18:33Z" },
-  { id: "TXN-2024-001879", sender_name: "James Brown", amount: 890, status: "Failed", created_at: "2026-02-10T11:02:44Z" },
-  { id: "TXN-2024-001878", sender_name: "Olivia Davis", amount: 5120, status: "Completed", created_at: "2026-02-10T10:55:22Z" },
-];
-
-const transactionHeaders = ["TRANSACTION ID", "USER", "AMOUNT",  "STATUS", "TIMESTAMP"]
+const transactionHeaders = ["TRANSACTION ID", "USER", "AMOUNT", "STATUS", "TIMESTAMP"];
 
 function StatusBadge({ status }: { status: string }) {
   const styles =
@@ -221,10 +215,9 @@ export default function AdminDashboardPage() {
         // },
       ]
     : [
-        { title: "Registered Users", value: "—", sub: "Loading…", bg: "bg-[#F3E8FF]", icon: registeredUsersIcon },
-        { title: "Transaction Volume", value: "—", sub: "Loading…", bg: "bg-[#E0F2FE]", icon: transactionVolumeIcon },
-        { title: "Active Users", value: "—", sub: "Loading…", bg: "bg-[#DCFCEA]", icon: activeWalletIcon },
-        // { title: "FastNow Transaction", value: "6,241", sub: "28% of total transactions", bg: "bg-[#FEF3C7]", icon: fastNowIcon },
+        { title: "Registered Users", value: "—", sub: "", bg: "bg-[#F3E8FF]", icon: registeredUsersIcon },
+        { title: "Transaction Volume", value: "—", sub: "", bg: "bg-[#E0F2FE]", icon: transactionVolumeIcon },
+        { title: "Active Users", value: "—", sub: "", bg: "bg-[#DCFCEA]", icon: activeWalletIcon },
       ];
 
   const chartData: ChartDataPoint[] =
@@ -239,7 +232,7 @@ export default function AdminDashboardPage() {
     : -1;
 
   return (
-    <div className="px-4 py-4 pb-12 sm:px-8 sm:py-8">
+    <div className="px-4 py-4 pb-10 sm:px-8">
       <AdminPageHeader title="Dashboard" />
 
       {/* Overview */}
@@ -259,8 +252,16 @@ export default function AdminDashboardPage() {
                 {card.icon}
               </div>
               <div className="p-4">
-                <p className="text-xl font-bold text-[#030200]">{card.value}</p>
-                <p className="text-xs text-[#6F7B8F] mt-1">{card.sub}</p>
+                {statsLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader size="md" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xl font-bold text-[#030200]">{card.value}</p>
+                    {card.sub ? <p className="text-xs text-[#6F7B8F] mt-1">{card.sub}</p> : null}
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -270,14 +271,14 @@ export default function AdminDashboardPage() {
       {/* Transaction Volume Chart */}
       <section className="mb-10">
         <div className="bg-white rounded-xl border border-[#e4e4e7] shadow-sm p-6">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-10">
             <div>
               <h2 className="text-lg font-semibold text-[#030200]">Transaction Volume Over Time</h2>
               <p className="text-sm text-[#6F7B8F]">
                 {chartMode === "yearly" ? "Yearly" : "Monthly"} transaction volume in USD
               </p>
             </div>
-            <div className="flex rounded-lg border border-[#e4e4e7] overflow-hidden">
+            <div className="mb-5     block md:flex rounded-lg border border-[#e4e4e7] overflow-hidden">
               <button
                 onClick={() => setChartMode("yearly")}
                 className={`cursor-pointer px-4 py-2 w-full text-sm font-medium ${chartMode === "yearly"
@@ -289,7 +290,7 @@ export default function AdminDashboardPage() {
               </button>
               <button
                 onClick={() => setChartMode("monthly")}
-                className={`cursor-pointer px-4 py-2 text-sm font-medium ${chartMode === "monthly"
+                className={`cursor-pointer px-4 py-2 w-full text-sm font-medium ${chartMode === "monthly"
                   ? "bg-[#169D25] text-white"
                   : "bg-white text-[#6F7B8F]"
                   }`}
@@ -299,6 +300,19 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex gap-4 overflow-visible">
+            {statsLoading ? (
+              <div className="flex-1 flex items-center justify-center h-[200px] text-sm text-[#6F7B8F]">
+                Loading...
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center h-[200px]">
+                <NoDataFoundBlock
+                  message="No data found"
+                  subMessage={`${chartMode === "yearly" ? "Yearly" : "Monthly"} transaction volume will appear here.`}
+                />
+              </div>
+            ) : (
+              <>
             <div className="flex flex-col justify-between text-xs text-[#6F7B8F] h-[200px] py-0.5 shrink-0 w-12">
               {[...yAxisTicks].reverse().map((yVal, idx) => (
                 <span key={`y-${idx}-${yVal}`}>{formatChartAmount(yVal)}</span>
@@ -342,9 +356,16 @@ export default function AdminDashboardPage() {
                           style={{ bottom: `${barHeightPx + 12}px` }}
                           className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none"
                         >
-                          <div className="bg-[#030200] text-white text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                            {formatChartAmount(d.value)}
-                          </div>
+                         <div className="relative inline-block">
+  <div className="bg-[#030200] text-white text-xs font-medium px-5 py-2 rounded-lg whitespace-nowrap shadow-lg">
+    {formatChartAmount(d.value)}
+  </div>
+
+  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 
+                  border-l-[6px] border-r-[6px] border-t-[6px] 
+                  border-l-transparent border-r-transparent border-t-[#030200]">
+  </div>
+</div>
                         </div>
                       )}
                     </div>
@@ -361,6 +382,8 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             </div>
+          </>
+            )}
           </div>
         </div>
       </section>
@@ -540,23 +563,33 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {(recentTx ?? fallbackRecentTransactions).map((row) => (
-                  <tr key={row.id} className="border-b border-[#e4e4e7] last:border-0">
-                    <td className="py-3 px-4 text-[#030200]">{row.id}</td>
-                    <td className="py-3 px-4 text-[#030200]">
-                      {row.sender_name ?? "—"}
-                    </td>
-                    <td className="py-3 px-4 text-[#030200]">
-                      {formatCurrency(row.amount)}
-                    </td>
-                    <td className="py-3 px-4 capitalize">
-                      <StatusBadge status={row.status} />
-                    </td>
-                    <td className="py-3 px-4 text-[#6F7B8F]">
-                      {row.created_at ? new Date(row.created_at).toLocaleString() : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {recentTx === null ? (
+                  <LoadingRow colSpan={transactionHeaders.length} />
+                ) : recentTx.length === 0 ? (
+                  <NoDataFoundRow
+                    colSpan={transactionHeaders.length}
+                    message="No data found"
+                    subMessage="Recent transactions will appear here when available."
+                  />
+                ) : (
+                  recentTx.map((row) => (
+                    <tr key={row.id} className="border-b border-[#e4e4e7] last:border-0">
+                      <td className="py-3 px-4 text-[#030200]">{row.id}</td>
+                      <td className="py-3 px-4 text-[#030200]">
+                        {row.sender_name ?? "—"}
+                      </td>
+                      <td className="py-3 px-4 text-[#030200]">
+                        {formatCurrency(row.amount)}
+                      </td>
+                      <td className="py-3 px-4 capitalize">
+                        <StatusBadge status={row.status} />
+                      </td>
+                      <td className="py-3 px-4 text-[#6F7B8F]">
+                        {row.created_at ? new Date(row.created_at).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

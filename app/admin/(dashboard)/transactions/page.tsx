@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import AdminPageHeader from "../AdminPageHeader";
+import { Loader } from "../../components/Loader";
+import { LoadingRow, NoDataFoundRow } from "../../components/NoDataFound";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
@@ -448,11 +450,13 @@ export default function AdminTransactionsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-[#6F7B8F]">
-                      Loading transactions…
-                    </td>
-                  </tr>
+                  <LoadingRow colSpan={7} />
+                ) : pageItems.length === 0 ? (
+                  <NoDataFoundRow
+                    colSpan={7}
+                    message="No transactions found"
+                    subMessage="Transactions will appear here when available."
+                  />
                 ) : (
                   pageItems.map((tx) => (
                     <tr
@@ -481,15 +485,17 @@ export default function AdminTransactionsPage() {
           </div>
 
           {/* Pagination footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[#E4E4E7] text-xs text-[#6F7B8F]">
-            <p>
-              {loading
-                ? "Loading…"
-                : totalCount === 0
-                  ? "No transactions found"
-                  : `Showing ${startIndex + 1} to ${endIndex} of ${totalCount} transactions`}
+          <div className="block md:flex md:flex-row sm:items-center md:justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[#E4E4E7] text-xs text-[#6F7B8F]">
+            <p className="flex items-center gap-2 mb-3 md:mb-0">
+              {loading ? (
+                <Loader size="sm" />
+              ) : totalCount === 0 ? (
+                "No transactions found"
+              ) : (
+                `Showing ${startIndex + 1} to ${endIndex} of ${totalCount} transactions`
+              )}
             </p>
-            <div className="flex items-center gap-4 justify-end">
+            <div className="flex items-center gap-4 justify-between md:justify-end">
               <div className="flex items-center gap-1">
                 <span>Rows per page</span>
                 <span className="inline-flex items-center gap-1 rounded-md border border-[#E2E8F0] px-2 py-1 text-[#0F172A] bg-white">
