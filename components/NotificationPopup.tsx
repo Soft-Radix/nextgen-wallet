@@ -62,9 +62,21 @@ export default function NotificationPopup({
 
   return (
     <div
-      className={`fixed top-0 left-0 right-0 z-[9999] flex justify-center pt-4 px-4 transition-all duration-300 ease-out ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+      className={`fixed top-0 left-0 right-0 z-[9999] flex justify-center px-4 transition-all duration-300 ease-out ${isVisible ? "opacity-100" : "opacity-0"
         }`}
-      style={{ pointerEvents: isVisible ? "auto" : "none" }}
+      style={{ 
+        pointerEvents: isVisible ? "auto" : "none",
+        paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 1rem))',
+        WebkitTransform: isVisible ? 'translate3d(0, 0, 0)' : 'translate3d(0, -100%, 0)',
+        transform: isVisible ? 'translate3d(0, 0, 0)' : 'translate3d(0, -100%, 0)',
+        WebkitBackfaceVisibility: 'hidden',
+        backfaceVisibility: 'hidden',
+        willChange: 'transform, opacity',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+      }}
     >
 
       <div className="bg-white rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.12)] w-full max-w-sm border border-gray-100 overflow-hidden  gap-3 p-4">
