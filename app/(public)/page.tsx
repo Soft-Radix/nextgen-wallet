@@ -3,35 +3,48 @@ import { Button } from "@/components/ui";
 import { Checkcircle, FeedNow, PoweredBy } from "@/lib/svg";
 import { getUserDetails } from "@/lib/utils/bootstrapRedirect";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function WelcomePage() {
     const router = useRouter();
-    const localUser = getUserDetails();
-    const countryCode = typeof window !== "undefined" ? localStorage.getItem("country_code") || "" : "";
-    const mobileNumber = typeof window !== "undefined" ? localStorage.getItem("mobile_number") || "" : "";
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-        localStorage.clear()
-        
-    }, []);
-    useEffect(() => {
+        if (typeof window === "undefined") {
+            setIsChecking(false);
+            return;
+        }
+
+        const localUser = getUserDetails();
+        const countryCode = localStorage.getItem("country_code") || "";
+        const mobileNumber = localStorage.getItem("mobile_number") || "";
+
         if (!localUser) {
             if (countryCode || mobileNumber) {
-                return router.push("/otp-verification");
+                router.replace("/otp-verification");
+                return;
             }
         } else {
             if (localUser?.status === "active") {
-                router.push("/dashboard");
+                router.replace("/dashboard");
+                return;
             } else if (!localUser?.name) {
-                router.push("/create-profile");
+                router.replace("/create-profile");
+                return;
             } else {
-                router.push("/create-pin");
+                router.replace("/create-pin");
+                return;
             }
         }
 
+        setIsChecking(false);
+    }, [router]);
 
-    }, [localUser, countryCode, mobileNumber, router]);
+    // Show loading screen while checking authentication
+    if (isChecking) {
+        return <LoadingScreen />;
+    }
 
     return (
 

@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createUserDetails, EmptyError } from "@/store/userDetailsSlice";
 import { RootState } from "@/store/store";
 import { EmailIcon } from "@/lib/svg";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function SignUpPage() {
     const savedNumber =
@@ -23,24 +24,41 @@ export default function SignUpPage() {
     const initialPhoneValue =
         initialNationalNumber ? `${initialDialCode}${initialNationalNumber}` : "";
 
-    const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
-    const [isChecked, setIsChecked] = useState(false);
-    const [email, setEmail] = useState("");
-
-    const [emailError, setEmailError] = useState("");
-    const [country, setCountry] = useState("us"); // ISO code for UI
-    const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
     const router = useRouter();
     const dispatch = useAppDispatch();
     const { loading } = useAppSelector((state: any) => state.userDetails);
-
+    const [phoneNumber, setPhoneNumber] = useState(initialPhoneValue);
+    const [isChecked, setIsChecked] = useState(false);
+    const [email, setEmail] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [country, setCountry] = useState("us"); // ISO code for UI
+    const [countryCode, setCountryCode] = useState(initialDialCode); // dial code for API
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
+        // Check authentication first
+        if (typeof window !== "undefined") {
+            const userRaw = localStorage.getItem("user");
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            
+            if (user && user.status === "active") {
+                router.replace("/dashboard");
+                return;
+            }
+        }
+        
+        // Only clear and set state if user is not logged in
         localStorage.clear()
         setPhoneNumber("+1");
         setEmail("");
         setIsChecked(false);
-    }, []);
+        setIsChecking(false);
+    }, [router]);
+    
+    // Show loading screen while checking authentication
+    if (isChecking) {
+        return <LoadingScreen />;
+    }
 
     const handleSignUp = async () => {
 
