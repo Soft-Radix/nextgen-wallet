@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import PhoneNumberInput from "@/components/ui/Phone";
+import { Loader } from "../../components/Loader";
+import { LoadingRow, NoDataFoundRow } from "../../components/NoDataFound";
 import UsersHeader from "./UsersHeader";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -239,7 +241,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="px-4 py-4 pb-12 sm:px-8">
+    <div className="px-4 py-4 pb-10 sm:px-8">
       <UsersHeader />
 
       {/* User Management header + Add New User — desktop: row with button on right; mobile only: stacked, button full width */}
@@ -371,11 +373,13 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-[#6F7B8F]">
-                    Loading users…
-                  </td>
-                </tr>
+                <LoadingRow colSpan={5} />
+              ) : pageItems.length === 0 ? (
+                <NoDataFoundRow
+                  colSpan={5}
+                  message="No users found"
+                  subMessage="Users will appear here when they register."
+                />
               ) : (
                 pageItems.map((user) => (
                 <tr
@@ -404,10 +408,10 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Pagination footer */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-[#E4E4E7]">
-          <p className="text-xs text-[#6B7280]">
+        <div className="flex flex-row md:flex-row sm:items-center justify-between gap-1 md:gap-4  px-4 sm:px-6 py-4 border-t border-[#E4E4E7]">
+          <p className="text-xs text-[#6B7280] flex items-center gap-2">
             {loading ? (
-              "Loading…"
+              <Loader size="sm" />
             ) : totalCount === 0 ? (
               "No users found"
             ) : (
