@@ -76,7 +76,6 @@ export async function POST(request: Request) {
         );
       }
 
-      console.log("Add-money transaction created successfully:", transactionData?.id);
 
       return NextResponse.json(
         {
@@ -125,8 +124,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    console.log("Add-money transaction created successfully:", transactionData?.id);
 
     return NextResponse.json(
       {
