@@ -75,7 +75,6 @@ export const toastNotification = ({
   status: string;
 }) => {
   // Implement your toast notification logic
-  console.log(`Toast Notification: ${title} - ${description} - ${status}`);
 };
 
 export const sendNativeNotification = ({

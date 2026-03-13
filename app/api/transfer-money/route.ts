@@ -108,6 +108,7 @@ export async function POST(request: Request) {
     }
 
     const transactionId = data;
+     
 
     // Before updating, check if there's a previous reverse transaction with a name set
     // This ensures new transactions use the name from previous transactions
@@ -198,9 +199,7 @@ export async function POST(request: Request) {
           updatePrevError
         );
       } else if (updatedTxs && updatedTxs.length > 0) {
-        console.log(
-          `Updated name for ${updatedTxs.length} previous transaction(s)`
-        );
+        
       }
     }
 
@@ -226,9 +225,7 @@ export async function POST(request: Request) {
           updatePrevError
         );
       } else if (updatedTxs && updatedTxs.length > 0) {
-        console.log(
-          `Updated sender_name for ${updatedTxs.length} previous transaction(s)`
-        );
+        
       }
     }
 
@@ -238,6 +235,177 @@ export async function POST(request: Request) {
       .select("balance, currency")
       .eq("user_id", sender_id)
       .maybeSingle();
+
+    // Send push notifications (non-blocking)
+    
+    if (transactionId) {
+      // Get receiver_id from transaction if it wasn't provided (phone number transfer)
+      let actualReceiverId = receiver_id;
+      
+      if (!actualReceiverId && transactionId) {
+        // Look up receiver_id from the transaction
+        const { data: transaction, error: txError } = await supabase
+          .from("transactions")
+          .select("receiver_profile_id")
+          .eq("id", transactionId)
+          .single();
+        
+        if (txError) {
+          console.error("Error fetching transaction:", txError);
+        }
+        
+        
+        if (transaction?.receiver_profile_id) {
+          actualReceiverId = transaction.receiver_profile_id;
+        } else {
+          console.warn("Transaction found but no receiver_profile_id");
+        }
+      } else {
+      }
+
+      // Get environment variables for notifications (needed for both receiver and sender)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+   
+      
+      if (!supabaseUrl) {
+        console.error("❌ NEXT_PUBLIC_SUPABASE_URL is not set!");
+      }
+      if (!serviceRoleKey) {
+        console.error("❌ SUPABASE_SERVICE_ROLE_KEY is not set!");
+      }
+
+      // Only send notifications if we have a receiver_id
+      if (actualReceiverId) {
+        // Get receiver and sender details for notifications
+        const [{ data: receiverDetails }, { data: senderDetails }] = await Promise.all([
+          supabase
+            .from("user_details")
+            .select("id, name")
+            .eq("id", actualReceiverId)
+            .single(),
+          supabase
+            .from("user_details")
+            .select("id, name")
+            .eq("id", sender_id)
+            .single(),
+        ]);
+
+        const receiverName = name || receiverDetails?.name || "Someone";
+        const senderName = sender_name || senderDetails?.name || "Someone";
+        const formattedAmount = `$${parseFloat(amount).toFixed(2)}`;
+
+        // Send notification to receiver (payment received)
+        
+        const notificationUrl = `${supabaseUrl}/functions/v1/send-push-notification`;
+        
+        const notificationPayload = {
+          userId: actualReceiverId,
+          title: "Payment Received",
+          body: `You received ${formattedAmount} from ${senderName}`,
+          data: {
+            transactionId: transactionId.toString(),
+            type: "receive",
+            amount: amount.toString(),
+            counterparty: senderName,
+          },
+        };
+        
+        try {
+          const fetchStartTime = Date.now();
+          const response = await fetch(notificationUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify(notificationPayload),
+          });
+          
+          const fetchDuration = Date.now() - fetchStartTime;
+         
+          const result = await response.json();
+         
+          if (!response.ok) {
+            console.error("❌ Push notification failed!");
+            console.error("Status:", response.status);
+            console.error("Error:", result);
+          } else if (result.error) {
+            console.error("❌ Push notification returned error:", result.error);
+          } else {
+          }
+        } catch (err: any) {
+          console.error("❌ Exception sending push notification to receiver:");
+          console.error("Error type:", err?.constructor?.name);
+          console.error("Error message:", err?.message);
+          console.error("Error stack:", err?.stack);
+          console.error("Full error:", err);
+        }
+      } else {
+        console.warn("⚠️ Cannot send notification: receiver_id not found for transaction:", transactionId);
+        console.warn("Transaction ID:", transactionId);
+        console.warn("Receiver ID:", receiver_id);
+        console.warn("Receiver Phone:", receiver_phone);
+      }
+
+      // Send notification to sender (payment sent) - optional, can be removed if not needed
+      // Get sender details for notification
+      const { data: senderDetailsForNotification } = await supabase
+        .from("user_details")
+        .select("id, name")
+        .eq("id", sender_id)
+        .single();
+
+      const senderNameForNotification = sender_name || senderDetailsForNotification?.name || "Someone";
+      const receiverNameForSender = name || "Someone";
+      const formattedAmountForSender = `$${parseFloat(amount).toFixed(2)}`;
+      
+      const senderNotificationUrl = `${supabaseUrl}/functions/v1/send-push-notification`;
+    
+      
+      const senderPayload = {
+        userId: sender_id,
+        title: "Payment Sent",
+        body: `You sent ${formattedAmountForSender} to ${receiverNameForSender}`,
+        data: {
+          transactionId: transactionId.toString(),
+          type: "send",
+          amount: amount.toString(),
+          counterparty: receiverNameForSender,
+        },
+      };
+      
+      
+      try {
+        const senderResponse = await fetch(senderNotificationUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify(senderPayload),
+        });
+        
+        const senderResult = await senderResponse.json();
+        
+        if (!senderResponse.ok) {
+          console.error("❌ Sender push notification failed!");
+          console.error("Status:", senderResponse.status);
+          console.error("Error:", senderResult);
+        } else if (senderResult.error) {
+          console.error("❌ Sender push notification returned error:", senderResult.error);
+        } else {
+          
+        }
+      } catch (err: any) {
+        console.error("❌ Exception sending push notification to sender:", err);
+      }
+    } else {
+      console.error("❌ Transaction ID is missing or falsy!");
+      console.error("Transaction ID value:", transactionId);
+      console.error("Transaction ID type:", typeof transactionId);
+    }
 
     if (walletError) {
       // Still return transaction id; wallet info is optional

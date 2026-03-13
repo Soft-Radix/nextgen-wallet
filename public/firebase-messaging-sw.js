@@ -14,10 +14,35 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 // Customize background notification handling here
 messaging.onBackgroundMessage((payload) => {
-  console.log('Background Message:', payload);
+
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
+    data: {
+      url: "/dashboard?fromNotification=1",
+    },
   };
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification?.data?.url || "/dashboard";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        const clientUrl = new URL(client.url);
+        const destinationUrl = new URL(targetUrl, self.location.origin);
+
+        if (clientUrl.origin === destinationUrl.origin) {
+          client.navigate(destinationUrl.href);
+          return client.focus();
+        }
+      }
+
+      return clients.openWindow(targetUrl);
+    })
+  );
 });

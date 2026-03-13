@@ -5,7 +5,6 @@ export default async function Home() {
   const supabase = await createClient(); // 👈 await here
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  console.log("========user==", user);
 
   if (user.status == "active") {
     redirect("/dashboard");

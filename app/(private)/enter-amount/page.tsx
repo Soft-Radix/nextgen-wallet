@@ -28,7 +28,7 @@ const EnterAmountContent = () => {
     const user = getUserDetails();
     const draft = useSelector((state: RootState) => state.transaction.draftTransfer);
 
-    console.log()
+ 
     const handleContinue = () => {
         const numericAmount = Number(amount);
         if (!numericAmount || numericAmount <= 0) {

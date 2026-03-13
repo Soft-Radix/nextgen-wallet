@@ -170,16 +170,16 @@ const ScanPage = () => {
             streamRef.current = stream;
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
-                
+
                 // Wait for video to be ready and start playing
                 await new Promise((resolve, reject) => {
                     if (!videoRef.current) {
                         reject(new Error('Video element not available'));
                         return;
                     }
-                    
+
                     const video = videoRef.current;
-                    
+
                     const handleLoadedMetadata = () => {
                         video.play()
                             .then(() => {
@@ -190,9 +190,9 @@ const ScanPage = () => {
                                 reject(err);
                             });
                     };
-                    
+
                     video.onloadedmetadata = handleLoadedMetadata;
-                    
+
                     // If metadata is already loaded
                     if (video.readyState >= 2) {
                         handleLoadedMetadata();
@@ -201,7 +201,6 @@ const ScanPage = () => {
             }
 
             setCameraActive(true);
-            console.log('iOS native scanner started');
 
             // Start scanning loop - optimized for iOS performance
             const scanQRCode = () => {
@@ -230,7 +229,6 @@ const ScanPage = () => {
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
 
                     if (code && code.data) {
-                        console.log('iOS native QR Code detected:', code.data);
                         handleQRCodeDetected(code.data);
                     }
                 } catch (err) {
@@ -243,7 +241,7 @@ const ScanPage = () => {
 
         } catch (err: any) {
             console.error('iOS native scanner error:', err);
-            
+
             let errorMsg: string;
             if (err.name === 'NotAllowedError' || err.message?.includes('Permission')) {
                 errorMsg = 'Camera access denied. Please allow camera permissions in Settings > Safari > Camera.';
@@ -269,7 +267,6 @@ const ScanPage = () => {
         if (isIOS) {
             // Prevent multiple simultaneous calls
             if (streamRef.current || scanIntervalRef.current) {
-                console.log('iOS camera already started');
                 return;
             }
             await startNativeIOSScanner();
@@ -279,12 +276,10 @@ const ScanPage = () => {
         // Use Html5Qrcode for non-iOS devices
         // Prevent multiple simultaneous calls
         if (html5QrCodeRef.current) {
-            console.log('Camera already started');
             return;
         }
 
         try {
-            console.log('Starting camera with Html5Qrcode...');
             setCameraError(null);
 
             // Wait for the container element to be available
@@ -338,11 +333,6 @@ const ScanPage = () => {
             try {
                 // Start scanning with best configuration
                 if (isIOS) {
-                    console.log('Starting iOS scanner with optimized config:', {
-                        fps: config.fps,
-                        qrbox: config.qrbox,
-                        disableFlip: config.disableFlip
-                    });
                 }
                 await html5QrCode.start(
                     cameraIdOrConfig,
@@ -350,9 +340,7 @@ const ScanPage = () => {
                     (decodedText, decodedResult) => {
                         // Success callback - QR code detected - call immediately for iOS
                         if (isIOS) {
-                            console.log('iOS QR Code detected:', decodedText);
                         } else {
-                            console.log('QR Code detected:', decodedText);
                         }
                         // Call handler immediately - no delays
                         handleQRCodeDetected(decodedText);
@@ -371,7 +359,6 @@ const ScanPage = () => {
                 // On iOS, if environment camera fails, try user camera
                 if (isIOS && cameraIdOrConfig && typeof cameraIdOrConfig === 'object' &&
                     cameraIdOrConfig.facingMode === 'environment') {
-                    console.log('Environment camera failed on iOS, trying user camera...');
                     try {
                         cameraIdOrConfig = { facingMode: "user" };
                         await html5QrCode.start(
@@ -379,7 +366,6 @@ const ScanPage = () => {
                             config,
                             (decodedText, decodedResult) => {
                                 // Success callback for iOS fallback camera
-                                console.log('iOS QR Code detected (user camera):', decodedText);
                                 handleQRCodeDetected(decodedText);
                             },
                             (errorMessage) => {
@@ -401,7 +387,6 @@ const ScanPage = () => {
             }
 
             setCameraActive(true);
-            console.log('Camera started successfully');
         } catch (err: any) {
             console.error('Camera access error:', err);
 
@@ -445,7 +430,7 @@ const ScanPage = () => {
         // Optimized for instant scanning like Google Pay - minimal delays
         const now = Date.now();
         const timeSinceLastScan = now - lastScanTimeRef.current;
-        
+
         // Detect iOS for iOS-specific optimizations
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -491,7 +476,7 @@ const ScanPage = () => {
             let finalCountryCode = "+1";
             let finalPhoneNumber = "";
 
-            console.log('Parsed phone:', { phone, digits, hasPlus, digitsLength: digits.length });
+
 
             if (hasPlus && digits.length >= 10) {
                 let countryCode = "+1";
@@ -551,7 +536,6 @@ const ScanPage = () => {
             }
 
             // Automatically call handleContinue with the values directly (don't update input field)
-            console.log('Calling handleContinue with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
 
             // Reset scanning flag immediately for instant scanning (like Google Pay)
             setScanning(false);
@@ -596,7 +580,6 @@ const ScanPage = () => {
 
             // Check if camera API is available
             if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
-                console.log('Camera API not available');
                 setCameraError('Camera API not supported in this browser');
                 return;
             }
@@ -605,7 +588,6 @@ const ScanPage = () => {
             try {
                 if ('permissions' in navigator) {
                     const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
-                    console.log('Camera permission status:', permissionStatus.state);
 
                     if (permissionStatus.state === 'denied') {
                         const errorMsg = isIOS
@@ -617,7 +599,6 @@ const ScanPage = () => {
                 }
             } catch (e) {
                 // Permissions API might not be supported, that's okay
-                console.log('Permissions API not available');
             }
 
             // Wait for html5-qrcode container to be rendered and start camera immediately
@@ -628,7 +609,6 @@ const ScanPage = () => {
 
                 const container = document.getElementById(qrCodeRegionId);
                 if (container) {
-                    console.log('QR scanner container ready, starting camera immediately...');
                     startCamera();
                 } else if (retryCount < maxRetries) {
                     // Retry quickly
@@ -724,7 +704,6 @@ const ScanPage = () => {
                 let finalCountryCode = "+1";
                 let finalPhoneNumber = "";
 
-                console.log('Parsed phone from upload:', { phone, digits, hasPlus, digitsLength: digits.length });
 
                 if (hasPlus && digits.length >= 10) {
                     let countryCode = "+1";
@@ -764,7 +743,6 @@ const ScanPage = () => {
 
 
                 // Automatically call handleContinue with the values directly (don't update input field)
-                console.log('Calling handleContinue from upload with:', { phone: finalPhoneNumber, countryCode: finalCountryCode });
                 handleContinue(finalPhoneNumber, finalCountryCode, true); // Pass true to skip state update
             } else {
                 // Invalid QR - don't show image, just show toast
@@ -785,16 +763,6 @@ const ScanPage = () => {
         // Use override values if provided, otherwise use state, default to +1 if no country code
         const phoneToUse = phoneNumberOverride || phoneNumber;
         const countryCodeToUse = countryCodeOverride || countryCode || "+1";
-
-        console.log('handleContinue called with:', {
-            phoneNumberOverride,
-            countryCodeOverride,
-            phoneToUse,
-            countryCodeToUse,
-            statePhoneNumber: phoneNumber,
-            stateCountryCode: countryCode,
-            skipStateUpdate
-        });
 
         // Only update state if not skipping (i.e., when manually clicking Continue button)
         if (!skipStateUpdate) {

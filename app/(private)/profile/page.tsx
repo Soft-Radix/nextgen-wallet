@@ -134,7 +134,6 @@ const Page = () => {
                         canvas.toBlob((blob) => {
                             URL.revokeObjectURL(url);
                             if (blob) {
-                                console.log('QR code image created:', blob.size, 'bytes');
                             }
                             resolve(blob);
                         }, 'image/png', 1.0);
