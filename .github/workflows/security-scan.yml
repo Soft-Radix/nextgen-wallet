@@ -1,0 +1,63 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for suspicious code
+        run: |
+          FAILED=0
+
+          scan_pattern () {
+            PATTERN="$1"
+            DESCRIPTION="$2"
+
+            MATCHES=$(grep -RIn \
+              --exclude-dir=.git \
+              --exclude-dir=.github \
+              --exclude-dir=node_modules \
+              --exclude-dir=.next \
+              --exclude-dir=dist \
+              "$PATTERN" . || true)
+
+            if [ -n "$MATCHES" ]; then
+              echo ""
+              echo "❌ $DESCRIPTION"
+              echo "$MATCHES"
+
+              while IFS= read -r line; do
+                FILE=$(echo "$line" | cut -d: -f1)
+                LINE=$(echo "$line" | cut -d: -f2)
+
+                echo "::error file=$FILE,line=$LINE::$DESCRIPTION"
+              done <<< "$MATCHES"
+
+              FAILED=1
+            fi
+          }
+
+          scan_pattern "eval(" "eval() detected"
+          scan_pattern "Function(" "Function() detected"
+          scan_pattern "String.fromCharCode" "Obfuscated code detected"
+          scan_pattern "global\\['!'\\]" "Suspicious payload detected"
+          scan_pattern "_\\$_" "Obfuscated variable detected"
+          scan_pattern "child_process" "child_process detected"
+          scan_pattern "spawn(" "spawn() detected"
+          scan_pattern "exec(" "exec() detected"
+          scan_pattern "Buffer.from.*base64" "Base64 payload detected"
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo "❌ Security Scan Failed"
+            exit 1
+          fi
+
+          echo "✅ Security Scan Passed"
